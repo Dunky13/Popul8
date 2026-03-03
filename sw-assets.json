@@ -1,0 +1,20 @@
+{
+  "assets": [
+    "/",
+    "/index.html",
+    "/manifest.json",
+    "/branding/popul8-logo.svg",
+    "/sw.js",
+    "/assets/index-CvmS-fxT.css",
+    "/assets/TemplateEditor-DAaflbXP.css",
+    "/assets/codemirror-B3nAru4X.js",
+    "/assets/csv-C0pSCDTy.js",
+    "/assets/prettier-B4wrTHlT.js",
+    "/assets/vendor-DT8DPFJ2.js",
+    "/assets/index-D08ZOCoU.js",
+    "/assets/TemplateEditor-Ci_3BT2g.js",
+    "/assets/CodeEditorPanel-DHl4iIG9.js",
+    "/assets/CssEditorPanel-BFEad7n-.js",
+    "/assets/FontSourcesPanel-CkfW62_5.js"
+  ]
+}
