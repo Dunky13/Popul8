@@ -10,6 +10,7 @@ const createStore = () => {
     isReadyForEdit: () => boolean;
     isReadyForMapping: () => boolean;
     isReadyForPreview: () => boolean;
+    isReadyForPrint: () => boolean;
   } = {
     currentStep: "upload",
     setCurrentStep: (step: "upload" | "edit" | "mapping" | "select" | "preview") => {
@@ -19,6 +20,7 @@ const createStore = () => {
     isReadyForEdit: () => true,
     isReadyForMapping: () => true,
     isReadyForPreview: () => true,
+    isReadyForPrint: () => true,
   };
   return { store, calls };
 };
@@ -72,9 +74,9 @@ test("managed print shortcut handles uppercase key value", () => {
   assert.equal(printRequestCalls, 1);
 });
 
-test("managed print shortcut does nothing when preview is not ready", () => {
+test("managed print shortcut does nothing when print is not ready", () => {
   const { store, calls } = createStore();
-  store.isReadyForPreview = () => false;
+  store.isReadyForPrint = () => false;
   let printRequestCalls = 0;
 
   handleAppKeyboardShortcut(
@@ -94,4 +96,23 @@ test("managed print shortcut does nothing when preview is not ready", () => {
   assert.deepEqual(calls, []);
   assert.equal(store.currentStep, "upload");
   assert.equal(printRequestCalls, 0);
+});
+
+test("preview shortcut does nothing when print is not ready", () => {
+  const { store, calls } = createStore();
+  store.isReadyForPrint = () => false;
+
+  handleAppKeyboardShortcut(
+    {
+      ctrlKey: true,
+      metaKey: false,
+      shiftKey: false,
+      key: "5",
+      preventDefault: () => {},
+    },
+    store,
+  );
+
+  assert.deepEqual(calls, []);
+  assert.equal(store.currentStep, "upload");
 });

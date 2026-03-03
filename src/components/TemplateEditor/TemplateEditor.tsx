@@ -4,7 +4,6 @@ import { useShallow } from "zustand/react/shallow";
 import { parseSVGTemplate } from "../../utils/svgManipulator";
 import { stripSvgExtension } from "../../utils/regexUtils";
 import styles from "./TemplateEditor.module.css";
-import { TemplateEditorHeader } from "./TemplateEditorHeader";
 import { TemplateEditorEmptyState } from "./TemplateEditorEmptyState";
 import { TemplateEditorWorkspace } from "./TemplateEditorWorkspace";
 import { useTemplateContent } from "./hooks/useTemplateContent";
@@ -25,8 +24,13 @@ export const TemplateEditor: React.FC = () => {
     canUndo,
     canRedo,
   } = useTemplateContent(svgTemplate, setSvgTemplate);
-  const { viewMode, setViewMode, isAdvanced, setIsAdvanced } =
-    useEditorSettings();
+  const {
+    viewMode,
+    setViewMode,
+    isAdvanced,
+    hasEnabledAdvancedBefore,
+    setIsAdvanced,
+  } = useEditorSettings();
 
   const contentSummary = useMemo(() => {
     if (!localContent) return null;
@@ -72,28 +76,24 @@ export const TemplateEditor: React.FC = () => {
 
   return (
     <div className={styles.editor}>
-      <TemplateEditorHeader
-        stats={{
-          fileName: svgTemplate.fileName ?? "Untitled",
-          placeholderCount: contentSummary?.placeholders.length ?? 0,
-          elementIdCount: contentSummary?.elementIds.length ?? 0,
-        }}
-        view={{
-          isAdvanced,
-          viewMode,
-          onToggleAdvanced: setIsAdvanced,
-          onSetViewMode: setViewMode,
-        }}
-        actions={{ onDownload: handleDownload }}
-        history={{ onUndo: handleUndo, onRedo: handleRedo, canUndo, canRedo }}
-      />
-
       <TemplateEditorWorkspace
-        view={{ mode: viewMode, isAdvanced }}
+        view={{ mode: viewMode, isAdvanced, hasEnabledAdvancedBefore }}
         content={{
           localContent,
           summary: contentSummary,
           onApplyContent: handleApplyContent,
+        }}
+        meta={{
+          fileName: svgTemplate.fileName ?? "Untitled",
+          placeholderCount: contentSummary?.placeholders.length ?? 0,
+          elementIdCount: contentSummary?.elementIds.length ?? 0,
+          onDownload: handleDownload,
+          onToggleAdvanced: setIsAdvanced,
+          onSetViewMode: setViewMode,
+          onUndo: handleUndo,
+          onRedo: handleRedo,
+          canUndo,
+          canRedo,
         }}
       />
     </div>

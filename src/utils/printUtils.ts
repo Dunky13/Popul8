@@ -8,13 +8,14 @@ import type { PrintLayout } from "../types/printLayout";
 
 export interface PrintOptions {
   layout: PrintLayout;
+  scrollContainer?: HTMLElement | null;
 }
 
 /**
  * Handle basic print functionality
  */
 export const handlePrint = async (options: PrintOptions): Promise<void> => {
-  const { layout } = options;
+  const { layout, scrollContainer } = options;
 
   document.body.classList.add("printing");
 
@@ -42,20 +43,30 @@ export const handlePrint = async (options: PrintOptions): Promise<void> => {
       margin: ${marginMm}mm !important;
     }
 
-    .pageGrid,
-    div[class*="pageGrid"],
-    .preview > div[class*="pageGrid"] {
-      width: ${contentWidth}mm !important;
-      height: ${contentHeight}mm !important;
-      max-width: ${contentWidth}mm !important;
-      max-height: ${contentHeight}mm !important;
-      min-width: ${contentWidth}mm !important;
-      min-height: ${contentHeight}mm !important;
+    [data-print-page="true"] {
+      width: min(${contentWidth}mm, 100%) !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      height: min(${contentHeight}mm, 100vh) !important;
+      min-height: 0 !important;
+      max-height: 100vh !important;
+      margin-inline: auto !important;
       grid-template-columns: repeat(${gridColumns}, 1fr) !important;
       grid-template-rows: repeat(${gridRows}, 1fr) !important;
     }
   `;
   document.head.appendChild(printStyle);
+
+  const previousWindowScrollX = window.scrollX;
+  const previousWindowScrollY = window.scrollY;
+  const previousContainerScrollTop = scrollContainer?.scrollTop ?? 0;
+  const previousContainerScrollLeft = scrollContainer?.scrollLeft ?? 0;
+
+  if (scrollContainer) {
+    scrollContainer.scrollTop = 0;
+    scrollContainer.scrollLeft = 0;
+  }
+  window.scrollTo(0, 0);
 
   let isCleanedUp = false;
   let cleanupTimeout = 0;
@@ -67,6 +78,13 @@ export const handlePrint = async (options: PrintOptions): Promise<void> => {
       window.clearTimeout(cleanupTimeout);
       cleanupTimeout = 0;
     }
+
+    if (scrollContainer) {
+      scrollContainer.scrollTop = previousContainerScrollTop;
+      scrollContainer.scrollLeft = previousContainerScrollLeft;
+    }
+    window.scrollTo(previousWindowScrollX, previousWindowScrollY);
+
     document.body.classList.remove("printing");
     printStyle.remove();
   };

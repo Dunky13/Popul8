@@ -305,65 +305,6 @@
   font-size: 0.77rem;
 }
 
-@media print {
-  .pageGridContainer {
-    padding: 0;
-    box-shadow: none;
-    background: white;
-    border: 0;
-  }
-
-  .header,
-  .warnings,
-  .previewGuidance,
-  .resizePanel,
-  .selectionBadge,
-  .resizeBadge {
-    display: none !important;
-  }
-
-  .preview {
-    gap: 0;
-    overflow: visible !important;
-    padding-right: 0;
-  }
-
-  .previewLayout {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-    grid-template-columns: 1fr;
-  }
-
-  .pageGrid {
-    margin: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-    gap: 2mm !important;
-    page-break-after: always !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .pageGrid:last-child {
-    page-break-after: auto;
-  }
-
-  .recordCardContainer,
-  .emptySlot {
-    break-inside: avoid;
-    page-break-inside: avoid;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .recordCardSelected {
-    border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent) !important;
-    box-shadow: none !important;
-  }
-}
-
 @media (max-width: 1024px) {
   .previewLayout {
     grid-template-columns: minmax(0, 1fr);

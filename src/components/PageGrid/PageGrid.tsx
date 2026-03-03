@@ -2,7 +2,13 @@
  * Page grid component with 1x4 layout for printing
  */
 
-import React, { useRef, useMemo, useState, useEffect, useCallback } from "react";
+import React, {
+  useRef,
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { RecordCard } from "../RecordCard/RecordCard";
 import { PrintSidebar } from "../PrintSidebar/PrintSidebar";
 import { useAppStore } from "../../store/appStore";
@@ -45,12 +51,16 @@ export const PageGrid: React.FC = () => {
     })),
   );
   const printRef = useRef<HTMLDivElement>(null);
-  const [selectedResizeCardIds, setSelectedResizeCardIds] = useState<string[]>([]);
-  const [fieldBaseSizes, setFieldBaseSizes] = useState<Record<string, number>>({});
+  const [selectedResizeCardIds, setSelectedResizeCardIds] = useState<string[]>(
+    [],
+  );
+  const [fieldBaseSizes, setFieldBaseSizes] = useState<Record<string, number>>(
+    {},
+  );
   const sheetsPerPage = Math.max(1, printLayout.rows * printLayout.columns);
   const pageDimensions = getPageDimensionsMm(
     printLayout.pageSize,
-    printLayout.orientation
+    printLayout.orientation,
   );
 
   // Paginate records into groups (1x4 grid)
@@ -66,7 +76,7 @@ export const PageGrid: React.FC = () => {
   const printReadiness = useValidatePrintReadiness(
     svgTemplate,
     records,
-    dataMapping
+    dataMapping,
   );
 
   const handlePrintClick = React.useCallback(async () => {
@@ -78,12 +88,13 @@ export const PageGrid: React.FC = () => {
 
       await handlePrint({
         layout: printLayout,
+        scrollContainer: printRef.current,
       });
     } catch (error) {
       addError(
         `Print failed: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     }
   }, [addError, printLayout, printReadiness]);
@@ -105,7 +116,7 @@ export const PageGrid: React.FC = () => {
     const collectBaseSize = () => {
       const nextSizes: Record<string, number> = {};
       const elements = container.querySelectorAll(
-        "[data-template-key], [data-template-keys]"
+        "[data-template-key], [data-template-keys]",
       );
 
       elements.forEach((node) => {
@@ -115,7 +126,10 @@ export const PageGrid: React.FC = () => {
         const keys = singleKey
           ? [singleKey]
           : multiKeys
-            ? multiKeys.split(",").map((key) => key.trim()).filter(Boolean)
+            ? multiKeys
+                .split(",")
+                .map((key) => key.trim())
+                .filter(Boolean)
             : [];
 
         if (keys.length === 0) return;
@@ -155,7 +169,7 @@ export const PageGrid: React.FC = () => {
     setSelectedResizeCardIds((prev) =>
       prev.includes(cardId)
         ? prev.filter((id) => id !== cardId)
-        : [...prev, cardId]
+        : [...prev, cardId],
     );
   }, []);
 
@@ -247,16 +261,14 @@ export const PageGrid: React.FC = () => {
 
   if (!printReadiness.isReady) {
     return (
-      <div className={styles.pageGridContainer}>
+      <div className={styles.pageGridContainer} data-print-scope="true">
         <h3>Print Preview</h3>
         <div className={styles.notReady}>
           <div className={styles.requirements}>
             <h4>Requirements for Printing:</h4>
             <ul>
               {!svgTemplate && <li>Upload SVG template</li>}
-              {records.length === 0 && (
-                <li>Upload CSV data</li>
-              )}
+              {records.length === 0 && <li>Upload CSV data</li>}
               {Object.keys(dataMapping).length === 0 && (
                 <li>Configure data mapping</li>
               )}
@@ -279,7 +291,7 @@ export const PageGrid: React.FC = () => {
   }
 
   return (
-    <div className={styles.pageGridContainer}>
+    <div className={styles.pageGridContainer} data-print-scope="true">
       <div className={styles.header}>
         <div className={styles.headerText}>
           <h3>Print Preview</h3>
@@ -296,7 +308,7 @@ export const PageGrid: React.FC = () => {
             </span>
           </div>
         </div>
-        <div className={`${styles.headerActions} no-print`}>
+        <div className={styles.headerActions}>
           <button
             type="button"
             className={styles.secondaryButton}
@@ -322,21 +334,6 @@ export const PageGrid: React.FC = () => {
         </div>
       </div>
 
-      <div className={styles.previewGuidance}>
-        <article className={styles.guidanceItem}>
-          <span className={styles.guidanceNumber}>1</span>
-          <p>Click cards in the preview to target card-specific resizing.</p>
-        </article>
-        <article className={styles.guidanceItem}>
-          <span className={styles.guidanceNumber}>2</span>
-          <p>Use sidebar field controls to apply size rules to all or selected cards.</p>
-        </article>
-        <article className={styles.guidanceItem}>
-          <span className={styles.guidanceNumber}>3</span>
-          <p>Finalize page setup, then print when sheet count and spacing look right.</p>
-        </article>
-      </div>
-
       {printReadiness.warnings.length > 0 && (
         <div className={styles.warnings}>
           <h4>Warnings:</h4>
@@ -348,12 +345,20 @@ export const PageGrid: React.FC = () => {
         </div>
       )}
 
-      <div className={styles.previewLayout}>
-        <div className={styles.preview} ref={printRef}>
+      <div className={styles.previewLayout} data-print-preview-layout="true">
+        <div
+          className={styles.preview}
+          ref={printRef}
+          data-print-preview="true"
+        >
           {paginatedRecords.map((page, pageIndex) => (
             <div
               key={pageIndex}
-              className={styles.pageGrid}
+              className={`${styles.pageGrid} print`}
+              data-print-page="true"
+              data-print-page-break={
+                pageIndex < paginatedRecords.length - 1 ? "page" : "none"
+              }
               style={{
                 gridTemplateColumns: `repeat(${printLayout.columns}, 1fr)`,
                 gridTemplateRows: `repeat(${printLayout.rows}, 1fr)`,
@@ -366,9 +371,10 @@ export const PageGrid: React.FC = () => {
                 return (
                   <div
                     key={record.id}
-                    className={`${styles.recordCardContainer} ${
+                    className={`${styles.recordCardContainer} print ${
                       isSelected ? styles.recordCardSelected : ""
                     }`}
+                    data-print-card="true"
                     onClick={() => handleToggleResizeCard(record.id)}
                     role="button"
                     tabIndex={0}
@@ -388,10 +394,18 @@ export const PageGrid: React.FC = () => {
                       {isSelected ? "Selected" : "Select"}
                     </div>
                     {resizeBadge && (
-                      <div className={`${styles.resizeBadge} ${styles[`resizeBadge${resizeBadge.tone}`]}`}>
-                        <span className={styles.resizeBadgeTitle}>{resizeBadge.label}</span>
+                      <div
+                        className={`${styles.resizeBadge} ${
+                          styles[`resizeBadge${resizeBadge.tone}`]
+                        }`}
+                      >
+                        <span className={styles.resizeBadgeTitle}>
+                          {resizeBadge.label}
+                        </span>
                         {resizeBadge.detail && (
-                          <span className={styles.resizeBadgeDetail}>{resizeBadge.detail}</span>
+                          <span className={styles.resizeBadgeDetail}>
+                            {resizeBadge.detail}
+                          </span>
                         )}
                       </div>
                     )}
@@ -403,16 +417,16 @@ export const PageGrid: React.FC = () => {
               {Array.from({
                 length: sheetsPerPage - page.length,
               }).map((_, emptyIndex) => (
-                <div key={`empty-${emptyIndex}`} className={styles.emptySlot}>
-                  <span>Empty Slot</span>
-                </div>
+                <div
+                  key={`empty-${emptyIndex}`}
+                  className={`${styles.emptySlot} print`}
+                />
               ))}
             </div>
           ))}
         </div>
 
         <PrintSidebar
-          className="no-print"
           data={{ records, svgTemplate, fieldBaseSizes }}
           layout={{ value: printLayout, onChange: setPrintLayout }}
           resize={{

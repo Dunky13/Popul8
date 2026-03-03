@@ -389,6 +389,114 @@
   min-height: 200px;
 }
 
+.sidebarSummaryCard {
+  padding: 0.68rem 0.78rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebarSummaryTopRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.45rem;
+}
+
+.sidebarSummaryFile {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.42rem;
+  flex: 1 1 auto;
+}
+
+.sidebarSummaryFileLabel {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.sidebarSummaryFileValue {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sidebarSummaryStats {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.sidebarSummaryStat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  border-radius: 999px;
+  padding: 0.16rem 0.46rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+  background: color-mix(in srgb, var(--bg-secondary) 84%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.sidebarSummaryStat strong {
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sidebarSummaryExportButton {
+  padding: 0.34rem 0.68rem;
+  min-height: 32px;
+  flex: 0 0 auto;
+}
+
+.sidebarSummaryControls {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  flex-wrap: wrap;
+}
+
+.sidebarSummaryAdvancedToggle {
+  padding: 0.24rem 0.52rem;
+  font-size: 0.72rem;
+}
+
+.sidebarSummaryControls .viewToggle {
+  margin-left: 0;
+}
+
+.sidebarSummaryControls .toggleButton {
+  padding: 0.3rem 0.62rem;
+  font-size: 0.72rem;
+}
+
+.sidebarSummaryHistory {
+  display: inline-flex;
+  gap: 0.36rem;
+  margin-left: auto;
+}
+
+.sidebarSummaryHistory .secondaryButton {
+  padding: 0.34rem 0.62rem;
+  min-height: 32px;
+}
+
 .statsGrid {
   display: grid;
   grid-template-columns: minmax(180px, 2fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr);
@@ -1410,6 +1518,14 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .sidebarSummaryStats {
+    margin-left: 0;
+  }
+
+  .sidebarSummaryHistory {
+    margin-left: 0;
+  }
+
   .controlsPanel {
     position: static;
     max-height: none;
@@ -1438,6 +1554,14 @@
 }
 
 @media (max-width: 700px) {
+  .sidebarSummaryTopRow {
+    flex-wrap: wrap;
+  }
+
+  .sidebarSummaryStats {
+    flex-wrap: wrap;
+  }
+
   .toolbarHints {
     display: none;
   }

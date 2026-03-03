@@ -17,6 +17,7 @@ type ShortcutStore = {
   isReadyForEdit: () => boolean;
   isReadyForMapping: () => boolean;
   isReadyForPreview: () => boolean;
+  isReadyForPrint: () => boolean;
 };
 
 const dispatchManagedPrintRequest = () => {
@@ -37,7 +38,7 @@ export const handleAppKeyboardShortcut = (
     case "p":
       if (event.shiftKey) {
         event.preventDefault();
-        if (!store.isReadyForPreview()) {
+        if (!store.isReadyForPrint()) {
           return;
         }
         if (store.currentStep !== "preview") {
@@ -70,7 +71,7 @@ export const handleAppKeyboardShortcut = (
       break;
     case "5":
       event.preventDefault();
-      if (store.isReadyForPreview()) {
+      if (store.isReadyForPrint()) {
         store.setCurrentStep("preview");
       }
       break;

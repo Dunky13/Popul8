@@ -11,6 +11,10 @@ import type { StepId } from '../types/app';
 import { PRINT_LAYOUT } from '../constants';
 import { getMissingFonts } from '../utils/svgFonts';
 import {
+  readAdvancedEditorSettings,
+  shouldAutoLoadMissingFonts,
+} from '../utils/editorPreferences';
+import {
   applyRequiredSelectionRules,
   getMissingRequiredRowIndices,
 } from '../utils/requiredFields';
@@ -214,7 +218,11 @@ export const useAppStore = create<AppState>()(
     isEditComplete: () => {
       const { svgTemplate } = get();
       if (!svgTemplate) return false;
-      return getMissingFonts(svgTemplate.content).length === 0;
+      const missingFonts = getMissingFonts(svgTemplate.content);
+      if (missingFonts.length === 0) return true;
+
+      const advancedSettings = readAdvancedEditorSettings();
+      return shouldAutoLoadMissingFonts(advancedSettings);
     },
     isReadyForSelection: () => {
       const { csvData } = get();
@@ -227,26 +235,23 @@ export const useAppStore = create<AppState>()(
     },
 
     isReadyForPreview: () => {
-      const { isReadyForMapping } = get();
-      const { dataMapping } = get();
-      const { svgTemplate } = get();
-      
-      if (!isReadyForMapping()) return false;
-      
-      // Check if all template placeholders are mapped
-      if (svgTemplate && svgTemplate.placeholders.length > 0) {
-        const unmappedPlaceholders = svgTemplate.placeholders.filter(
-          key => !dataMapping[key]
-        );
-        if (unmappedPlaceholders.length > 0) return false;
+      const { csvData, svgTemplate, dataMapping } = get();
+      if (!csvData || !svgTemplate) return false;
+
+      if (svgTemplate.placeholders.length === 0) {
+        return true;
       }
-      
-      return true;
+
+      return svgTemplate.placeholders.every((key) => Boolean(dataMapping[key]));
     },
 
     isReadyForPrint: () => {
-      const { isReadyForPreview, records } = get();
-      return isReadyForPreview() && records.length > 0;
+      const { isReadyForPreview, selectedRowIndices, records } = get();
+      return (
+        isReadyForPreview() &&
+        selectedRowIndices.length > 0 &&
+        records.length > 0
+      );
     }
   })
 );

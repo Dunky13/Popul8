@@ -12,6 +12,7 @@ import { useOfflineStatus } from "./hooks/useOfflineStatus";
 import { useSelectedRecords } from "./hooks/useSelectedRecords";
 import { useAppKeyboardShortcuts } from "./hooks/useAppKeyboardShortcuts";
 import { useThemeMode } from "./hooks/useThemeMode";
+import { useDefaultMappingSync } from "./hooks/useDefaultMappingSync";
 import type { StepId } from "./types/app";
 import Icon from "./components/Icon/Icon";
 import styles from "./styles/App.module.css";
@@ -74,9 +75,7 @@ export const App: React.FC = () => {
     records,
     setCurrentStep,
     isReadyForEdit,
-    isEditComplete,
     isReadyForMapping,
-    isReadyForPreview,
     isReadyForPrint,
   } = useAppStore(
     useShallow((state) => ({
@@ -88,21 +87,20 @@ export const App: React.FC = () => {
       records: state.records,
       setCurrentStep: state.setCurrentStep,
       isReadyForEdit: state.isReadyForEdit,
-      isEditComplete: state.isEditComplete,
       isReadyForMapping: state.isReadyForMapping,
-      isReadyForPreview: state.isReadyForPreview,
       isReadyForPrint: state.isReadyForPrint,
     })),
   );
 
   const { showOfflineIndicator } = useOfflineStatus();
   const { themeMode, setThemeMode } = useThemeMode();
+  const [isChecklistExpanded, setIsChecklistExpanded] = React.useState(false);
 
+  useDefaultMappingSync();
   useSelectedRecords({ csvData, selectedRowIndices });
   useAppKeyboardShortcuts();
 
   const activeStep = STEP_COPY[currentStep];
-  const rowCount = csvData?.rows.length ?? 0;
   const placeholderCount = svgTemplate?.placeholders.length ?? 0;
   const mappedCount = svgTemplate
     ? svgTemplate.placeholders.filter((key) => Boolean(dataMapping[key])).length
@@ -111,9 +109,8 @@ export const App: React.FC = () => {
   const hasCsvUpload = csvData !== null;
   const hasTemplateUpload = svgTemplate !== null;
   const readyForEdit = isReadyForEdit();
-  const editComplete = isEditComplete();
   const readyForMapping = isReadyForMapping();
-  const readyForPreview = isReadyForPreview();
+  const readyForPreview = readyForMapping && placeholderCount === mappedCount;
   const readyForPrint = isReadyForPrint();
   const hasRenderableRecords = records.length > 0;
   const isUploadStep = currentStep === "upload";
@@ -130,7 +127,7 @@ export const App: React.FC = () => {
         return [
           { label: "Template available", done: hasTemplateUpload },
           { label: "Placeholders detected", done: placeholderCount > 0 },
-          { label: "Template ready for mapping", done: editComplete },
+          { label: "Template ready for mapping", done: readyForMapping },
         ];
       case "mapping":
         return [
@@ -142,7 +139,10 @@ export const App: React.FC = () => {
         return [
           { label: "Mapping complete", done: readyForPreview },
           { label: "At least one row selected", done: selectedCount > 0 },
-          { label: "Preview can be opened", done: readyForPreview && selectedCount > 0 },
+          {
+            label: "Preview can be opened",
+            done: readyForPreview && selectedCount > 0,
+          },
         ];
       case "preview":
         return [
@@ -172,7 +172,9 @@ export const App: React.FC = () => {
         };
       case "edit":
         return {
-          label: readyForMapping ? "Continue To Data Mapping" : "Upload CSV To Start Mapping",
+          label: readyForMapping
+            ? "Continue To Data Mapping"
+            : "Upload CSV To Start Mapping",
           helper: readyForMapping
             ? "Template and CSV are ready. Connect each placeholder to a column."
             : "Data mapping requires both an SVG template and a CSV dataset.",
@@ -181,7 +183,9 @@ export const App: React.FC = () => {
         };
       case "mapping":
         return {
-          label: readyForPreview ? "Continue To Row Selection" : "Finish Mapping To Continue",
+          label: readyForPreview
+            ? "Continue To Row Selection"
+            : "Finish Mapping To Continue",
           helper: readyForPreview
             ? "Mapping is complete. Pick the rows you want to generate."
             : `${Math.max(placeholderCount - mappedCount, 0)} placeholder${
@@ -208,6 +212,15 @@ export const App: React.FC = () => {
     }
   })();
 
+  const completedChecklistCount = flowChecklist.filter(
+    (item) => item.done,
+  ).length;
+  const totalChecklistCount = flowChecklist.length;
+
+  React.useEffect(() => {
+    setIsChecklistExpanded(false);
+  }, [currentStep]);
+
   return (
     <div className={styles.app}>
       {showOfflineIndicator && (
@@ -223,41 +236,71 @@ export const App: React.FC = () => {
       <main className={styles.main}>
         {!isUploadStep && (
           <section className={styles.stepIntro}>
-            <div className={styles.stepIntroMeta}>{activeStep.label}</div>
-            <h2 className={styles.stepIntroTitle}>{activeStep.title}</h2>
-            <p className={styles.stepIntroDescription}>{activeStep.description}</p>
-            <div className={styles.stepStatRow}>
-              <span className={styles.stepStat}>{rowCount} rows</span>
-              <span className={styles.stepStat}>{placeholderCount} placeholders</span>
-              <span className={styles.stepStat}>{mappedCount} mapped</span>
-              <span className={styles.stepStat}>{selectedCount} selected</span>
+            <div className={styles.stepIntroTopRow}>
+              <div className={styles.stepIntroLead}>
+                <div className={styles.stepIntroMeta}>{activeStep.label}</div>
+                <h2 className={styles.stepIntroTitle}>{activeStep.title}</h2>
+                <p className={styles.stepIntroDescription}>
+                  {activeStep.description}
+                </p>
+              </div>
+              <div
+                className={styles.stepIntroChecklistRail}
+                aria-label="Current step checklist"
+              >
+                <div className={styles.stepIntroChecklistSummary}>
+                  <div className={styles.stepIntroChecklistSummaryText}>
+                    <p className={styles.stepIntroChecklistLabel}>
+                      Step checklist
+                    </p>
+                    <p className={styles.stepIntroChecklistProgress}>
+                      {completedChecklistCount}/{totalChecklistCount} steps
+                      completed
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.stepIntroChecklistToggle}
+                    aria-expanded={isChecklistExpanded}
+                    aria-controls="current-step-checklist"
+                    onClick={() => {
+                      setIsChecklistExpanded((expanded) => !expanded);
+                    }}
+                  >
+                    <Icon name="checklist" size={14} />
+                    {isChecklistExpanded ? "Hide" : "Show"}
+                  </button>
+                </div>
+                {isChecklistExpanded && (
+                  <ul
+                    id="current-step-checklist"
+                    className={styles.flowChecklist}
+                  >
+                    {flowChecklist.map((item) => (
+                      <li
+                        key={item.label}
+                        className={`${styles.flowChecklistItem} ${
+                          item.done
+                            ? styles.flowChecklistDone
+                            : styles.flowChecklistPending
+                        }`}
+                      >
+                        <span
+                          className={styles.flowChecklistIcon}
+                          aria-hidden="true"
+                        >
+                          <Icon
+                            name={item.done ? "check" : "close"}
+                            size={14}
+                          />
+                        </span>
+                        <span>{item.label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
-          </section>
-        )}
-
-        {!isUploadStep && (
-          <section className={styles.flowCoach} aria-label="Current step checklist">
-            <div className={styles.flowCoachHeader}>
-              <h3 className={styles.flowCoachTitle}>Step Checklist</h3>
-              <p className={styles.flowCoachDescription}>
-                Complete each item, then move forward with the guided action.
-              </p>
-            </div>
-            <ul className={styles.flowChecklist}>
-              {flowChecklist.map((item) => (
-                <li
-                  key={item.label}
-                  className={`${styles.flowChecklistItem} ${
-                    item.done ? styles.flowChecklistDone : styles.flowChecklistPending
-                  }`}
-                >
-                  <span className={styles.flowChecklistIcon} aria-hidden="true">
-                    <Icon name={item.done ? "check" : "close"} size={14} />
-                  </span>
-                  <span>{item.label}</span>
-                </li>
-              ))}
-            </ul>
             {flowAction && (
               <div className={styles.flowActionRow}>
                 <button

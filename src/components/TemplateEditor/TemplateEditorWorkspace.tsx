@@ -15,6 +15,7 @@ import {
   inferFontWeightsFromSvg,
   parseFontLinksFromComments,
 } from "../../utils/svgFonts";
+import { shouldAutoLoadMissingFonts } from "../../utils/editorPreferences";
 import {
   applyPlaceholderTemplate,
   createPlaceholderRegex,
@@ -45,6 +46,7 @@ import {
   applySelectedMarkupToContent,
   updatePlaceholder,
 } from "./placeholderActions";
+import Icon from "../Icon/Icon";
 
 const GRID_SIZE = 1;
 const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
@@ -91,19 +93,44 @@ type TemplateEditorWorkspaceProps = {
   view: {
     mode: "visual" | "code";
     isAdvanced: boolean;
+    hasEnabledAdvancedBefore: boolean;
   };
   content: {
     localContent: string;
     summary: { placeholders: string[]; elementIds: string[] } | null;
     onApplyContent: (updatedContent: string) => void;
   };
+  meta: {
+    fileName: string;
+    placeholderCount: number;
+    elementIdCount: number;
+    onDownload: () => void;
+    onToggleAdvanced: (value: boolean) => void;
+    onSetViewMode: (mode: "visual" | "code") => void;
+    onUndo: () => void;
+    onRedo: () => void;
+    canUndo: boolean;
+    canRedo: boolean;
+  };
 };
 
 export const TemplateEditorWorkspace: React.FC<
   TemplateEditorWorkspaceProps
-> = ({ view, content }) => {
-  const { mode: viewMode, isAdvanced } = view;
+> = ({ view, content, meta }) => {
+  const { mode: viewMode, isAdvanced, hasEnabledAdvancedBefore } = view;
   const { localContent, summary: contentSummary, onApplyContent } = content;
+  const {
+    fileName,
+    placeholderCount,
+    elementIdCount,
+    onDownload,
+    onToggleAdvanced,
+    onSetViewMode,
+    onUndo,
+    onRedo,
+    canUndo,
+    canRedo,
+  } = meta;
   const [activeTool, setActiveTool] = useState<"select" | "text" | "image">(
     "select",
   );
@@ -662,6 +689,11 @@ export const TemplateEditorWorkspace: React.FC<
     return buildGoogleFontsUrl(autoLinkFonts, inferredFontWeights);
   }, [autoLinkFonts, inferredFontWeights]);
 
+  const shouldAutoLoadFonts = shouldAutoLoadMissingFonts({
+    isAdvanced,
+    hasEnabledAdvancedBefore,
+  });
+
   useEffect(() => {
     if (typeof document === "undefined") return;
     const linkId = "popul8-google-fonts";
@@ -679,14 +711,14 @@ export const TemplateEditorWorkspace: React.FC<
       return;
     }
 
-    if (isAdvanced) return;
+    if (!shouldAutoLoadFonts) return;
 
     const link = document.createElement("link");
     link.id = linkId;
     link.rel = "stylesheet";
     link.href = autoGoogleFontUrl;
     document.head.appendChild(link);
-  }, [autoGoogleFontUrl, isAdvanced]);
+  }, [autoGoogleFontUrl, shouldAutoLoadFonts]);
 
   useEffect(() => {
     if (viewMode !== "visual") return;
@@ -864,6 +896,96 @@ export const TemplateEditorWorkspace: React.FC<
         </div>
 
         <div className={styles.controlsPanel}>
+          <div className={`${styles.formCard} ${styles.sidebarSummaryCard}`}>
+            <div className={styles.sidebarSummaryTopRow}>
+              <div className={styles.sidebarSummaryFile}>
+                <span className={styles.sidebarSummaryFileLabel}>File</span>
+                <span className={styles.sidebarSummaryFileValue} title={fileName}>
+                  {fileName}
+                </span>
+              </div>
+              <div className={styles.sidebarSummaryStats}>
+                <div className={styles.sidebarSummaryStat}>
+                  <span>Placeholders</span>
+                  <strong>{placeholderCount}</strong>
+                </div>
+                <div className={styles.sidebarSummaryStat}>
+                  <span>Element IDs</span>
+                  <strong>{elementIdCount}</strong>
+                </div>
+              </div>
+              <button
+                className={`${styles.secondaryButton} ${styles.sidebarSummaryExportButton}`}
+                onClick={onDownload}
+              >
+                <span className={styles.buttonIcon} aria-hidden="true">
+                  <Icon name="download" size={16} />
+                </span>
+                Export
+              </button>
+            </div>
+            <div className={styles.sidebarSummaryControls}>
+              <label
+                className={`${styles.advancedToggle} ${styles.sidebarSummaryAdvancedToggle}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isAdvanced}
+                  onChange={(event) => onToggleAdvanced(event.target.checked)}
+                />
+                <span>Advanced</span>
+              </label>
+              {isAdvanced && (
+                <div className={styles.viewToggle}>
+                  <button
+                    className={`${styles.toggleButton} ${
+                      viewMode === "visual" ? styles.toggleActive : ""
+                    }`}
+                    onClick={() => onSetViewMode("visual")}
+                  >
+                    <span className={styles.buttonIcon} aria-hidden="true">
+                      <Icon name="visibility" size={16} />
+                    </span>
+                    Visual
+                  </button>
+                  <button
+                    className={`${styles.toggleButton} ${
+                      viewMode === "code" ? styles.toggleActive : ""
+                    }`}
+                    onClick={() => onSetViewMode("code")}
+                  >
+                    <span className={styles.buttonIcon} aria-hidden="true">
+                      <Icon name="code" size={16} />
+                    </span>
+                    Code
+                  </button>
+                </div>
+              )}
+              <div className={styles.sidebarSummaryHistory}>
+                <button
+                  className={styles.secondaryButton}
+                  onClick={onUndo}
+                  disabled={!canUndo}
+                >
+                  <span className={styles.buttonIcon} aria-hidden="true">
+                    <Icon name="undo" size={16} />
+                  </span>
+                  Undo
+                </button>
+                <button
+                  className={styles.secondaryButton}
+                  onClick={onRedo}
+                  disabled={!canRedo}
+                >
+                  <span className={styles.buttonIcon} aria-hidden="true">
+                    <Icon name="redo" size={16} />
+                  </span>
+                  Redo
+                </button>
+              </div>
+            </div>
+          </div>
+
           {isAdvanced && (
             <Suspense fallback={<div className={styles.notice}>Loading advanced tools…</div>}>
               <CssEditorPanel

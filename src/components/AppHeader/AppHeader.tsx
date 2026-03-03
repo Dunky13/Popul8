@@ -1,8 +1,13 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import SVG from "react-inlinesvg";
 import { useAppStore } from "../../store/appStore";
 import { useShallow } from "zustand/react/shallow";
 import { getMissingFonts } from "../../utils/svgFonts";
+import {
+  ADVANCED_SETTINGS_UPDATED_EVENT,
+  readAdvancedEditorSettings,
+  shouldAutoLoadMissingFonts,
+} from "../../utils/editorPreferences";
 import type { StepId } from "../../types/app";
 import type { ThemeMode } from "../../hooks/useThemeMode";
 import Icon from "../Icon/Icon";
@@ -93,11 +98,11 @@ const StepButton: React.FC<StepButtonProps> = ({
   const badgeClassName = badgeTone === "error" ? styles.stepBadgeError : "";
 
   return (
-    <button
-      type="button"
-      className={`${styles.stepButton} ${isActive ? styles.active : ""} ${
-        isCompleted ? styles.completed : ""
-      } ${isReady ? styles.ready : ""}`}
+      <button
+        type="button"
+        className={`${styles.stepButton} ${isActive ? styles.active : ""} ${
+        isCompleted && !isActive ? styles.completed : ""
+      } ${isReady && !isActive ? styles.ready : ""}`}
       onClick={() => {
         if (isAvailable) {
           onActivate(step);
@@ -107,20 +112,24 @@ const StepButton: React.FC<StepButtonProps> = ({
       aria-current={isActive ? "step" : undefined}
     >
       <div className={styles.stepTopRow}>
-        <div className={styles.stepIcon}>{icon}</div>
-        {readyBadge && (
-          <span className={`${styles.stepBadge} ${badgeClassName}`}>
-            {readyBadge}
-          </span>
-        )}
-      </div>
-      <span className={styles.stepLabel}>{label}</span>
-      <span className={styles.stepDetail}>{detail}</span>
-      {isCompleted && (
-        <div className={styles.stepCheck}>
-          <Icon name="check" size={14} />
+        <div className={styles.stepLead}>
+          <div className={styles.stepIcon}>{icon}</div>
+          <span className={styles.stepLabel}>{label}</span>
         </div>
-      )}
+        <div className={styles.stepStatus}>
+          {readyBadge && (
+            <span className={`${styles.stepBadge} ${badgeClassName}`}>
+              {readyBadge}
+            </span>
+          )}
+          {isCompleted && (
+            <div className={styles.stepCheck}>
+              <Icon name="check" size={14} />
+            </div>
+          )}
+        </div>
+      </div>
+      <span className={styles.stepDetail}>{detail}</span>
     </button>
   );
 };
@@ -129,6 +138,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   themeMode,
   onThemeModeChange,
 }) => {
+  const [advancedSettings, setAdvancedSettings] = useState(
+    readAdvancedEditorSettings,
+  );
   const {
     currentStep,
     selectedRowIndices,
@@ -139,7 +151,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     isEditComplete,
     isReadyForSelection,
     isReadyForMapping,
-    isReadyForPreview,
     isReadyForPrint,
   } = useAppStore(
     useShallow((state) => ({
@@ -152,38 +163,63 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       isEditComplete: state.isEditComplete,
       isReadyForSelection: state.isReadyForSelection,
       isReadyForMapping: state.isReadyForMapping,
-      isReadyForPreview: state.isReadyForPreview,
       isReadyForPrint: state.isReadyForPrint,
     })),
   );
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncAdvancedSettings = () => {
+      setAdvancedSettings(readAdvancedEditorSettings());
+    };
+    window.addEventListener("storage", syncAdvancedSettings);
+    window.addEventListener(
+      ADVANCED_SETTINGS_UPDATED_EVENT,
+      syncAdvancedSettings,
+    );
+    return () => {
+      window.removeEventListener("storage", syncAdvancedSettings);
+      window.removeEventListener(
+        ADVANCED_SETTINGS_UPDATED_EVENT,
+        syncAdvancedSettings,
+      );
+    };
+  }, []);
+
   const missingFontCount = svgTemplate
     ? getMissingFonts(svgTemplate.content).length
     : 0;
+  const warningFontCount = shouldAutoLoadMissingFonts(advancedSettings)
+    ? 0
+    : missingFontCount;
 
   const mappedPlaceholders = useMemo(() => {
     if (!svgTemplate) return 0;
     return svgTemplate.placeholders.filter((key) => Boolean(dataMapping[key]))
       .length;
   }, [dataMapping, svgTemplate]);
+  const readyForPreview =
+    isReadyForMapping() &&
+    (!svgTemplate || mappedPlaceholders === svgTemplate.placeholders.length);
+  const hasSelectedRows = selectedRowIndices.length > 0;
 
   const getStepState = (step: StepId) => {
     const isActive = currentStep === step;
     const isCompleted =
       (step === "upload" && isReadyForEdit() && isReadyForSelection()) ||
-      (step === "edit" && isEditComplete()) ||
-      (step === "mapping" && isReadyForPreview()) ||
+      (step === "edit" && (isEditComplete() || isReadyForMapping())) ||
+      (step === "mapping" && readyForPreview) ||
       (step === "select" &&
-        isReadyForPreview() &&
-        selectedRowIndices.length > 0) ||
-      (step === "preview" && isReadyForPrint());
+        readyForPreview &&
+        hasSelectedRows) ||
+      (step === "preview" && isReadyForPrint() && hasSelectedRows);
 
     const isAvailable =
       step === "upload" ||
       (step === "edit" && isReadyForEdit()) ||
       (step === "mapping" && isReadyForMapping()) ||
-      (step === "select" && isReadyForPreview()) ||
-      (step === "preview" && isReadyForPreview());
+      (step === "select" && readyForPreview) ||
+      (step === "preview" && readyForPreview && hasSelectedRows);
 
     const isReady = isAvailable && !isActive && !isCompleted;
 
@@ -195,8 +231,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     state: getStepState(item.step),
   }));
 
-  const completedSteps = stepsWithState.filter((item) => item.state.isCompleted)
-    .length;
+  const completedSteps = stepsWithState.filter(
+    (item) => item.state.isCompleted,
+  ).length;
   const progressValue = Math.round((completedSteps / STEP_ITEMS.length) * 100);
 
   const placeholdersTotal = svgTemplate?.placeholders.length ?? 0;
@@ -213,7 +250,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <div className={styles.headerText}>
               <h1 className={styles.title}>Popul8</h1>
               <p className={styles.subtitle}>
-                CSV + SVG workflow studio for mapping, tweaking, and print-ready card generation.
+                CSV + SVG workflow studio for mapping, tweaking, and print-ready
+                card generation.
               </p>
             </div>
           </div>
@@ -221,16 +259,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <div className={styles.controlRail}>
             <div className={styles.workflowStats}>
               <span className={styles.workflowStat}>
-                <strong>{recordCount}</strong> rows
+                <strong>
+                  {selectedCount} / {recordCount}
+                </strong>{" "}
+                selected rows
               </span>
               <span className={styles.workflowStat}>
-                <strong>{placeholdersTotal}</strong> placeholders
-              </span>
-              <span className={styles.workflowStat}>
-                <strong>{mappedPlaceholders}</strong> mapped
-              </span>
-              <span className={styles.workflowStat}>
-                <strong>{selectedCount}</strong> selected
+                <strong>
+                  {mappedPlaceholders} / {placeholdersTotal}
+                </strong>{" "}
+                mapped placeholders
               </span>
             </div>
 
@@ -245,7 +283,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               </div>
             </div>
 
-            <div className={styles.themeSwitcher} role="group" aria-label="Theme mode">
+            <div
+              className={styles.themeSwitcher}
+              role="group"
+              aria-label="Theme mode"
+            >
               {THEME_ITEMS.map((item) => (
                 <button
                   key={item.value}
@@ -258,7 +300,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   aria-label={`${item.label} mode`}
                   title={`${item.label} mode`}
                 >
-                  <Icon name={item.icon} size={16} className={styles.themeIcon} />
+                  <Icon
+                    name={item.icon}
+                    size={16}
+                    className={styles.themeIcon}
+                  />
                   <span className="sr-only">{item.label}</span>
                 </button>
               ))}
@@ -266,45 +312,51 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </div>
         </div>
 
-        {missingFontCount > 0 && (
+        {warningFontCount > 0 && (
           <div className={styles.headerWarningRow}>
-            <span className={`${styles.workflowStat} ${styles.workflowStatWarning}`}>
-              <strong>{missingFontCount}</strong> missing fonts
+            <span
+              className={`${styles.workflowStat} ${styles.workflowStatWarning}`}
+            >
+              <strong>{warningFontCount}</strong> missing fonts
             </span>
           </div>
         )}
 
-        <nav className={styles.navigation} aria-label="Workflow steps">
-          {stepsWithState.map((item) => {
-            const badge =
-              item.step === "edit" && missingFontCount > 0
-                ? `${missingFontCount}`
-                : item.step === "select"
-                  ? `${selectedRowIndices.length}`
-                  : undefined;
-            const badgeTone: StepBadgeTone =
-              item.step === "edit" && missingFontCount > 0 ? "error" : "default";
+        <div className={styles.navigationScroller}>
+          <nav className={styles.navigation} aria-label="Workflow steps">
+            {stepsWithState.map((item) => {
+              const badge =
+                item.step === "edit" && warningFontCount > 0
+                  ? `${warningFontCount}`
+                  : item.step === "select"
+                    ? `${selectedRowIndices.length}`
+                    : undefined;
+              const badgeTone: StepBadgeTone =
+                item.step === "edit" && warningFontCount > 0
+                  ? "error"
+                  : "default";
 
-            return (
-              <StepButton
-                key={item.step}
-                step={item.step}
-                display={{
-                  label: item.label,
-                  detail: item.detail,
-                  icon: item.icon,
-                  badge,
-                  badgeTone,
-                }}
-                state={item.state}
-                onActivate={(nextStep) => {
-                  const { setCurrentStep } = useAppStore.getState();
-                  setCurrentStep(nextStep);
-                }}
-              />
-            );
-          })}
-        </nav>
+              return (
+                <StepButton
+                  key={item.step}
+                  step={item.step}
+                  display={{
+                    label: item.label,
+                    detail: item.detail,
+                    icon: item.icon,
+                    badge,
+                    badgeTone,
+                  }}
+                  state={item.state}
+                  onActivate={(nextStep) => {
+                    const { setCurrentStep } = useAppStore.getState();
+                    setCurrentStep(nextStep);
+                  }}
+                />
+              );
+            })}
+          </nav>
+        </div>
       </div>
     </header>
   );

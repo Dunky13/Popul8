@@ -7,47 +7,18 @@ import { useAppStore } from "../../store/appStore";
 import { useShallow } from "zustand/react/shallow";
 import { useValidateDataMapping } from "../../utils/validationUtils";
 import { findBestMatches } from "../../utils/fuzzyMatcher";
+import { buildDefaultMapping } from "../../utils/mappingDefaults";
 import { VALIDATION } from "../../constants";
 
 import styles from "./DataMapping.module.css";
 import Icon from "../Icon/Icon";
-
-const buildMappingContextKey = (headers: string[], placeholders: string[]) => {
-  const normalizedHeaders = Array.from(new Set(headers)).sort();
-  const normalizedPlaceholders = Array.from(new Set(placeholders)).sort();
-  return `${normalizedHeaders.join("|")}::${normalizedPlaceholders.join("|")}`;
-};
-
-const canReuseMappingInContext = ({
-  dataMapping,
-  headers,
-  placeholders,
-}: {
-  dataMapping: Record<string, string>;
-  headers: string[];
-  placeholders: string[];
-}) => {
-  const mappings = Object.entries(dataMapping).filter(([, column]) => Boolean(column));
-  if (mappings.length === 0) {
-    return false;
-  }
-
-  const headerSet = new Set(headers);
-  const placeholderSet = new Set(placeholders);
-  return mappings.every(
-    ([placeholder, column]) =>
-      placeholderSet.has(placeholder) && headerSet.has(column),
-  );
-};
 
 export const DataMapping: React.FC = () => {
   const {
     csvData,
     svgTemplate,
     dataMapping,
-    mappingContextKey,
     setDataMapping,
-    setMappingContextKey,
     setErrors,
     setWarnings,
     selectedRowIndices,
@@ -58,9 +29,7 @@ export const DataMapping: React.FC = () => {
       csvData: state.csvData,
       svgTemplate: state.svgTemplate,
       dataMapping: state.dataMapping,
-      mappingContextKey: state.mappingContextKey,
       setDataMapping: state.setDataMapping,
-      setMappingContextKey: state.setMappingContextKey,
       setErrors: state.setErrors,
       setWarnings: state.setWarnings,
       selectedRowIndices: state.selectedRowIndices,
@@ -91,58 +60,18 @@ export const DataMapping: React.FC = () => {
     setDataMapping(newMapping);
   };
 
-  const buildDefaultMapping = React.useCallback(() => {
+  const getDefaultMapping = React.useCallback(() => {
     if (!csvData || !svgTemplate) return {};
 
-    const matches = findBestMatches(svgTemplate.placeholders, csvData.headers, 0.5);
-    const defaultMapping: Record<string, string> = {};
-
-    matches.forEach(
-      (match: { placeholder: string; column: string; confidence: number }) => {
-        defaultMapping[match.placeholder] = match.column;
-      },
-    );
-
-    return defaultMapping;
-  }, [csvData, svgTemplate]);
-
-  React.useEffect(() => {
-    if (!csvData || !svgTemplate) {
-      if (mappingContextKey !== null) {
-        setMappingContextKey(null);
-      }
-      return;
-    }
-
-    const mappingKey = buildMappingContextKey(
-      csvData.headers,
-      svgTemplate.placeholders,
-    );
-    if (mappingContextKey === mappingKey) {
-      return;
-    }
-
-    const shouldReuseMapping = canReuseMappingInContext({
-      dataMapping,
+    return buildDefaultMapping({
       headers: csvData.headers,
       placeholders: svgTemplate.placeholders,
     });
+  }, [csvData, svgTemplate]);
 
-    if (!shouldReuseMapping) {
-      setDataMapping(buildDefaultMapping());
-    }
-
-    setMappingContextKey(mappingKey);
+  React.useEffect(() => {
     setAutoSuggestedMapping(false);
-  }, [
-    buildDefaultMapping,
-    csvData,
-    dataMapping,
-    mappingContextKey,
-    setDataMapping,
-    setMappingContextKey,
-    svgTemplate,
-  ]);
+  }, [csvData, svgTemplate]);
 
   const handleAutoSuggest = () => {
     if (!csvData || !svgTemplate) return;
@@ -172,7 +101,7 @@ export const DataMapping: React.FC = () => {
   };
 
   const handleResetToDefault = () => {
-    setDataMapping(buildDefaultMapping());
+    setDataMapping(getDefaultMapping());
     setAutoSuggestedMapping(false);
   };
 

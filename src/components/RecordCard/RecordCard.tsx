@@ -119,7 +119,9 @@ const RecordCardComponent: React.FC<RecordCardProps> = ({
 
   if (!processedSheet) {
     return (
-      <div className={`${styles.recordCard} ${styles.empty}`}>
+      <div
+        className={`${styles.recordCard} ${styles.empty} ${preview ? "print" : ""}`}
+      >
         <div className={styles.errorMessage}>
         <p>No template loaded</p>
           <p>Please upload an SVG template to see generated pages</p>
@@ -130,7 +132,9 @@ const RecordCardComponent: React.FC<RecordCardProps> = ({
 
   if (processedSheet.errors && processedSheet.errors.length > 0) {
     return (
-      <div className={`${styles.recordCard} ${styles.hasErrors}`}>
+      <div
+        className={`${styles.recordCard} ${styles.hasErrors} ${preview ? "print" : ""}`}
+      >
         <div className={styles.errorMessage}>
           <h4>Render Errors</h4>
           <ul>
@@ -146,7 +150,7 @@ const RecordCardComponent: React.FC<RecordCardProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`${styles.recordCard} ${preview ? styles.preview : ""}`}
+      className={`${styles.recordCard} ${preview ? `${styles.preview} print` : ""}`}
     >
       <SVG
         src={sanitizedSvgContent ?? processedSheet.svgContent}

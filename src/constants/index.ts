@@ -22,8 +22,8 @@ export const PRINT_LAYOUT = {
   DEFAULT_ORIENTATION: "landscape",
   DEFAULT_ROWS: 1,
   DEFAULT_COLUMNS: 4,
-  DEFAULT_MARGIN_MM: 10,
-  MARGIN_MM: 10,
+  DEFAULT_MARGIN_MM: 0,
+  MARGIN_MM: 0,
   PAGE_SIZES_MM: {
     A4: { width: 210, height: 297 },
     A5: { width: 148, height: 210 },
