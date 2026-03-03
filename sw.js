@@ -1,5 +1,5 @@
 const BASE_PATH = "/";
-const CACHE_VERSION = "eac123340987";
+const CACHE_VERSION = "6ea4200d04c6";
 const CACHE_NAME = `popul8-${CACHE_VERSION}`;
 const APP_SHELL_ASSETS = [
   BASE_PATH,
