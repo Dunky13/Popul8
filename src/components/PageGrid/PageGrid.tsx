@@ -352,19 +352,26 @@ export const PageGrid: React.FC = () => {
           data-print-preview="true"
         >
           {paginatedRecords.map((page, pageIndex) => (
-            <div
-              key={pageIndex}
-              className={`${styles.pageGrid} print`}
-              data-print-page="true"
-              data-print-page-break={
-                pageIndex < paginatedRecords.length - 1 ? "page" : "none"
-              }
-              style={{
-                gridTemplateColumns: `repeat(${printLayout.columns}, 1fr)`,
-                gridTemplateRows: `repeat(${printLayout.rows}, 1fr)`,
+            (() => {
+              const pageStyle: React.CSSProperties & {
+                "--print-page-ratio"?: number;
+              } = {
+                gridTemplateColumns: `repeat(${printLayout.columns}, minmax(0, 1fr))`,
+                gridTemplateRows: `repeat(${printLayout.rows}, minmax(0, 1fr))`,
                 aspectRatio: `${pageDimensions.width} / ${pageDimensions.height}`,
-              }}
-            >
+                "--print-page-ratio": pageDimensions.width / pageDimensions.height,
+              };
+
+              return (
+                <div
+                  key={pageIndex}
+                  className={`${styles.pageGrid} print`}
+                  data-print-page="true"
+                  data-print-page-break={
+                    pageIndex < paginatedRecords.length - 1 ? "page" : "none"
+                  }
+                  style={pageStyle}
+                >
               {page.map((record, recordIndex) => {
                 const isSelected = selectedResizeCardIdSet.has(record.id);
                 const resizeBadge = resizeBadgesByCardId[record.id] ?? null;
@@ -420,9 +427,12 @@ export const PageGrid: React.FC = () => {
                 <div
                   key={`empty-${emptyIndex}`}
                   className={`${styles.emptySlot} print`}
+                  data-print-empty="true"
                 />
               ))}
-            </div>
+                </div>
+              );
+            })()
           ))}
         </div>
 

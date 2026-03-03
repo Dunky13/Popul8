@@ -52,21 +52,29 @@
 
   [data-print-page="true"].print {
     display: grid !important;
-    margin: 0 !important;
+    width: calc(100% - 4%) !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     border: none !important;
     border-radius: 0 !important;
     background: #fff !important;
+    aspect-ratio: var(--print-page-ratio, auto) !important;
+    height: auto !important;
+    max-height: none !important;
     gap: 1.5mm !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+    overflow: hidden !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
     break-before: auto !important;
     page-break-before: auto !important;
     break-after: auto !important;
     page-break-after: auto !important;
   }
 
-  [data-print-preview="true"] > [data-print-page="true"].print + [data-print-page="true"].print {
+  [data-print-preview="true"]
+    > [data-print-page="true"].print
+    + [data-print-page="true"].print {
     break-before: page !important;
     page-break-before: always !important;
   }
@@ -84,8 +92,10 @@
   [data-print-page="true"] > * {
     overflow: hidden !important;
     box-sizing: border-box !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 
   .recordCard,
@@ -102,13 +112,21 @@
     overflow: hidden !important;
   }
 
-  .emptySlot {
+  [data-print-empty="true"] {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     border: 1px dashed #d8d8d8 !important;
     border-radius: 0 !important;
     background: #fff !important;
+    width: calc(100% - 3mm) !important;
+    height: calc(100% - 3mm) !important;
+    max-width: calc(100% - 3mm) !important;
+    max-height: calc(100% - 3mm) !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    justify-self: center !important;
+    align-self: center !important;
   }
 
   .svgContent,
@@ -116,6 +134,8 @@
   div[class*="recordCard"] svg {
     max-width: 100% !important;
     max-height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
     width: auto !important;
     height: auto !important;
     object-fit: contain !important;
