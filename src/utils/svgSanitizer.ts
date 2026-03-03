@@ -1,11 +1,48 @@
 const UNSAFE_TAGS = ["script", "iframe", "object", "embed", "audio", "video"];
 const URL_ATTRIBUTES = ["href", "xlink:href", "src"];
 
+type UrlContext = {
+  tagName?: string;
+  attrName?: string;
+};
+
 const hasUnsafeStyleUrl = (value: string) => {
   return /url\s*\(\s*['"]?\s*javascript:/i.test(value);
 };
 
-const isSafeSvgUrl = (value: string) => {
+const normalizeTagName = (tagName: string | undefined) => {
+  if (!tagName) return "";
+  const normalized = tagName.trim().toLowerCase();
+  const parts = normalized.split(":");
+  return parts[parts.length - 1] ?? normalized;
+};
+
+const isImageUrlContext = ({ tagName, attrName }: UrlContext) => {
+  const normalizedAttrName = (attrName ?? "").trim().toLowerCase();
+  if (!URL_ATTRIBUTES.includes(normalizedAttrName)) return false;
+  return normalizeTagName(tagName) === "image";
+};
+
+const inferTagNameForAttrMatch = (input: string, offset: number) => {
+  const tagStart = input.lastIndexOf("<", offset);
+  if (tagStart === -1) return undefined;
+
+  const tagClose = input.indexOf(">", tagStart);
+  if (tagClose !== -1 && tagClose < offset) return undefined;
+
+  let cursor = tagStart + 1;
+  while (cursor < input.length && /\s/.test(input[cursor])) cursor += 1;
+  if (input[cursor] === "/") cursor += 1;
+  while (cursor < input.length && /\s/.test(input[cursor])) cursor += 1;
+
+  let end = cursor;
+  while (end < input.length && /[^\s/>]/.test(input[end])) end += 1;
+
+  const tagName = input.slice(cursor, end).trim();
+  return tagName || undefined;
+};
+
+const isSafeSvgUrl = (value: string, context: UrlContext = {}) => {
   const normalized = value.trim().toLowerCase();
   if (!normalized) return true;
   if (normalized.startsWith("#")) return true;
@@ -19,6 +56,12 @@ const isSafeSvgUrl = (value: string) => {
     return true;
   }
   if (/^[a-z][a-z0-9+.-]*:/i.test(normalized)) {
+    if (
+      isImageUrlContext(context) &&
+      (normalized.startsWith("https:") || normalized.startsWith("http:"))
+    ) {
+      return true;
+    }
     return false;
   }
   return true;
@@ -52,11 +95,26 @@ export const sanitizeSvgMarkup = (svgMarkup: string) => {
       );
       sanitized = sanitized.replace(
         attrPattern,
-        (fullMatch, _attr, _raw, doubleQuoted, singleQuoted, bareValue) => {
+        (
+          fullMatch,
+          _attr,
+          _raw,
+          doubleQuoted,
+          singleQuoted,
+          bareValue,
+          offset,
+          input,
+        ) => {
           const resolvedValue = String(
             doubleQuoted ?? singleQuoted ?? bareValue ?? "",
           );
-          return isSafeSvgUrl(resolvedValue) ? fullMatch : "";
+          const tagName =
+            typeof input === "string" && typeof offset === "number"
+              ? inferTagNameForAttrMatch(input, offset)
+              : undefined;
+          return isSafeSvgUrl(resolvedValue, { tagName, attrName })
+            ? fullMatch
+            : "";
         },
       );
     });
@@ -96,7 +154,13 @@ export const sanitizeSvgMarkup = (svgMarkup: string) => {
         return;
       }
 
-      if (URL_ATTRIBUTES.includes(attrName) && !isSafeSvgUrl(attrValue)) {
+      if (
+        URL_ATTRIBUTES.includes(attrName) &&
+        !isSafeSvgUrl(attrValue, {
+          tagName: element.tagName,
+          attrName,
+        })
+      ) {
         element.removeAttribute(attribute.name);
         return;
       }

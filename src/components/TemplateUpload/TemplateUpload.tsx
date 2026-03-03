@@ -11,6 +11,7 @@ import { useFileUpload } from '../../hooks/useFileUpload';
 import { parseSVGTemplate, readSVGFile } from '../../utils/svgManipulator';
 import { validateTemplate } from '../../utils/validationUtils';
 import { handleTemplateValidationMessages } from '../../utils/templateValidation';
+import { buildBootstrappedCsvFromPlaceholders } from '../../utils/bootstrapCsv';
 import { FILE_CONSTRAINTS } from '../../constants';
 import { addFilesToHistoryWithHashes, clearHistory, getLastUsed, getSelection, listHistory, setLastUsed, setSelection, type StoredFile } from '../../utils/fileHistory';
 import styles from './TemplateUpload.module.css';
@@ -65,6 +66,24 @@ export const TemplateUpload: React.FC = () => {
       console.warn(message);
     }
   }, []);
+
+  const handleDownloadBootstrappedCsv = useCallback(() => {
+    if (!svgTemplate) return;
+    const bootstrappedCsv = buildBootstrappedCsvFromPlaceholders(
+      svgTemplate.placeholders,
+      svgTemplate.fileName,
+    );
+    if (!bootstrappedCsv) return;
+
+    const url = URL.createObjectURL(bootstrappedCsv.file);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = bootstrappedCsv.file.name;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  }, [svgTemplate]);
 
   const processor = useCallback(async (file: File) => {
     const template = await readSVGFile(file);
@@ -322,6 +341,21 @@ export const TemplateUpload: React.FC = () => {
         >
           Browse Files
         </button>
+
+        {svgTemplate && (
+          <button
+            onClick={handleDownloadBootstrappedCsv}
+            className={styles.secondaryButton}
+            disabled={svgTemplate.placeholders.length === 0}
+            title={
+              svgTemplate.placeholders.length > 0
+                ? "Download CSV scaffold with detected placeholders."
+                : "No placeholders found to bootstrap."
+            }
+          >
+            Download Bootstrapped CSV
+          </button>
+        )}
         
           {svgTemplate && (
             <button 

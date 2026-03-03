@@ -9,18 +9,17 @@ import styles from "../../styles/App.module.css";
 
 export const UploadStep: React.FC = () => {
   const { hasPreviousRun, handleUseLastUsed } = usePreviousRunLoader();
-  const { csvData, svgTemplate, isReadyForEdit, setCurrentStep } = useAppStore(
+  const { csvData, svgTemplate, setCurrentStep } = useAppStore(
     useShallow((state) => ({
       csvData: state.csvData,
       svgTemplate: state.svgTemplate,
-      isReadyForEdit: state.isReadyForEdit,
       setCurrentStep: state.setCurrentStep,
     })),
   );
 
   const hasCsvUpload = csvData !== null;
   const hasTemplateUpload = svgTemplate !== null;
-  const canContinue = isReadyForEdit();
+  const canContinue = hasCsvUpload && hasTemplateUpload;
 
   return (
     <div className={styles.uploadStep}>
@@ -30,8 +29,8 @@ export const UploadStep: React.FC = () => {
             <p className={styles.uploadStageEyebrow}>Step 1 Workflow</p>
             <h3 className={styles.uploadStageTitle}>Load source files side by side</h3>
             <p className={styles.uploadStageDescription}>
-              Start with CSV data and an SVG template. Once the template is loaded,
-              the editor unlocks for template tweaking.
+              Start with CSV data and an SVG template. Continue only after both
+              files are uploaded or selected from history.
             </p>
           </div>
           <div className={styles.uploadStageAside}>
@@ -99,8 +98,8 @@ export const UploadStep: React.FC = () => {
             }`}
           >
             {canContinue
-              ? "Template is loaded. Continue to edit placeholders and styling."
-              : "Upload an SVG template to unlock template editing."}
+              ? "Both files are loaded. Continue to edit placeholders and styling."
+              : "Upload or select both CSV and SVG files to continue."}
           </p>
           <button
             type="button"

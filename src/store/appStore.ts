@@ -23,6 +23,7 @@ interface AppState {
   // Processed data
   records: DataRecord[];
   dataMapping: DataMapping;
+  mappingContextKey: string | null;
   selectedRowIndices: number[];
   requiredRowOverrides: number[];
   textResizeRules: TextResizeRules;
@@ -45,6 +46,7 @@ interface AppState {
   setSvgTemplate: (template: SVGTemplate | null) => void;
   setRecords: (records: DataRecord[]) => void;
   setDataMapping: (mapping: DataMapping) => void;
+  setMappingContextKey: (key: string | null) => void;
   setSelectedRowIndices: (indices: number[]) => void;
   setRequiredRowOverrides: (indices: number[]) => void;
   addRequiredRowOverride: (index: number) => void;
@@ -82,6 +84,7 @@ export const useAppStore = create<AppState>()(
     svgTemplate: null,
     records: [],
     dataMapping: {},
+    mappingContextKey: null,
     selectedRowIndices: [],
     requiredRowOverrides: [],
     textResizeRules: { allCards: {}, perCard: {} },
@@ -103,6 +106,7 @@ export const useAppStore = create<AppState>()(
     setCsvData: (csvData) => set({ csvData }),
     setSvgTemplate: (svgTemplate) => set({ svgTemplate }),
     setRecords: (records) => set({ records }),
+    setMappingContextKey: (mappingContextKey) => set({ mappingContextKey }),
     setDataMapping: (dataMapping) =>
       set((state) => {
         const missingRequiredRowIndices = getMissingRequiredRowIndices({
@@ -179,6 +183,7 @@ export const useAppStore = create<AppState>()(
       svgTemplate: null,
       records: [],
       dataMapping: {},
+      mappingContextKey: null,
       selectedRowIndices: [],
       requiredRowOverrides: [],
       textResizeRules: { allCards: {}, perCard: {} },
@@ -202,8 +207,8 @@ export const useAppStore = create<AppState>()(
 
     // Convenience getters
     isReadyForEdit: () => {
-      const { svgTemplate } = get();
-      return svgTemplate !== null;
+      const { csvData, svgTemplate } = get();
+      return svgTemplate !== null && csvData !== null;
     },
 
     isEditComplete: () => {

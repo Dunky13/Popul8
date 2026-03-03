@@ -24,6 +24,35 @@ test("removes unsafe SVG nodes and attributes", () => {
   assert.equal(sanitized.includes('xlink:href="#local"'), true);
 });
 
+test("keeps external URLs for image elements", () => {
+  const input = `
+    <svg xmlns="http://www.w3.org/2000/svg">
+      <image href="https://cdn.example.com/avatar.png" x="0" y="0" width="10" height="10" />
+    </svg>
+  `;
+
+  const sanitized = sanitizeSvgMarkup(input);
+
+  assert.equal(
+    sanitized.includes('href="https://cdn.example.com/avatar.png"'),
+    true
+  );
+});
+
+test("removes external URLs for non-image elements", () => {
+  const input = `
+    <svg xmlns="http://www.w3.org/2000/svg">
+      <a xlink:href="https://example.com">Unsafe</a>
+      <use href="https://example.com/icon.svg#symbol" />
+    </svg>
+  `;
+
+  const sanitized = sanitizeSvgMarkup(input);
+
+  assert.equal(sanitized.includes('xlink:href="https://example.com"'), false);
+  assert.equal(sanitized.includes('href="https://example.com/icon.svg#symbol"'), false);
+});
+
 test("removes unsafe URL attributes on root element", () => {
   const input =
     '<svg xmlns="http://www.w3.org/2000/svg" href="javascript:alert(1)"><text>Hello</text></svg>';

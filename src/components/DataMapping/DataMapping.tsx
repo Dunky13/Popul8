@@ -2,7 +2,7 @@
  * Data mapping component for connecting template placeholders to CSV columns
  */
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useAppStore } from "../../store/appStore";
 import { useShallow } from "zustand/react/shallow";
 import { useValidateDataMapping } from "../../utils/validationUtils";
@@ -12,12 +12,42 @@ import { VALIDATION } from "../../constants";
 import styles from "./DataMapping.module.css";
 import Icon from "../Icon/Icon";
 
+const buildMappingContextKey = (headers: string[], placeholders: string[]) => {
+  const normalizedHeaders = Array.from(new Set(headers)).sort();
+  const normalizedPlaceholders = Array.from(new Set(placeholders)).sort();
+  return `${normalizedHeaders.join("|")}::${normalizedPlaceholders.join("|")}`;
+};
+
+const canReuseMappingInContext = ({
+  dataMapping,
+  headers,
+  placeholders,
+}: {
+  dataMapping: Record<string, string>;
+  headers: string[];
+  placeholders: string[];
+}) => {
+  const mappings = Object.entries(dataMapping).filter(([, column]) => Boolean(column));
+  if (mappings.length === 0) {
+    return false;
+  }
+
+  const headerSet = new Set(headers);
+  const placeholderSet = new Set(placeholders);
+  return mappings.every(
+    ([placeholder, column]) =>
+      placeholderSet.has(placeholder) && headerSet.has(column),
+  );
+};
+
 export const DataMapping: React.FC = () => {
   const {
     csvData,
     svgTemplate,
     dataMapping,
+    mappingContextKey,
     setDataMapping,
+    setMappingContextKey,
     setErrors,
     setWarnings,
     selectedRowIndices,
@@ -28,7 +58,9 @@ export const DataMapping: React.FC = () => {
       csvData: state.csvData,
       svgTemplate: state.svgTemplate,
       dataMapping: state.dataMapping,
+      mappingContextKey: state.mappingContextKey,
       setDataMapping: state.setDataMapping,
+      setMappingContextKey: state.setMappingContextKey,
       setErrors: state.setErrors,
       setWarnings: state.setWarnings,
       selectedRowIndices: state.selectedRowIndices,
@@ -40,7 +72,6 @@ export const DataMapping: React.FC = () => {
   const [autoSuggestedMapping, setAutoSuggestedMapping] = useState(false);
   const [showOnlyUnresolved, setShowOnlyUnresolved] = useState(false);
   const [placeholderFilter, setPlaceholderFilter] = useState("");
-  const defaultMappingKeyRef = useRef<string | null>(null);
 
   const validationResult = useValidateDataMapping(svgTemplate, csvData, dataMapping);
 
@@ -76,17 +107,42 @@ export const DataMapping: React.FC = () => {
   }, [csvData, svgTemplate]);
 
   React.useEffect(() => {
-    if (!csvData || !svgTemplate) return;
-
-    const mappingKey = `${csvData.headers.join("|")}::${svgTemplate.placeholders.join("|")}`;
-    if (defaultMappingKeyRef.current === mappingKey) {
+    if (!csvData || !svgTemplate) {
+      if (mappingContextKey !== null) {
+        setMappingContextKey(null);
+      }
       return;
     }
 
-    defaultMappingKeyRef.current = mappingKey;
-    setDataMapping(buildDefaultMapping());
+    const mappingKey = buildMappingContextKey(
+      csvData.headers,
+      svgTemplate.placeholders,
+    );
+    if (mappingContextKey === mappingKey) {
+      return;
+    }
+
+    const shouldReuseMapping = canReuseMappingInContext({
+      dataMapping,
+      headers: csvData.headers,
+      placeholders: svgTemplate.placeholders,
+    });
+
+    if (!shouldReuseMapping) {
+      setDataMapping(buildDefaultMapping());
+    }
+
+    setMappingContextKey(mappingKey);
     setAutoSuggestedMapping(false);
-  }, [buildDefaultMapping, csvData, setDataMapping, svgTemplate]);
+  }, [
+    buildDefaultMapping,
+    csvData,
+    dataMapping,
+    mappingContextKey,
+    setDataMapping,
+    setMappingContextKey,
+    svgTemplate,
+  ]);
 
   const handleAutoSuggest = () => {
     if (!csvData || !svgTemplate) return;
