@@ -20,15 +20,10 @@ export const handlePrint = async (options: PrintOptions): Promise<void> => {
   document.body.classList.add("printing");
 
   const { width, height } = getPageDimensionsMm(layout.pageSize, layout.orientation);
-  const gridColumns = Math.max(1, layout.columns);
-  const gridRows = Math.max(1, layout.rows);
   const marginMm =
     typeof layout.marginMm === "number"
       ? Math.max(0, layout.marginMm)
       : PRINT_LAYOUT.MARGIN_MM;
-  const totalMargin = marginMm * 2;
-  const contentWidth = Math.max(1, width - totalMargin);
-  const contentHeight = Math.max(1, height - totalMargin);
 
   const printStyle = document.createElement("style");
   printStyle.setAttribute("data-popul8-print-style", "true");
@@ -36,23 +31,6 @@ export const handlePrint = async (options: PrintOptions): Promise<void> => {
     @page {
       size: ${width}mm ${height}mm !important;
       margin: ${marginMm}mm !important;
-    }
-
-    @page :first {
-      size: ${width}mm ${height}mm !important;
-      margin: ${marginMm}mm !important;
-    }
-
-    [data-print-page="true"] {
-      width: min(${contentWidth}mm, 100%) !important;
-      max-width: 100% !important;
-      min-width: 0 !important;
-      height: min(${contentHeight}mm, 100vh) !important;
-      min-height: 0 !important;
-      max-height: 100vh !important;
-      margin-inline: auto !important;
-      grid-template-columns: repeat(${gridColumns}, 1fr) !important;
-      grid-template-rows: repeat(${gridRows}, 1fr) !important;
     }
   `;
   document.head.appendChild(printStyle);

@@ -6,6 +6,50 @@ type UrlContext = {
   attrName?: string;
 };
 
+const stripPageAtRules = (cssText: string) => {
+  if (!cssText.includes("@")) return cssText;
+
+  let result = "";
+  let cursor = 0;
+  const source = cssText;
+
+  while (cursor < source.length) {
+    const atIndex = source.toLowerCase().indexOf("@page", cursor);
+    if (atIndex === -1) {
+      result += source.slice(cursor);
+      break;
+    }
+
+    result += source.slice(cursor, atIndex);
+
+    let end = atIndex + 5;
+    while (end < source.length && /\s/.test(source[end])) end += 1;
+
+    while (end < source.length && source[end] !== "{" && source[end] !== ";") {
+      end += 1;
+    }
+
+    if (end >= source.length) break;
+
+    if (source[end] === ";") {
+      cursor = end + 1;
+      continue;
+    }
+
+    let depth = 1;
+    end += 1;
+    while (end < source.length && depth > 0) {
+      if (source[end] === "{") depth += 1;
+      if (source[end] === "}") depth -= 1;
+      end += 1;
+    }
+
+    cursor = end;
+  }
+
+  return result;
+};
+
 const hasUnsafeStyleUrl = (value: string) => {
   return /url\s*\(\s*['"]?\s*javascript:/i.test(value);
 };
@@ -73,6 +117,12 @@ export const sanitizeSvgMarkup = (svgMarkup: string) => {
   if (typeof DOMParser === "undefined" || typeof XMLSerializer === "undefined") {
     let sanitized = svgMarkup;
 
+    sanitized = sanitized.replace(
+      /<style([^>]*)>([\s\S]*?)<\/style>/gi,
+      (_fullMatch, attrs = "", cssText = "") =>
+        `<style${attrs}>${stripPageAtRules(String(cssText))}</style>`,
+    );
+
     UNSAFE_TAGS.forEach((tagName) => {
       const pairedTagPattern = new RegExp(
         `<${tagName}\\b[\\s\\S]*?<\\/${tagName}\\s*>`,
@@ -136,6 +186,11 @@ export const sanitizeSvgMarkup = (svgMarkup: string) => {
   const doc = parser.parseFromString(svgMarkup, "image/svg+xml");
   const svg = doc.querySelector("svg");
   if (!svg) return svgMarkup;
+
+  Array.from(svg.querySelectorAll("style")).forEach((styleElement) => {
+    const cssText = styleElement.textContent ?? "";
+    styleElement.textContent = stripPageAtRules(cssText);
+  });
 
   UNSAFE_TAGS.forEach((tagName) => {
     const elements = Array.from(svg.querySelectorAll(tagName));
