@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: "Path to refresh"
+        description: "Deploy target"
         required: true
         default: main
         type: choice
@@ -21,16 +21,16 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -47,32 +47,8 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Compute base paths
-        id: base
-        run: |
-          owner="${GITHUB_REPOSITORY_OWNER}"
-          repo="${GITHUB_REPOSITORY#*/}"
-
-          if [ "${repo}" = "${owner}.github.io" ]; then
-            prod_base="/"
-          else
-            prod_base="/${repo}/"
-          fi
-
-          dev_base="${prod_base}dev/"
-
-          echo "prod=${prod_base}" >> "${GITHUB_OUTPUT}"
-          echo "dev=${dev_base}" >> "${GITHUB_OUTPUT}"
-
-      - name: Fetch deployment branches
-        run: git fetch origin main dev
-
-      - name: Fetch optional manual ref
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref != '' }}
-        run: git fetch origin "${{ github.event.inputs.ref }}"
-
-      - name: Resolve build refs
-        id: refs
+      - name: Resolve target and ref
+        id: target
         env:
           EVENT_NAME: ${{ github.event_name }}
           PUSH_BRANCH: ${{ github.ref_name }}
@@ -80,50 +56,76 @@ jobs:
           MANUAL_TARGET: ${{ github.event.inputs.target }}
           MANUAL_REF: ${{ github.event.inputs.ref }}
         run: |
-          main_ref="origin/main"
-          dev_ref="origin/dev"
-
           if [ "${EVENT_NAME}" = "push" ]; then
-            if [ "${PUSH_BRANCH}" = "main" ]; then
-              main_ref="${PUSH_SHA}"
-            elif [ "${PUSH_BRANCH}" = "dev" ]; then
-              dev_ref="${PUSH_SHA}"
-            fi
+            target="${PUSH_BRANCH}"
+            ref="${PUSH_SHA}"
           else
-            target_ref="${MANUAL_REF}"
-            if [ -z "${target_ref}" ]; then
-              target_ref="origin/${MANUAL_TARGET}"
-            fi
-
-            if [ "${MANUAL_TARGET}" = "main" ]; then
-              main_ref="${target_ref}"
+            target="${MANUAL_TARGET}"
+            if [ -n "${MANUAL_REF}" ]; then
+              ref="${MANUAL_REF}"
             else
-              dev_ref="${target_ref}"
+              ref="origin/${target}"
             fi
           fi
 
-          echo "main=${main_ref}" >> "${GITHUB_OUTPUT}"
-          echo "dev=${dev_ref}" >> "${GITHUB_OUTPUT}"
+          if [ "${target}" = "main" ]; then
+            base_path="/"
+            site_path="_site"
+          elif [ "${target}" = "dev" ]; then
+            base_path="/dev/"
+            site_path="_site/dev"
+          else
+            echo "Unsupported target: ${target}" >&2
+            exit 1
+          fi
 
-      - name: Build main branch
+          echo "target=${target}" >> "${GITHUB_OUTPUT}"
+          echo "ref=${ref}" >> "${GITHUB_OUTPUT}"
+          echo "base=${base_path}" >> "${GITHUB_OUTPUT}"
+          echo "site_path=${site_path}" >> "${GITHUB_OUTPUT}"
+
+      - name: Fetch deploy refs
+        env:
+          TARGET: ${{ steps.target.outputs.target }}
+          REF: ${{ steps.target.outputs.ref }}
         run: |
-          git worktree add ../site-main "${{ steps.refs.outputs.main }}"
-          cd ../site-main
+          git fetch origin main dev
+          if [ "${TARGET}" = "main" ] || [ "${TARGET}" = "dev" ]; then
+            if [ "${REF}" != "origin/${TARGET}" ]; then
+              git fetch origin "${REF}" || true
+            fi
+          fi
+
+      - name: Build selected target
+        run: |
+          git worktree add ../site-build "${{ steps.target.outputs.ref }}"
+          cd ../site-build
           npm ci
-          VITE_BASE_PATH="${{ steps.base.outputs.prod }}" npm run build
+          VITE_BASE_PATH="${{ steps.target.outputs.base }}" npm run build
 
-      - name: Build dev branch
+      - name: Restore existing site state
         run: |
-          git worktree add ../site-dev "${{ steps.refs.outputs.dev }}"
-          cd ../site-dev
-          npm ci
-          VITE_BASE_PATH="${{ steps.base.outputs.dev }}" npm run build
+          mkdir -p _site
+          if git ls-remote --exit-code --heads origin pages-state >/dev/null 2>&1; then
+            git fetch origin pages-state
+            git worktree add ../site-state origin/pages-state
+            cp -R ../site-state/. _site/
+          fi
+          touch _site/.nojekyll
 
-      - name: Assemble Pages artifact
+      - name: Merge selected target into site
+        env:
+          TARGET: ${{ steps.target.outputs.target }}
+          SITE_PATH: ${{ steps.target.outputs.site_path }}
         run: |
-          mkdir -p _site/dev
-          cp -R ../site-main/dist/. _site/
-          cp -R ../site-dev/dist/. _site/dev/
+          if [ "${TARGET}" = "main" ]; then
+            find _site -mindepth 1 -maxdepth 1 ! -name dev ! -name CNAME -exec rm -rf {} +
+            cp -R ../site-build/dist/. _site/
+          else
+            rm -rf "${SITE_PATH}"
+            mkdir -p "${SITE_PATH}"
+            cp -R ../site-build/dist/. "${SITE_PATH}/"
+          fi
           touch _site/.nojekyll
 
       - name: Upload pages artifact
@@ -131,13 +133,37 @@ jobs:
         with:
           path: _site
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Persist merged state branch
+        env:
+          TARGET: ${{ steps.target.outputs.target }}
+          REF: ${{ steps.target.outputs.ref }}
+        run: |
+          git worktree remove --force ../site-state >/dev/null 2>&1 || true
+          if git ls-remote --exit-code --heads origin pages-state >/dev/null 2>&1; then
+            git fetch origin pages-state
+            git worktree add ../site-state origin/pages-state
+          else
+            git worktree add --detach ../site-state
+            cd ../site-state
+            git switch --orphan pages-state
+            find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+            cd -
+          fi
+
+          find ../site-state -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -R _site/. ../site-state/
+
+          cd ../site-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes in pages-state."
+            exit 0
+          fi
+          git commit -m "pages-state: ${TARGET} (${REF})"
+          git push origin HEAD:pages-state
