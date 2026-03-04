@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import type { Plugin } from "vite";
 import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, stat } from "node:fs/promises";
 import path from "node:path";
 
 const normalizeBasePath = (candidate: string | undefined): string => {
@@ -17,6 +17,89 @@ const normalizeBasePath = (candidate: string | undefined): string => {
 
 const basePath = normalizeBasePath(process.env.VITE_BASE_PATH);
 
+// ─── PWA Asset Generation ────────────────────────────────────────────────────
+// Generates all favicon + PWA icon sizes from the SVG at build/dev start.
+// Icons are written to public/ so Vite copies them to dist/ automatically,
+// and manifest.json + index.html can reference them as static paths.
+//
+// Files produced (via minimal2023Preset):
+//   public/favicon.ico
+//   public/favicon-16x16.png
+//   public/favicon-32x32.png
+//   public/favicon-48x48.png
+//   public/apple-touch-icon-180x180.png  ← iOS home screen
+//   public/pwa-64x64.png
+//   public/pwa-192x192.png
+//   public/pwa-512x512.png               ← Android launcher
+//   public/maskable-icon-512x512.png     ← Android adaptive icon (safe-zone padded)
+const pwaAssetsPlugin = (): Plugin => {
+  const SOURCE_SVG = "public/branding/popul8-logo.svg";
+  const STAMP_FILE = "public/.pwa-assets-stamp";
+
+  return {
+    name: "popul8-pwa-assets",
+
+    async buildStart() {
+      const srcPath = path.resolve(process.cwd(), SOURCE_SVG);
+      const stampPath = path.resolve(process.cwd(), STAMP_FILE);
+
+      try {
+        const [svgStat, stampStat] = await Promise.all([
+          stat(srcPath),
+          stat(stampPath),
+        ]);
+        if (stampStat.mtimeMs >= svgStat.mtimeMs) return;
+      } catch {
+        // stamp missing → first run, fall through
+      }
+
+      this.warn?.(
+        `[popul8-pwa-assets] Generating PWA assets from ${SOURCE_SVG}…`,
+      );
+
+      const { instructions } =
+        await import("@vite-pwa/assets-generator/api/instructions");
+      const { generateAssets } =
+        await import("@vite-pwa/assets-generator/api/generate-assets");
+      const { minimal2023Preset } =
+        await import("@vite-pwa/assets-generator/config");
+
+      const svgBuffer = await readFile(srcPath);
+
+      const preset = {
+        ...minimal2023Preset,
+        maskable: {
+          ...minimal2023Preset.maskable,
+          resizeOptions: { background: "transparent" },
+          padding: 0.3,
+        },
+        apple: {
+          ...minimal2023Preset.apple,
+          resizeOptions: { background: "white" },
+          padding: 0.1,
+        },
+      };
+
+      const imageAssets = {
+        imageResolver: () => svgBuffer,
+        imageName: "popul8-logo.svg",
+        preset,
+        htmlLinks: { xhtml: false, includeId: false },
+        basePath: "/",
+        resolveSvgName: (name: string) => name,
+      };
+
+      const instructionsResult = await instructions(imageAssets);
+      await generateAssets(instructionsResult, true, "public", () => {});
+
+      await writeFile(stampPath, new Date().toISOString(), "utf8");
+
+      this.warn?.("[popul8-pwa-assets] Done.");
+    },
+  };
+};
+
+// ─── SW Asset Manifest ───────────────────────────────────────────────────────
 const swAssetManifestPlugin = (resolvedBasePath: string): Plugin => ({
   name: "popul8-sw-asset-manifest",
   apply: "build",
@@ -27,6 +110,16 @@ const swAssetManifestPlugin = (resolvedBasePath: string): Plugin => ({
       `${resolvedBasePath}manifest.json`,
       `${resolvedBasePath}branding/popul8-logo.svg`,
       `${resolvedBasePath}sw.js`,
+      // PWA icons — SW can pre-cache these so the app installs fully offline
+      `${resolvedBasePath}favicon.ico`,
+      `${resolvedBasePath}favicon-16x16.png`,
+      `${resolvedBasePath}favicon-32x32.png`,
+      `${resolvedBasePath}favicon-48x48.png`,
+      `${resolvedBasePath}apple-touch-icon-180x180.png`,
+      `${resolvedBasePath}pwa-64x64.png`,
+      `${resolvedBasePath}pwa-192x192.png`,
+      `${resolvedBasePath}pwa-512x512.png`,
+      `${resolvedBasePath}maskable-icon-512x512.png`,
     ]);
 
     Object.values(bundle).forEach((output) => {
@@ -43,6 +136,7 @@ const swAssetManifestPlugin = (resolvedBasePath: string): Plugin => ({
   },
 });
 
+// ─── SW Cache Version ────────────────────────────────────────────────────────
 const swCacheVersionPlugin = (resolvedBasePath: string): Plugin => ({
   name: "popul8-sw-cache-version",
   apply: "build",
@@ -116,6 +210,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    pwaAssetsPlugin(),
     swAssetManifestPlugin(basePath),
     swCacheVersionPlugin(basePath),
     react({

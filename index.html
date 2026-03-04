@@ -2,28 +2,58 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="%BASE_URL%branding/popul8-logo.svg"
-    />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Popul8</title>
     <meta
       name="description"
       content="Compose reusable SVG and CSS outputs from CSV data."
     />
+
+    <!-- Favicons -->
+    <!-- SVG first: modern browsers (Chrome, Firefox, Edge) use this natively -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="%BASE_URL%branding/popul8-logo.svg"
+    />
+    <!-- PNG fallbacks: Safari + any browser that doesn't support SVG favicons -->
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="%BASE_URL%favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="%BASE_URL%favicon-16x16.png"
+    />
+    <!-- iOS home screen icon (ignores the manifest, needs its own link tag) -->
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="%BASE_URL%apple-touch-icon-180x180.png"
+    />
+
+    <!-- PWA -->
     <link rel="manifest" href="%BASE_URL%manifest.json" />
     <meta name="theme-color" content="#0d76dd" />
+
+    <!-- Open Graph -->
     <meta property="og:title" content="Popul8" />
     <meta
       property="og:description"
       content="Compose reusable SVG and CSS outputs from CSV data."
     />
-    <meta property="og:image" content="%BASE_URL%branding/popul8-logo.svg" />
+    <!-- PNG preferred for OG — crawlers often can't render SVG -->
+    <meta property="og:image" content="%BASE_URL%pwa-512x512.png" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="%BASE_URL%" />
+
+    <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="%BASE_URL%pwa-512x512.png" />
     <meta name="twitter:image:alt" content="Popul8 logo" />
   </head>
   <body>

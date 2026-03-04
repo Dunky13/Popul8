@@ -6,6 +6,16 @@ const APP_SHELL_ASSETS = [
   `${BASE_PATH}index.html`,
   `${BASE_PATH}manifest.json`,
   `${BASE_PATH}branding/popul8-logo.svg`,
+  // PWA icons — pre-cached so install/splash screens work fully offline
+  `${BASE_PATH}favicon.ico`,
+  `${BASE_PATH}favicon-16x16.png`,
+  `${BASE_PATH}favicon-32x32.png`,
+  `${BASE_PATH}favicon-48x48.png`,
+  `${BASE_PATH}apple-touch-icon-180x180.png`,
+  `${BASE_PATH}pwa-64x64.png`,
+  `${BASE_PATH}pwa-192x192.png`,
+  `${BASE_PATH}pwa-512x512.png`,
+  `${BASE_PATH}maskable-icon-512x512.png`,
 ];
 const SW_ASSET_MANIFEST = `${BASE_PATH}sw-assets.json`;
 

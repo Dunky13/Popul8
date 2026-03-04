@@ -12,7 +12,8 @@ import type { StepId } from "../../types/app";
 import type { ThemeMode } from "../../hooks/useThemeMode";
 import Icon from "../Icon/Icon";
 import styles from "../../styles/App.module.css";
-import appLogo from "../../assets/branding/logo.svg";
+
+const APP_LOGO_URL = "/branding/popul8-logo.svg";
 
 type StepBadgeTone = "default" | "error";
 
@@ -98,9 +99,9 @@ const StepButton: React.FC<StepButtonProps> = ({
   const badgeClassName = badgeTone === "error" ? styles.stepBadgeError : "";
 
   return (
-      <button
-        type="button"
-        className={`${styles.stepButton} ${isActive ? styles.active : ""} ${
+    <button
+      type="button"
+      className={`${styles.stepButton} ${isActive ? styles.active : ""} ${
         isCompleted && !isActive ? styles.completed : ""
       } ${isReady && !isActive ? styles.ready : ""}`}
       onClick={() => {
@@ -209,9 +210,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       (step === "upload" && isReadyForEdit() && isReadyForSelection()) ||
       (step === "edit" && (isEditComplete() || isReadyForMapping())) ||
       (step === "mapping" && readyForPreview) ||
-      (step === "select" &&
-        readyForPreview &&
-        hasSelectedRows) ||
+      (step === "select" && readyForPreview && hasSelectedRows) ||
       (step === "preview" && isReadyForPrint() && hasSelectedRows);
 
     const isAvailable =
@@ -246,7 +245,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <div className={styles.headerInner}>
         <div className={styles.headerMetaRow}>
           <div className={styles.headerContent}>
-            <SVG src={appLogo} title="Popul8 logo" className={styles.logo} />
+            <SVG
+              src={APP_LOGO_URL}
+              title="Popul8 logo"
+              className={styles.logo}
+            />
             <div className={styles.headerText}>
               <h1 className={styles.title}>Popul8</h1>
               <p className={styles.subtitle}>
