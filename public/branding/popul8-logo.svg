@@ -2,8 +2,8 @@
     <defs>
         <style>
             :root {
-            --primary: 222.2 47.4% 11.2%;
-            --primary-foreground: 210 40% 98%;
+            --primary: 215, 58%, 13%;
+            --primary-foreground: 37, 92%, 90%;
             --border-radius: 29px;
             }
         </style>
