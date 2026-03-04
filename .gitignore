@@ -32,3 +32,4 @@ public/favicon-*.png
 public/apple-touch-icon-*.png
 public/pwa-*.png
 public/maskable-icon-*.png
+.env

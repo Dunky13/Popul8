@@ -16,6 +16,7 @@ import { FILE_CONSTRAINTS } from '../../constants';
 import { addFilesToHistoryWithHashes, clearHistory, getLastUsed, getSelection, listHistory, setLastUsed, setSelection, type StoredFile } from '../../utils/fileHistory';
 import styles from './TemplateUpload.module.css';
 import Icon from "../Icon/Icon";
+import { posthog } from '../../lib/posthog';
 
 export const TemplateUpload: React.FC = () => {
   const {
@@ -75,6 +76,9 @@ export const TemplateUpload: React.FC = () => {
     );
     if (!bootstrappedCsv) return;
 
+    posthog.capture('bootstrapped csv downloaded', {
+      placeholder_count: svgTemplate.placeholders.length,
+    });
     const url = URL.createObjectURL(bootstrappedCsv.file);
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -93,6 +97,10 @@ export const TemplateUpload: React.FC = () => {
 
     setSvgTemplate(template);
     setSvgUploaded(true);
+    posthog.capture('template uploaded', {
+      placeholder_count: template.placeholders.length,
+      element_id_count: template.elementIds.length,
+    });
     try {
       const { items: updated, fileHashes } = await addFilesToHistoryWithHashes(
         "svg",
@@ -161,6 +169,10 @@ export const TemplateUpload: React.FC = () => {
       setSvgUploaded(true);
       setSelectedHistoryId(selectedHistory.id);
       setLastUsed({ svgId: selectedHistory.id });
+      posthog.capture('template from history used', {
+        placeholder_count: template.placeholders.length,
+        element_id_count: template.elementIds.length,
+      });
     } catch (error) {
       addError(
         `File processing failed: ${

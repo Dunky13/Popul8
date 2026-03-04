@@ -12,6 +12,7 @@ import { VALIDATION } from "../../constants";
 
 import styles from "./DataMapping.module.css";
 import Icon from "../Icon/Icon";
+import { posthog } from "../../lib/posthog";
 
 export const DataMapping: React.FC = () => {
   const {
@@ -73,6 +74,21 @@ export const DataMapping: React.FC = () => {
     setAutoSuggestedMapping(false);
   }, [csvData, svgTemplate]);
 
+  const prevReadyForPreview = React.useRef(false);
+  React.useEffect(() => {
+    const ready = isReadyForPreview();
+    if (ready && !prevReadyForPreview.current && svgTemplate) {
+      const total = svgTemplate.placeholders.length;
+      const mapped = svgTemplate.placeholders.filter((k) => Boolean(dataMapping[k])).length;
+      posthog.capture('data mapping completed', {
+        placeholder_count: total,
+        mapped_count: mapped,
+        coverage_percent: total === 0 ? 100 : Math.round((mapped / total) * 100),
+      });
+    }
+    prevReadyForPreview.current = ready;
+  }, [isReadyForPreview, svgTemplate, dataMapping]);
+
   const handleAutoSuggest = () => {
     if (!csvData || !svgTemplate) return;
 
@@ -93,6 +109,10 @@ export const DataMapping: React.FC = () => {
 
     setDataMapping({ ...dataMapping, ...autoMapping });
     setAutoSuggestedMapping(true);
+    posthog.capture('data mapping auto suggested', {
+      placeholder_count: svgTemplate.placeholders.length,
+      auto_mapped_count: Object.keys(autoMapping).length,
+    });
   };
 
   const handleClearMapping = () => {

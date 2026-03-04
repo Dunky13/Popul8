@@ -20,6 +20,7 @@
     "@lezer/highlight": "^1.2.3",
     "leven": "^4.1.0",
     "papaparse": "^5.5.3",
+    "posthog-js": "^1.358.1",
     "prettier": "^3.6.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

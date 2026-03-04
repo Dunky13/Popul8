@@ -16,6 +16,7 @@ import { useDefaultMappingSync } from "./hooks/useDefaultMappingSync";
 import type { StepId } from "./types/app";
 import Icon from "./components/Icon/Icon";
 import styles from "./styles/App.module.css";
+import { posthog } from "./lib/posthog";
 
 const STEP_COPY: Record<
   StepId,
@@ -216,6 +217,27 @@ export const App: React.FC = () => {
     (item) => item.done,
   ).length;
   const totalChecklistCount = flowChecklist.length;
+
+  const prevStepRef = React.useRef<StepId | null>(null);
+  React.useEffect(() => {
+    if (prevStepRef.current !== null && prevStepRef.current !== currentStep) {
+      posthog.capture('step navigated', {
+        from_step: prevStepRef.current,
+        to_step: currentStep,
+      });
+    }
+    prevStepRef.current = currentStep;
+  }, [currentStep]);
+
+  React.useEffect(() => {
+    if (currentStep === 'preview' && records.length > 0) {
+      posthog.capture('cards generated', {
+        record_count: records.length,
+        placeholder_count: svgTemplate?.placeholders.length ?? 0,
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep]);
 
   React.useEffect(() => {
     setIsChecklistExpanded(false);

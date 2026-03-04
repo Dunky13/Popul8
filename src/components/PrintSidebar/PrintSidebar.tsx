@@ -7,6 +7,7 @@ import { getFieldOverride } from "../../utils/textResize";
 import { extractPlaceholdersFromString, parseFirstNumberToken } from "../../utils/regexUtils";
 import { removeDraftField, removeFieldResizeRules } from "./resizeHelpers";
 import styles from "./PrintSidebar.module.css";
+import { posthog } from "../../lib/posthog";
 
 const PAGE_SIZE_OPTIONS: { value: PrintPageSize; label: string }[] = [
   { value: "A4", label: "A4" },
@@ -488,25 +489,39 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
     clearGridCollapseTimeout();
     const nextRows = clampLayoutCount(rows, printLayout.rows);
     const nextCols = clampLayoutCount(columns, printLayout.columns);
-    setPrintLayout({
-      ...printLayout,
+    const nextLayout = { ...printLayout, rows: nextRows, columns: nextCols };
+    setPrintLayout(nextLayout);
+    updateGridBounds(nextRows, nextCols);
+    posthog.capture('print layout configured', {
+      page_size: nextLayout.pageSize,
+      orientation: nextLayout.orientation,
       rows: nextRows,
       columns: nextCols,
+      source: 'grid',
     });
-    updateGridBounds(nextRows, nextCols);
   };
 
   const handlePresetSelect = (preset: LayoutPreset) => {
     clearGridCollapseTimeout();
     const nextRows = clampLayoutCount(preset.rows, printLayout.rows);
     const nextCols = clampLayoutCount(preset.columns, printLayout.columns);
-    setPrintLayout({
+    const nextOrientation = preset.orientation ?? printLayout.orientation;
+    const nextLayout = {
       ...printLayout,
       rows: nextRows,
       columns: nextCols,
-      orientation: preset.orientation ?? printLayout.orientation,
-    });
+      orientation: nextOrientation,
+    };
+    setPrintLayout(nextLayout);
     updateGridBounds(nextRows, nextCols);
+    posthog.capture('print layout configured', {
+      page_size: nextLayout.pageSize,
+      orientation: nextOrientation,
+      rows: nextRows,
+      columns: nextCols,
+      source: 'preset',
+      preset_id: preset.id,
+    });
   };
 
   const isPresetActive = (preset: LayoutPreset) => {

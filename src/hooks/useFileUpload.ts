@@ -7,6 +7,7 @@ import { useAppStore } from "../store/appStore";
 import { useShallow } from "zustand/react/shallow";
 import { PROGRESS_RESET_DELAY } from "../constants";
 import { parseAcceptedFileRules, validateFileInput } from "../utils/fileValidation";
+import { posthog } from "../lib/posthog";
 
 interface UseFileUploadProps<T = unknown> {
   accept?: string;
@@ -96,6 +97,10 @@ export const useFileUpload = <T = unknown>({
         const validationError = validateFile(file);
         if (validationError) {
           addError(validationError);
+          posthog.capture('file upload failed', {
+            error_message: validationError,
+            file_type: file.name.split('.').pop() ?? 'unknown',
+          });
           return;
         }
 
@@ -112,11 +117,12 @@ export const useFileUpload = <T = unknown>({
           onFileProcessed(result);
         }
       } catch (error) {
-        addError(
-          `File processing failed: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        addError(`File processing failed: ${errorMessage}`);
+        posthog.capture('file upload failed', {
+          error_message: errorMessage,
+          file_type: 'unknown',
+        });
       } finally {
         setLoading(false);
         scheduleProgressReset();
@@ -142,6 +148,10 @@ export const useFileUpload = <T = unknown>({
           const validationError = validateFile(file);
           if (validationError) {
             addError(`File "${file.name}": ${validationError}`);
+            posthog.capture('file upload failed', {
+              error_message: validationError,
+              file_type: file.name.split('.').pop() ?? 'unknown',
+            });
             return;
           }
         }
@@ -161,11 +171,12 @@ export const useFileUpload = <T = unknown>({
           onFileProcessed(result);
         }
       } catch (error) {
-        addError(
-          `File processing failed: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        addError(`File processing failed: ${errorMessage}`);
+        posthog.capture('file upload failed', {
+          error_message: errorMessage,
+          file_type: 'unknown',
+        });
       } finally {
         setLoading(false);
         scheduleProgressReset();

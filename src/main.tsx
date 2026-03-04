@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { App } from './App.tsx'
 import './styles/globals.css'
 import { getInitialThemeMode } from './hooks/useThemeMode'
+import './lib/posthog'
 
 const initialThemeMode = getInitialThemeMode();
 document.documentElement.dataset.theme = initialThemeMode;

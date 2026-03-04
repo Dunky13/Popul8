@@ -30,6 +30,7 @@ import {
 } from './historySelectionHelpers';
 import styles from './FileUpload.module.css';
 import Icon from "../Icon/Icon";
+import { posthog } from '../../lib/posthog';
 
 interface FileUploadProps {
   accept?: string;
@@ -99,11 +100,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   }, []);
 
   const applyCombinedCsvData = useCallback(
-    (combinedData: typeof csvData) => {
+    (combinedData: typeof csvData, fileCount = 1) => {
       if (!combinedData) return;
       setCsvData(combinedData);
       setSelectedRowIndices(combinedData.rows.map((_, index) => index));
       setCsvUploaded(true);
+      posthog.capture('csv uploaded', {
+        row_count: combinedData.rows.length,
+        column_count: combinedData.headers.length,
+        file_count: fileCount,
+      });
     },
     [setCsvData, setCsvUploaded, setSelectedRowIndices]
   );
@@ -118,7 +124,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         console.warn("Record validation warnings:", recordWarnings);
       }
 
-      applyCombinedCsvData(combinedData);
+      applyCombinedCsvData(combinedData, 1);
 
       try {
         const { items: updated, fileHashes } = await addFilesToHistoryWithHashes(
@@ -154,7 +160,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         console.warn("Record validation warnings:", recordWarnings);
       }
 
-      applyCombinedCsvData(combinedData);
+      applyCombinedCsvData(combinedData, files.length);
 
       try {
         const { items: updated, fileHashes } = await addFilesToHistoryWithHashes(
