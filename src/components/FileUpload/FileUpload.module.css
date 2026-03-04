@@ -1,0 +1,332 @@
+.fileUpload {
+  padding: 1rem;
+  background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  border-radius: 16px;
+  box-shadow: 0 18px 34px rgb(var(--shadow-rgb) / 0.09);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-height: 100%;
+}
+
+.fileUpload h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-family: var(--font-display);
+}
+
+.fileUpload p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  font-size: 0.84rem;
+}
+
+.dropZone {
+  border: 1px dashed color-mix(in srgb, var(--border-color) 92%, transparent);
+  border-radius: 14px;
+  padding: 1.1rem 0.8rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 220ms ease;
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--bg-secondary) 88%, transparent), color-mix(in srgb, var(--bg-primary) 90%, transparent));
+  position: relative;
+  min-height: 156px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropZone:hover {
+  border-color: color-mix(in srgb, var(--accent-cyan) 52%, transparent);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--accent-cyan) 16%, transparent);
+  transform: translateY(-1px);
+}
+
+.dropZone.dragging {
+  border-color: var(--accent-cyan);
+  background: color-mix(in srgb, var(--bg-drag) 80%, var(--bg-primary));
+  transform: scale(1.01);
+}
+
+.dropZoneContent {
+  pointer-events: none;
+}
+
+.uploadIcon {
+  margin-bottom: 0.48rem;
+  color: color-mix(in srgb, var(--accent-cyan) 72%, var(--text-secondary));
+}
+
+.dropText {
+  margin: 0;
+  font-size: 0.91rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dragText {
+  margin: 0;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.subText {
+  margin: 0.34rem 0 0;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.fileInput {
+  display: none;
+}
+
+.progressContainer {
+  margin-top: 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.progressBar {
+  flex: 1;
+  height: 7px;
+  background: color-mix(in srgb, var(--bg-tertiary) 85%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-orange));
+  border-radius: 999px;
+  transition: width 220ms ease;
+}
+
+.progressText {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 2.2rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.successMessage {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  background: color-mix(in srgb, var(--success-bg) 72%, transparent);
+  color: color-mix(in srgb, var(--success-color) 88%, var(--text-primary));
+  border: 1px solid color-mix(in srgb, var(--success-color) 35%, transparent);
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.historySection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
+}
+
+.historyHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.historyHeader h4 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.historyHint {
+  margin: 0.2rem 0 0;
+  font-size: 0.73rem;
+  color: var(--text-muted);
+}
+
+.ghostButton {
+  padding: 0.32rem 0.55rem;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px dashed color-mix(in srgb, var(--border-color) 90%, transparent);
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 180ms ease;
+  white-space: nowrap;
+}
+
+.ghostButton:hover:enabled {
+  border-color: color-mix(in srgb, var(--accent-cyan) 52%, transparent);
+  color: var(--accent-cyan);
+}
+
+.ghostButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.historyToolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.historyGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+}
+
+.historyGroupLabel {
+  font-size: 0.69rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.historyItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.46rem 0.52rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-primary) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 88%, transparent);
+  cursor: pointer;
+}
+
+.historyItem:hover {
+  border-color: color-mix(in srgb, var(--accent-cyan) 42%, transparent);
+}
+
+.historyItem input {
+  margin-top: 0.12rem;
+}
+
+.historyDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+  min-width: 0;
+}
+
+.historyName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.historyMeta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.historyActions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: 0.46rem 0.72rem;
+  border-radius: 9px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.primaryButton {
+  border: 1px solid transparent;
+  background: linear-gradient(140deg, var(--accent-cyan), color-mix(in srgb, var(--accent-cyan) 62%, var(--accent-orange)));
+  color: #fff;
+}
+
+.primaryButton:hover:enabled {
+  transform: translateY(-1px);
+}
+
+.primaryButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  border: 1px solid color-mix(in srgb, var(--border-color) 88%, transparent);
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  color: var(--text-primary);
+}
+
+.secondaryButton:hover:enabled {
+  border-color: color-mix(in srgb, var(--accent-cyan) 38%, transparent);
+}
+
+.secondaryButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .fileUpload {
+    padding: 0.8rem;
+  }
+
+  .dropZone {
+    min-height: 132px;
+  }
+
+  .actions,
+  .historyActions {
+    flex-direction: column;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+    justify-content: center;
+    min-height: 38px;
+  }
+}
+
+@media (pointer: coarse) {
+  .dropZone,
+  .primaryButton,
+  .secondaryButton,
+  .ghostButton {
+    min-height: 40px;
+  }
+}

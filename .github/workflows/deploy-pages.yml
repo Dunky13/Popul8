@@ -1,0 +1,143 @@
+name: Deploy To GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Path to refresh"
+        required: true
+        default: main
+        type: choice
+        options:
+          - main
+          - dev
+      ref:
+        description: "Optional git ref (branch/tag/SHA) for selected target"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Compute base paths
+        id: base
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER}"
+          repo="${GITHUB_REPOSITORY#*/}"
+
+          if [ "${repo}" = "${owner}.github.io" ]; then
+            prod_base="/"
+          else
+            prod_base="/${repo}/"
+          fi
+
+          dev_base="${prod_base}dev/"
+
+          echo "prod=${prod_base}" >> "${GITHUB_OUTPUT}"
+          echo "dev=${dev_base}" >> "${GITHUB_OUTPUT}"
+
+      - name: Fetch deployment branches
+        run: git fetch origin main dev
+
+      - name: Fetch optional manual ref
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref != '' }}
+        run: git fetch origin "${{ github.event.inputs.ref }}"
+
+      - name: Resolve build refs
+        id: refs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_BRANCH: ${{ github.ref_name }}
+          PUSH_SHA: ${{ github.sha }}
+          MANUAL_TARGET: ${{ github.event.inputs.target }}
+          MANUAL_REF: ${{ github.event.inputs.ref }}
+        run: |
+          main_ref="origin/main"
+          dev_ref="origin/dev"
+
+          if [ "${EVENT_NAME}" = "push" ]; then
+            if [ "${PUSH_BRANCH}" = "main" ]; then
+              main_ref="${PUSH_SHA}"
+            elif [ "${PUSH_BRANCH}" = "dev" ]; then
+              dev_ref="${PUSH_SHA}"
+            fi
+          else
+            target_ref="${MANUAL_REF}"
+            if [ -z "${target_ref}" ]; then
+              target_ref="origin/${MANUAL_TARGET}"
+            fi
+
+            if [ "${MANUAL_TARGET}" = "main" ]; then
+              main_ref="${target_ref}"
+            else
+              dev_ref="${target_ref}"
+            fi
+          fi
+
+          echo "main=${main_ref}" >> "${GITHUB_OUTPUT}"
+          echo "dev=${dev_ref}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build main branch
+        run: |
+          git worktree add ../site-main "${{ steps.refs.outputs.main }}"
+          cd ../site-main
+          npm ci
+          VITE_BASE_PATH="${{ steps.base.outputs.prod }}" npm run build
+
+      - name: Build dev branch
+        run: |
+          git worktree add ../site-dev "${{ steps.refs.outputs.dev }}"
+          cd ../site-dev
+          npm ci
+          VITE_BASE_PATH="${{ steps.base.outputs.dev }}" npm run build
+
+      - name: Assemble Pages artifact
+        run: |
+          mkdir -p _site/dev
+          cp -R ../site-main/dist/. _site/
+          cp -R ../site-dev/dist/. _site/dev/
+          touch _site/.nojekyll
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,113 @@
+const BASE_PATH = "__P8_BASE_PATH__";
+const CACHE_VERSION = "__P8_CACHE_VERSION__";
+const CACHE_NAME = `popul8-${CACHE_VERSION}`;
+const APP_SHELL_ASSETS = [
+  BASE_PATH,
+  `${BASE_PATH}index.html`,
+  `${BASE_PATH}manifest.json`,
+  `${BASE_PATH}branding/popul8-logo.svg`,
+];
+const SW_ASSET_MANIFEST = `${BASE_PATH}sw-assets.json`;
+
+const isSameOriginRequest = (request) => {
+  const requestUrl = new URL(request.url);
+  return requestUrl.origin === self.location.origin;
+};
+
+const isStaticAsset = (request) => {
+  const requestUrl = new URL(request.url);
+  return (
+    requestUrl.pathname.startsWith(`${BASE_PATH}assets/`) ||
+    request.destination === "script" ||
+    request.destination === "style" ||
+    request.destination === "font" ||
+    request.destination === "image"
+  );
+};
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      let assetsToCache = APP_SHELL_ASSETS;
+      try {
+        const manifestResponse = await fetch(SW_ASSET_MANIFEST, {
+          cache: "no-store",
+        });
+        if (manifestResponse.ok) {
+          const manifest = await manifestResponse.json();
+          if (Array.isArray(manifest?.assets) && manifest.assets.length > 0) {
+            assetsToCache = manifest.assets;
+          }
+        }
+      } catch {
+        // Fallback to app shell list when manifest is unavailable.
+      }
+      // Cache known shell entries without failing the install when one entry is unavailable.
+      await Promise.allSettled(assetsToCache.map((asset) => cache.add(asset)));
+      await self.skipWaiting();
+    })(),
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    (async () => {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+          return Promise.resolve();
+        }),
+      );
+      await self.clients.claim();
+    })(),
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  if (request.method !== "GET" || !isSameOriginRequest(request)) {
+    return;
+  }
+
+  event.respondWith(
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const isNavigation = request.mode === "navigate";
+
+      if (isNavigation) {
+        try {
+          const networkResponse = await fetch(request);
+          if (networkResponse.ok) {
+            cache.put(request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch {
+          return (
+            (await cache.match(request)) ||
+            (await cache.match(`${BASE_PATH}index.html`)) ||
+            Response.error()
+          );
+        }
+      }
+
+      if (isStaticAsset(request)) {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+      }
+
+      try {
+        const networkResponse = await fetch(request);
+        if (networkResponse.ok) {
+          cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+      } catch {
+        return (await cache.match(request)) || Response.error();
+      }
+    })(),
+  );
+});

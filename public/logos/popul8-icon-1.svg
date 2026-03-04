@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Popul8 icon 1">
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#0f172a" stroke-width="14">
+      <path d="M40 130 H160 L150 160 H50 Z" />
+      <path d="M70 130 V110 H130 V130" />
+      <path d="M70 110 H130 L150 90 H120" />
+      <path d="M100 40 L122 82 L100 102 L78 82 Z" />
+    </g>
+    <g stroke="#f8fafc" stroke-width="10">
+      <path d="M40 130 H160 L150 160 H50 Z" />
+      <path d="M70 130 V110 H130 V130" />
+      <path d="M70 110 H130 L150 90 H120" />
+    </g>
+    <g stroke="#f59e0b" stroke-width="10">
+      <path d="M100 40 L122 82 L100 102 L78 82 Z" />
+    </g>
+    <circle cx="100" cy="78" r="6" fill="#f59e0b" stroke="none" />
+  </g>
+</svg>
