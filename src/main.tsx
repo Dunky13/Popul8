@@ -8,6 +8,11 @@ import './lib/posthog'
 const initialThemeMode = getInitialThemeMode();
 document.documentElement.dataset.theme = initialThemeMode;
 
+if (import.meta.env.PROD) {
+  // eslint-disable-next-line no-console
+  console.log('Build commit SHA:', import.meta.env.VITE_COMMIT_SHA);
+}
+
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     const scope = import.meta.env.BASE_URL;
