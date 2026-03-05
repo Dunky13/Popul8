@@ -7,4 +7,9 @@ posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY as string, {
   capture_pageleave: true,
 });
 
+console.log("PostHog env", {
+  key: import.meta.env.VITE_PUBLIC_POSTHOG_KEY,
+  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_API_HOST,
+  ui_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+});
 export { posthog };
