@@ -329,7 +329,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       return;
     }
 
-    const { csvData: previousCsvData, selectedRowIndices, setSelectedRowIndices } =
+    const { csvData: previousCsvData, selectedRowIndices } =
       useAppStore.getState();
 
     void syncSelectedCsvFiles({
@@ -339,6 +339,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       applyCombinedCsvData,
       setLoading,
       addError,
+      // use hook variable from outer scope instead of destructured one
       updateSelection: setSelectedRowIndices,
       deps: {
         parseContent: parseCSVContent,
