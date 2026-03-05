@@ -14,9 +14,9 @@ on:
         type: choice
         options:
           - main
-          - dev
+          - auto
       ref:
-        description: "Optional git ref (branch/tag/SHA) for selected target"
+        description: "Optional git ref (branch/tag/SHA) - defaults to target's latest if empty"
         required: false
         type: string
 
@@ -26,7 +26,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target || github.ref_name }}
+  group: pages-${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.target || 'auto') || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -52,6 +52,23 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Check available branches
+        id: branches
+        run: |
+          git fetch origin main dev
+
+          has_main=false
+          has_dev=false
+          if git ls-remote --exit-code --heads origin main >/dev/null 2>&1; then
+            has_main=true
+          fi
+          if git ls-remote --exit-code --heads origin dev >/dev/null 2>&1; then
+            has_dev=true
+          fi
+
+          echo "has_main=${has_main}" >> "${GITHUB_OUTPUT}"
+          echo "has_dev=${has_dev}" >> "${GITHUB_OUTPUT}"
+
       - name: Resolve target and ref
         id: target
         env:
@@ -60,25 +77,63 @@ jobs:
           PUSH_SHA: ${{ github.sha }}
           MANUAL_TARGET: ${{ github.event.inputs.target }}
           MANUAL_REF: ${{ github.event.inputs.ref }}
+          HAS_MAIN: ${{ steps.branches.outputs.has_main }}
+          HAS_DEV: ${{ steps.branches.outputs.has_dev }}
         run: |
           if [ "${EVENT_NAME}" = "push" ]; then
             target="${PUSH_BRANCH}"
             ref="${PUSH_SHA}"
+
+            if [ "${target}" = "dev" ] && [ "${HAS_DEV}" = "false" ]; then
+              echo "Dev branch does not exist, using SHA preview instead"
+              target="sha"
+            fi
           else
-            target="${MANUAL_TARGET}"
+            target="${MANUAL_TARGET:-auto}"
+
+            if [ "${target}" = "auto" ]; then
+              if [ "${HAS_DEV}" = "true" ]; then
+                target="dev"
+              elif [ "${HAS_MAIN}" = "true" ]; then
+                target="main"
+              else
+                target="sha"
+                ref="${MANUAL_REF:-${PUSH_SHA}}"
+              fi
+            fi
+
             if [ -n "${MANUAL_REF}" ]; then
               ref="${MANUAL_REF}"
-            else
+            elif [ "${target}" = "main" ] || [ "${target}" = "dev" ]; then
               ref="origin/${target}"
+            else
+              ref="${PUSH_SHA}"
+            fi
+
+            if [ "${target}" = "dev" ] && [ "${HAS_DEV}" = "false" ]; then
+              if [ "${HAS_MAIN}" = "true" ]; then
+                target="main"
+                ref="origin/main"
+              else
+                target="sha"
+                ref="${PUSH_SHA}"
+              fi
             fi
           fi
 
           if [ "${target}" = "main" ]; then
             base_path="/"
             site_path="_site"
+            keep_paths="dev"
           elif [ "${target}" = "dev" ]; then
             base_path="/dev/"
             site_path="_site/dev"
+            keep_paths="main"
+          elif [ "${target}" = "sha" ]; then
+            sha_short="${ref:0:7}"
+            base_path="/${sha_short}/"
+            site_path="_site/${sha_short}"
+            keep_paths="main dev"
           else
             echo "Unsupported target: ${target}" >&2
             exit 1
@@ -88,17 +143,20 @@ jobs:
           echo "ref=${ref}" >> "${GITHUB_OUTPUT}"
           echo "base=${base_path}" >> "${GITHUB_OUTPUT}"
           echo "site_path=${site_path}" >> "${GITHUB_OUTPUT}"
+          echo "keep_paths=${keep_paths}" >> "${GITHUB_OUTPUT}"
+          echo "sha_short=${sha_short:-}" >> "${GITHUB_OUTPUT}"
 
       - name: Fetch deploy refs
         env:
           TARGET: ${{ steps.target.outputs.target }}
           REF: ${{ steps.target.outputs.ref }}
         run: |
-          git fetch origin main dev
           if [ "${TARGET}" = "main" ] || [ "${TARGET}" = "dev" ]; then
             if [ "${REF}" != "origin/${TARGET}" ]; then
               git fetch origin "${REF}" || true
             fi
+          elif [ "${TARGET}" = "sha" ]; then
+            git fetch origin "${REF}" || true
           fi
 
       - name: Build selected target
@@ -127,11 +185,27 @@ jobs:
         env:
           TARGET: ${{ steps.target.outputs.target }}
           SITE_PATH: ${{ steps.target.outputs.site_path }}
+          KEEP_PATHS: ${{ steps.target.outputs.keep_paths }}
+          SHA_SHORT: ${{ steps.target.outputs.sha_short }}
         run: |
           if [ "${TARGET}" = "main" ]; then
-            find _site -mindepth 1 -maxdepth 1 ! -name dev ! -name CNAME -exec rm -rf {} +
+            for keep in ${KEEP_PATHS}; do
+              if [ -d "_site/${keep}" ]; then
+                mv "_site/${keep}" "_site/${keep}.bak" 2>/dev/null || true
+              fi
+            done
+            find _site -mindepth 1 -maxdepth 1 ! -name dev ! -name CNAME -exec rm -rf {} + 2>/dev/null || true
+            for keep in ${KEEP_PATHS}; do
+              if [ -d "_site/${keep}.bak" ]; then
+                mv "_site/${keep}.bak" "_site/${keep}"
+              fi
+            done
             cp -R ../site-build/dist/. _site/
-          else
+          elif [ "${TARGET}" = "dev" ]; then
+            rm -rf "${SITE_PATH}"
+            mkdir -p "${SITE_PATH}"
+            cp -R ../site-build/dist/. "${SITE_PATH}/"
+          elif [ "${TARGET}" = "sha" ]; then
             rm -rf "${SITE_PATH}"
             mkdir -p "${SITE_PATH}"
             cp -R ../site-build/dist/. "${SITE_PATH}/"
@@ -151,6 +225,7 @@ jobs:
         env:
           TARGET: ${{ steps.target.outputs.target }}
           REF: ${{ steps.target.outputs.ref }}
+          SHA_SHORT: ${{ steps.target.outputs.sha_short }}
         run: |
           git worktree remove --force ../site-state >/dev/null 2>&1 || true
           if git ls-remote --exit-code --heads origin pages-state >/dev/null 2>&1; then
@@ -175,5 +250,11 @@ jobs:
             echo "No changes in pages-state."
             exit 0
           fi
-          git commit -m "pages-state: ${TARGET} (${REF})"
+
+          if [ "${TARGET}" = "sha" ]; then
+            commit_msg="pages-state: ${TARGET} ${SHA_SHORT} (${REF})"
+          else
+            commit_msg="pages-state: ${TARGET} (${REF})"
+          fi
+          git commit -m "${commit_msg}"
           git push origin HEAD:pages-state
