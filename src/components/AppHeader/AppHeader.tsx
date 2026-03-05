@@ -11,6 +11,7 @@ import {
 import type { StepId } from "../../types/app";
 import type { ThemeMode } from "../../hooks/useThemeMode";
 import Icon from "../Icon/Icon";
+import { ThemeSwitcher } from "../ThemeSwitcher/ThemeSwitcher";
 import styles from "../../styles/App.module.css";
 
 const APP_LOGO_URL = "/branding/popul8-logo.svg";
@@ -76,15 +77,6 @@ const STEP_ITEMS: Array<{
     detail: "Print output",
     icon: <Icon name="print" size={20} />,
   },
-];
-
-const THEME_ITEMS: Array<{
-  value: ThemeMode;
-  label: string;
-  icon: "lightMode" | "darkMode";
-}> = [
-  { value: "light", label: "Light", icon: "lightMode" },
-  { value: "dark", label: "Dark", icon: "darkMode" },
 ];
 
 const StepButton: React.FC<StepButtonProps> = ({
@@ -286,32 +278,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               </div>
             </div>
 
-            <div
-              className={styles.themeSwitcher}
-              role="group"
-              aria-label="Theme mode"
-            >
-              {THEME_ITEMS.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  className={`${styles.themeButton} ${
-                    themeMode === item.value ? styles.themeButtonActive : ""
-                  }`}
-                  onClick={() => onThemeModeChange(item.value)}
-                  aria-pressed={themeMode === item.value}
-                  aria-label={`${item.label} mode`}
-                  title={`${item.label} mode`}
-                >
-                  <Icon
-                    name={item.icon}
-                    size={16}
-                    className={styles.themeIcon}
-                  />
-                  <span className="sr-only">{item.label}</span>
-                </button>
-              ))}
-            </div>
+            <ThemeSwitcher
+              themeMode={themeMode}
+              onThemeModeChange={onThemeModeChange}
+            />
           </div>
         </div>
 

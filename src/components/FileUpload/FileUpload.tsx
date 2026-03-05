@@ -23,7 +23,7 @@ import {
   type StoredFile
 } from '../../utils/fileHistory';
 import { parseAcceptedFileRules, validateFileInput } from '../../utils/fileValidation';
-import { resolveCsvIdsForAppend } from './csvSelectionHelpers';
+import { resolveCsvIdsForAppend, syncSelectedCsvFiles } from './csvSelectionHelpers';
 import {
   resolveTodayHistorySelection,
   toggleCsvHistorySelection,
@@ -320,6 +320,37 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     () => historyItems.filter((item) => selectedHistoryIds.has(item.id)),
     [historyItems, selectedHistoryIds]
   );
+
+  useEffect(() => {
+    if (selectedHistory.length === 0) {
+      setCsvData(null);
+      setSelectedRowIndices([]);
+      setCsvUploaded(false);
+      return;
+    }
+
+    const { csvData: previousCsvData, selectedRowIndices, setSelectedRowIndices } =
+      useAppStore.getState();
+
+    void syncSelectedCsvFiles({
+      selectedHistory,
+      previousCsvData,
+      previousSelectedRowIndices: selectedRowIndices,
+      applyCombinedCsvData,
+      setLoading,
+      addError,
+      updateSelection: setSelectedRowIndices,
+      deps: {
+        parseContent: parseCSVContent,
+        combineCsv: (csvDataList) => validateAndCombineCsvData(csvDataList),
+        logWarnings: (warnings) => {
+          if (warnings.length > 0 && import.meta.env.DEV) {
+            console.warn("Record validation warnings:", warnings);
+          }
+        },
+      },
+    });
+  }, [addError, applyCombinedCsvData, selectedHistory, setCsvData, setCsvUploaded, setLoading, setSelectedRowIndices]);
 
   const historyByDay = useMemo(() => {
     return historyItems.reduce<Record<string, StoredFile[]>>((acc, item) => {

@@ -1,5 +1,5 @@
-@import url('./print.css');
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,500;10..48,600;10..48,700;10..48,800&family=Instrument+Sans:wght@400;500;600;700&display=swap');
+@import url("./print.css");
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,500;10..48,600;10..48,700;10..48,800&family=Instrument+Sans:wght@400;500;600;700&display=swap");
 
 :root {
   --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
@@ -58,13 +58,18 @@
   --spacing-xxl: 3rem;
 
   color-scheme: light;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   color-scheme: light;
 }
 
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   --bg-primary: #161b21;
   --bg-secondary: #1e252d;
   --bg-tertiary: #28313b;
@@ -211,7 +216,7 @@ textarea:focus {
 }
 
 .loading::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
