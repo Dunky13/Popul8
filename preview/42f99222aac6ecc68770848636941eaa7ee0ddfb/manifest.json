@@ -1,0 +1,35 @@
+{
+  "name": "Popul8",
+  "short_name": "Popul8",
+  "description": "Compose reusable SVG and CSS outputs from CSV data.",
+  "start_url": "/preview/42f99222aac6ecc68770848636941eaa7ee0ddfb/",
+  "display": "standalone",
+  "background_color": "#f6f8fb",
+  "theme_color": "#0d76dd",
+  "scope": "/preview/42f99222aac6ecc68770848636941eaa7ee0ddfb/",
+  "offline_enabled": true,
+  "icons": [
+    {
+      "src": "/preview/42f99222aac6ecc68770848636941eaa7ee0ddfb/pwa-64x64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/preview/42f99222aac6ecc68770848636941eaa7ee0ddfb/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/preview/42f99222aac6ecc68770848636941eaa7ee0ddfb/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/preview/42f99222aac6ecc68770848636941eaa7ee0ddfb/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
