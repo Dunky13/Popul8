@@ -51,8 +51,8 @@ jobs:
             echo "base=/" >> $GITHUB_OUTPUT
             echo "site_path=" >> $GITHUB_OUTPUT
           else
-            echo "base=/${{ github.sha }}/" >> $GITHUB_OUTPUT
-            echo "site_path=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "base=/preview/${{ github.sha }}/" >> $GITHUB_OUTPUT
+            echo "site_path=preview/${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Install dependencies
@@ -130,3 +130,18 @@ jobs:
 
           git commit -m "pages-state: ${{ github.event_name }} ${{ github.sha }}"
           git push origin HEAD:pages-state --force
+
+      - name: Show deployed URL
+        if: steps.deployment.outputs.page_url != ''
+        env:
+          BASE_URL: ${{ steps.deployment.outputs.page_url }}
+          SITE_PATH: ${{ steps.paths.outputs.site_path }}
+          EVENT_TYPE: ${{ github.event_name }}
+        run: |
+          if [[ "$EVENT_TYPE" == "release" || -z "$SITE_PATH" ]]; then
+            URL="$BASE_URL"
+          else
+            URL="${BASE_URL%/}/$SITE_PATH/"
+          fi
+          echo "Deployed URL: $URL"
+          echo "::notice title=Deployed URL::$URL"
