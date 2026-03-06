@@ -1,0 +1,29 @@
+{
+  "assets": [
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/index.html",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/manifest.json",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/branding/popul8-logo.svg",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/sw.js",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/favicon.ico",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/favicon-16x16.png",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/favicon-32x32.png",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/favicon-48x48.png",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/apple-touch-icon-180x180.png",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/pwa-64x64.png",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/pwa-192x192.png",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/pwa-512x512.png",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/maskable-icon-512x512.png",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/assets/index-MfD3Mv7w.css",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/assets/TemplateEditor-C6VeW-ts.css",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/assets/vendor-CtwvGxuH.js",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/assets/csv-BLfeXkRA.js",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/assets/codemirror-DoSYpn7H.js",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/assets/prettier-CtfhWL_X.js",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/assets/index-Bwa-O4zw.js",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/assets/TemplateEditor-5qc6jXXQ.js",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/assets/CodeEditorPanel-CSVpqPaP.js",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/assets/CssEditorPanel-D9GMdIfZ.js",
+    "/preview/0600e08b946ada6e392dc9de826b0dd491503bba/assets/FontSourcesPanel-IcIl8nfR.js"
+  ]
+}
