@@ -42,6 +42,9 @@ export const DataMapping: React.FC = () => {
   const [autoSuggestedMapping, setAutoSuggestedMapping] = useState(false);
   const [showOnlyUnresolved, setShowOnlyUnresolved] = useState(false);
   const [placeholderFilter, setPlaceholderFilter] = useState("");
+  const [mobileActivePlaceholder, setMobileActivePlaceholder] = useState<
+    string | null
+  >(null);
 
   const validationResult = useValidateDataMapping(svgTemplate, csvData, dataMapping);
 
@@ -131,6 +134,7 @@ export const DataMapping: React.FC = () => {
     const firstSelectedIndex = selectedRowIndices[0];
     return csvData.rows[firstSelectedIndex] || null;
   }, [csvData, selectedRowIndices]);
+  const previewRowNumber = selectedRowIndices.length > 0 ? selectedRowIndices[0] + 1 : null;
 
   const duplicateColumns = useMemo(() => {
     const counts = new Map<string, number>();
@@ -196,6 +200,73 @@ export const DataMapping: React.FC = () => {
     [normalizedFilter, placeholderRows, showOnlyUnresolved],
   );
 
+  React.useEffect(() => {
+    if (visibleRows.length === 0) {
+      setMobileActivePlaceholder(null);
+      return;
+    }
+
+    if (
+      mobileActivePlaceholder &&
+      visibleRows.some((row) => row.placeholder === mobileActivePlaceholder)
+    ) {
+      return;
+    }
+
+    const preferredPlaceholder =
+      visibleRows.find((row) => row.rowHasIssue)?.placeholder ??
+      visibleRows[0]?.placeholder ??
+      null;
+    setMobileActivePlaceholder(preferredPlaceholder);
+  }, [mobileActivePlaceholder, visibleRows]);
+
+  const mobileCurrentIndex = useMemo(() => {
+    if (visibleRows.length === 0) return -1;
+    if (!mobileActivePlaceholder) return 0;
+    const index = visibleRows.findIndex(
+      (row) => row.placeholder === mobileActivePlaceholder,
+    );
+    return index === -1 ? 0 : index;
+  }, [mobileActivePlaceholder, visibleRows]);
+
+  const mobileCurrentRow =
+    mobileCurrentIndex >= 0 ? visibleRows[mobileCurrentIndex] : null;
+
+  const nextUnresolvedIndex = useMemo(() => {
+    if (visibleRows.length === 0) return -1;
+
+    const afterCurrent = visibleRows.findIndex(
+      (row, index) => index > mobileCurrentIndex && row.rowHasIssue,
+    );
+    if (afterCurrent !== -1) return afterCurrent;
+
+    return visibleRows.findIndex(
+      (row, index) => index < mobileCurrentIndex && row.rowHasIssue,
+    );
+  }, [mobileCurrentIndex, visibleRows]);
+
+  const mobileIssueMessages = useMemo(() => {
+    if (!mobileCurrentRow) return [];
+
+    const messages: string[] = [];
+    if (mobileCurrentRow.isUnmapped) {
+      messages.push("No CSV column is selected yet.");
+    }
+    if (mobileCurrentRow.isInvalidColumn) {
+      messages.push("The selected column is no longer available in the CSV.");
+    }
+    if (mobileCurrentRow.isDuplicateColumn) {
+      messages.push("This CSV column is already assigned to another placeholder.");
+    }
+    return messages;
+  }, [mobileCurrentRow]);
+
+  const jumpToMobileIndex = (index: number) => {
+    const target = visibleRows[index];
+    if (!target) return;
+    setMobileActivePlaceholder(target.placeholder);
+  };
+
   if (!isReadyForMapping()) {
     return (
       <div className={styles.dataMapping}>
@@ -209,34 +280,71 @@ export const DataMapping: React.FC = () => {
 
   return (
     <div className={styles.dataMapping}>
-      <h3>Map Template Placeholders to CSV Columns</h3>
-      <p>
-        Connect each template placeholder ({"{key}"}) to the corresponding CSV
-        column so every rendered card has the correct values.
-      </p>
-
-      <div className={styles.mappingSummary}>
-        <div className={styles.mappingMetric}>
-          <span className={styles.mappingMetricLabel}>Placeholders</span>
-          <strong>{placeholderCount}</strong>
+      <div className={styles.header}>
+        <div className={styles.headerIntro}>
+          <p className={styles.eyebrow}>Field mapping</p>
+          <h3>Connect placeholders to CSV columns</h3>
+          <p>
+            Resolve each placeholder once, then the rest of the workflow can
+            render and print from the mapped columns.
+          </p>
         </div>
-        <div className={styles.mappingMetric}>
-          <span className={styles.mappingMetricLabel}>Mapped</span>
-          <strong>{mappedCount}</strong>
-        </div>
-        <div className={styles.mappingMetric}>
-          <span className={styles.mappingMetricLabel}>Coverage</span>
-          <strong>{mappingCoverage}%</strong>
+        <div className={styles.headerStats}>
+          <span className={styles.headerStat}>
+            {mappedCount}/{placeholderCount} mapped
+          </span>
+          <span
+            className={`${styles.headerStat} ${
+              unmappedPlaceholders.length > 0 ? styles.headerStatWarning : ""
+            }`}
+          >
+            {unmappedPlaceholders.length} unresolved
+          </span>
+          <span className={styles.headerStat}>{mappingCoverage}% coverage</span>
+          {previewRowNumber ? (
+            <span className={styles.headerStat}>Preview row {previewRowNumber}</span>
+          ) : null}
         </div>
       </div>
 
-      <div className={styles.coverageBar}>
-        <div className={styles.coverageFill} style={{ width: `${mappingCoverage}%` }} />
+      <div className={styles.topBar}>
+        <div className={styles.topBarStatus}>
+          {unmappedPlaceholders.length > 0 ? (
+            <p className={styles.topBarMessage}>
+              Resolve the remaining placeholders before moving to preview.
+            </p>
+          ) : (
+            <p className={styles.topBarMessage}>
+              Mapping is complete and ready for row selection.
+            </p>
+          )}
+          <div className={styles.coverageTrack} aria-hidden="true">
+            <div
+              className={styles.coverageFill}
+              style={{ width: `${mappingCoverage}%` }}
+            />
+          </div>
+        </div>
+        <div className={styles.actions}>
+          <button
+            onClick={handleAutoSuggest}
+            className={styles.suggestButton}
+            disabled={autoSuggestedMapping}
+          >
+            Auto-suggest
+          </button>
+          <button onClick={handleResetToDefault} className={styles.resetButton}>
+            Use defaults
+          </button>
+          <button onClick={handleClearMapping} className={styles.clearButton}>
+            Clear all
+          </button>
+        </div>
       </div>
 
       {unmappedPlaceholders.length > 0 && (
         <div className={styles.unmappedBlock}>
-          <span className={styles.unmappedTitle}>Still missing</span>
+          <span className={styles.unmappedTitle}>Unresolved placeholders</span>
           <div className={styles.unmappedList}>
             {unmappedPlaceholders.map((placeholder) => (
               <span key={placeholder} className={styles.unmappedTag}>
@@ -275,8 +383,164 @@ export const DataMapping: React.FC = () => {
         </span>
       </div>
 
+      <div className={styles.mobileMappingFlow}>
+        <div className={styles.mobileFlowHeader}>
+          <div>
+            <p className={styles.mobileFlowMeta}>
+              {visibleRows.length === 0
+                ? "No placeholders in the current filter"
+                : `Placeholder ${mobileCurrentIndex + 1} of ${visibleRows.length}`}
+            </p>
+            <h4 className={styles.mobileFlowTitle}>
+              {mobileCurrentRow
+                ? `{{${mobileCurrentRow.placeholder}}}`
+                : "No matching placeholders"}
+            </h4>
+            <p className={styles.mobileFlowText}>
+              Map one placeholder at a time, then move to the next unresolved
+              item.
+            </p>
+          </div>
+          {mobileCurrentRow ? (
+            <span
+              className={`${styles.mobileStatusBadge} ${
+                mobileCurrentRow.rowHasIssue
+                  ? styles.mobileStatusBadgeWarning
+                  : styles.mobileStatusBadgeSuccess
+              }`}
+            >
+              {mobileCurrentRow.rowHasIssue ? "Needs attention" : "Mapped"}
+            </span>
+          ) : null}
+        </div>
+
+        {mobileCurrentRow ? (
+          <>
+            <div className={styles.mobileMappingCard}>
+              <div className={styles.mobileFieldGroup}>
+                <span className={styles.mobileFieldLabel}>
+                  Template placeholder
+                </span>
+                <code className={styles.mobilePlaceholderCode}>
+                  {`{{${mobileCurrentRow.placeholder}}}`}
+                </code>
+              </div>
+
+              <div className={styles.mobileFieldGroup}>
+                <span className={styles.mobileFieldLabel}>CSV column</span>
+                <select
+                  value={mobileCurrentRow.selectedColumn || ""}
+                  onChange={(event) =>
+                    handleMappingChange(
+                      mobileCurrentRow.placeholder,
+                      event.target.value,
+                    )
+                  }
+                  className={`${styles.columnSelect} ${
+                    mobileCurrentRow.isInvalidColumn ||
+                    mobileCurrentRow.isDuplicateColumn
+                      ? styles.warning
+                      : ""
+                  }`}
+                >
+                  <option value="">Select column</option>
+                  {csvData?.headers.map((header) => (
+                    <option key={header} value={header}>
+                      {header}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.mobileFieldGroup}>
+                <span className={styles.mobileFieldLabel}>
+                  {previewRowNumber
+                    ? `Preview row ${previewRowNumber}`
+                    : "Preview sample"}
+                </span>
+                {mobileCurrentRow.selectedColumn &&
+                previewRow?.[mobileCurrentRow.selectedColumn] ? (
+                  <div className={styles.mobilePreviewValue}>
+                    {previewRow[mobileCurrentRow.selectedColumn]}
+                  </div>
+                ) : (
+                  <div className={styles.mobilePreviewEmpty}>
+                    No preview data for the current selection.
+                  </div>
+                )}
+              </div>
+
+              {mobileIssueMessages.length > 0 && (
+                <div className={styles.mobileIssueBlock}>
+                  <span className={styles.mobileIssueTitle}>Needs fixing</span>
+                  <div className={styles.mobileIssueList}>
+                    {mobileIssueMessages.map((message) => (
+                      <span key={message} className={styles.mobileIssueItem}>
+                        {message}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className={styles.mobileNavRow}>
+              <button
+                type="button"
+                className={styles.mobileNavButton}
+                onClick={() => jumpToMobileIndex(mobileCurrentIndex - 1)}
+                disabled={mobileCurrentIndex <= 0}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className={styles.mobileNavButton}
+                onClick={() => jumpToMobileIndex(nextUnresolvedIndex)}
+                disabled={nextUnresolvedIndex === -1}
+              >
+                Next unresolved
+              </button>
+              <button
+                type="button"
+                className={`${styles.mobileNavButton} ${styles.mobileNavButtonPrimary}`}
+                onClick={() => jumpToMobileIndex(mobileCurrentIndex + 1)}
+                disabled={mobileCurrentIndex >= visibleRows.length - 1}
+              >
+                Next
+              </button>
+            </div>
+
+            <div className={styles.mobileJumpStrip}>
+              <span className={styles.mobileJumpLabel}>Jump to</span>
+              <div className={styles.mobileJumpList}>
+                {visibleRows.map((row, index) => (
+                  <button
+                    key={row.placeholder}
+                    type="button"
+                    className={`${styles.mobileJumpButton} ${
+                      index === mobileCurrentIndex
+                        ? styles.mobileJumpButtonActive
+                        : ""
+                    } ${row.rowHasIssue ? styles.mobileJumpButtonWarning : ""}`}
+                    onClick={() => jumpToMobileIndex(index)}
+                  >
+                    <span className={styles.mobileJumpIndex}>{index + 1}</span>
+                    <span className={styles.mobileJumpText}>{row.placeholder}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className={styles.emptyFilteredState}>
+            No placeholders match this filter.
+          </div>
+        )}
+      </div>
+
       <div className={styles.mappingGrid}>
-        <div className={styles.headerRow}>
+        <div className={styles.gridHeader}>
           <div className={styles.placeholderHeader}>Template Placeholder</div>
           <div className={styles.columnHeader}>CSV Column</div>
           <div className={styles.previewHeader}>Preview Data</div>
@@ -328,24 +592,6 @@ export const DataMapping: React.FC = () => {
             No placeholders match this filter.
           </div>
         )}
-      </div>
-
-      <div className={styles.actions}>
-        <button
-          onClick={handleAutoSuggest}
-          className={styles.suggestButton}
-          disabled={autoSuggestedMapping}
-        >
-          Auto-Suggest Mapping
-        </button>
-
-        <button onClick={handleResetToDefault} className={styles.resetButton}>
-          Use Default Mapping
-        </button>
-
-        <button onClick={handleClearMapping} className={styles.clearButton}>
-          Clear All
-        </button>
       </div>
 
       {isReadyForPreview() && (

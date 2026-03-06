@@ -56,6 +56,13 @@ interface FileUploadProps {
   multiple?: boolean;
 }
 
+const compareStoredFiles = (a: StoredFile, b: StoredFile) => {
+  const uploadedAtDelta =
+    new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
+  if (uploadedAtDelta !== 0) return uploadedAtDelta;
+  return a.fileName.localeCompare(b.fileName);
+};
+
 export const FileUpload: React.FC<FileUploadProps> = ({
   accept = ".csv",
   maxSize = FILE_CONSTRAINTS.MAX_CSV_SIZE,
@@ -91,6 +98,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(
     () => new Set(getSelection("csv") as string[]),
   );
+  const [historyRowCounts, setHistoryRowCounts] = useState<
+    Record<string, number>
+  >({});
   const addFilesInputRef = useRef<HTMLInputElement>(null);
   const acceptedFileRules = useMemo(
     () => parseAcceptedFileRules(accept),
@@ -129,6 +139,32 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       window.removeEventListener("file-history-updated", handleHistorySync);
     };
   }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadRowCounts = async () => {
+      const counts = await Promise.all(
+        historyItems.map(async (item) => {
+          try {
+            const parsed = await parseCSVContent(item.content, item.fileName);
+            return [item.id, parsed.rows.length] as const;
+          } catch {
+            return [item.id, 0] as const;
+          }
+        }),
+      );
+
+      if (isCancelled) return;
+      setHistoryRowCounts(Object.fromEntries(counts));
+    };
+
+    void loadRowCounts();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [historyItems]);
 
   const applyCombinedCsvData = useCallback(
     (combinedData: typeof csvData, fileCount = 1) => {
@@ -397,19 +433,18 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     setSelectedRowIndices,
   ]);
 
-  const historyByDay = useMemo(() => {
-    return historyItems.reduce<Record<string, StoredFile[]>>((acc, item) => {
-      const key = new Date(item.uploadedAt).toISOString().slice(0, 10);
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(item);
-      return acc;
-    }, {});
-  }, [historyItems]);
-
+  const sortedHistoryItems = useMemo(
+    () => [...historyItems].sort(compareStoredFiles),
+    [historyItems],
+  );
   const todayKey = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const historyDayKeys = useMemo(
-    () => Object.keys(historyByDay).sort((a, b) => b.localeCompare(a)),
-    [historyByDay],
+  const hasTodayHistory = useMemo(
+    () =>
+      sortedHistoryItems.some(
+        (item) =>
+          new Date(item.uploadedAt).toISOString().slice(0, 10) === todayKey,
+      ),
+    [sortedHistoryItems, todayKey],
   );
 
   const toggleHistorySelection = useCallback(
@@ -426,13 +461,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   );
 
   const handleSelectToday = useCallback(() => {
-    const todaysItems = historyByDay[todayKey] || [];
+    const todaysItems = sortedHistoryItems.filter(
+      (item) =>
+        new Date(item.uploadedAt).toISOString().slice(0, 10) === todayKey,
+    );
     const ids = resolveTodayHistorySelection({
       todaysIds: todaysItems.map((item) => item.id),
       multiple,
     });
     setSelectedHistoryIds(new Set(ids));
-  }, [historyByDay, multiple, todayKey]);
+  }, [multiple, sortedHistoryItems, todayKey]);
 
   const handleUseSelectedHistory = useCallback(async () => {
     if (selectedHistory.length === 0) return;
@@ -521,6 +559,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </>
       }
       subText={`Maximum file size: ${Math.round(maxSize / 1024 / 1024)}MB per file`}
+      browseLabel={multiple ? "Browse CSV Files" : "Browse CSV File"}
+      onBrowseClick={handleClick}
       onClick={handleClick}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -560,43 +600,64 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       {historyItems.length > 0 ? (
         <div className={styles.historySection}>
           <div className={styles.historyHeader}>
-            <div>
-              <h4>Previous CSV Files</h4>
+            <div className={styles.historyTitleBlock}>
+              <h4>Recent CSV Files</h4>
               <p className={styles.historyHint}>
-                Select one or more files to reuse.
+                Reuse or append a previous upload when you need it.
               </p>
+            </div>
+            <div className={styles.historyHeaderActions}>
+              <span className={styles.historyMetaCount}>
+                {historyItems.length} saved
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.historyToolbar}>
+            <div className={styles.historySelectionSummary}>
+              {selectedHistory.length > 0
+                ? `${selectedHistory.length} selected`
+                : "Nothing selected"}
             </div>
             <UploadPanelButton
               variant="ghost"
               onClick={handleSelectToday}
-              disabled={!historyByDay[todayKey]?.length}
+              disabled={!hasTodayHistory}
             >
               Select Today&apos;s Files
             </UploadPanelButton>
           </div>
 
+          <div className={styles.historyColumns} aria-hidden="true">
+            <span>File</span>
+            <span>Rows</span>
+            <span>Saved</span>
+          </div>
           <div className={styles.historyList}>
-            {historyDayKeys.map((dayKey) => (
-              <div key={dayKey} className={styles.historyGroup}>
-                <div className={styles.historyGroupLabel}>
-                  {new Date(dayKey).toLocaleDateString()}
+            {sortedHistoryItems.map((item) => (
+              <label
+                key={item.id}
+                className={`${styles.historyItem} ${
+                  selectedHistoryIds.has(item.id)
+                    ? styles.historyItemSelected
+                    : ""
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedHistoryIds.has(item.id)}
+                  onChange={() => toggleHistorySelection(item.id)}
+                />
+                <div className={styles.historyDetails}>
+                  <span className={styles.historyName}>{item.fileName}</span>
                 </div>
-                {historyByDay[dayKey].map((item) => (
-                  <label key={item.id} className={styles.historyItem}>
-                    <input
-                      type="checkbox"
-                      checked={selectedHistoryIds.has(item.id)}
-                      onChange={() => toggleHistorySelection(item.id)}
-                    />
-                    <div className={styles.historyDetails}>
-                      <span className={styles.historyName}>{item.fileName}</span>
-                      <span className={styles.historyMeta}>
-                        Uploaded {new Date(item.uploadedAt).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  </label>
-                ))}
-              </div>
+                <span className={styles.historySize}>
+                  {historyRowCounts[item.id] ?? 0}
+                </span>
+                <span className={styles.historyTime}>
+                  {new Date(item.uploadedAt).toLocaleDateString()}
+                </span>
+              </label>
             ))}
           </div>
 
@@ -624,19 +685,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       ) : null}
 
-      <UploadPanelActions>
-        <UploadPanelButton variant="primary" onClick={handleClick}>
-          Browse Files
-        </UploadPanelButton>
-        {csvData ? (
+      {csvData ? (
+        <UploadPanelActions>
           <UploadPanelButton onClick={handleAddFilesClick}>
             Add Files
           </UploadPanelButton>
-        ) : null}
-        <UploadPanelButton onClick={handleClearData}>
-          Clear Data
-        </UploadPanelButton>
-      </UploadPanelActions>
+          <UploadPanelButton onClick={handleClearData}>
+            Clear Data
+          </UploadPanelButton>
+        </UploadPanelActions>
+      ) : null}
     </UploadPanel>
   );
 };

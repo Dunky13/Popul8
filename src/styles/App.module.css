@@ -132,6 +132,51 @@
   scrollbar-width: thin;
 }
 
+.mobileWorkflowNav {
+  display: none;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.mobileWorkflowButton {
+  appearance: none;
+  border: 1px solid var(--line-subtle);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  border-radius: 10px;
+  min-height: 2.25rem;
+  padding: 0.38rem 0.72rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.mobileWorkflowButton:disabled {
+  opacity: 0.46;
+}
+
+.mobileWorkflowSummary {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  padding: 0.42rem 0.55rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 10px;
+  background: var(--surface-panel);
+}
+
+.mobileWorkflowMeta,
+.mobileWorkflowDetail {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.mobileWorkflowSummary strong {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
 .navigationScroller::-webkit-scrollbar {
   height: 0.45rem;
 }
@@ -639,18 +684,18 @@
 .uploadStage {
   border: 1px solid var(--line-subtle);
   border-radius: 14px;
-  padding: 1rem;
+  padding: 0.9rem;
   background: var(--surface-panel);
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.75rem;
   width: 100%;
 }
 
 .uploadStageHeader {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 0.9fr);
-  gap: 0.9rem;
+  gap: 0.7rem;
   align-items: start;
 }
 
@@ -681,7 +726,7 @@
 }
 
 .uploadStageDescription {
-  margin: 0.35rem 0 0;
+  margin: 0.25rem 0 0;
   font-size: 0.88rem;
   line-height: 1.45;
   color: var(--text-secondary);
@@ -692,15 +737,15 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .uploadStageCheck {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  min-height: 2rem;
-  padding: 0.3rem 0.55rem;
+  min-height: 1.9rem;
+  padding: 0.26rem 0.52rem;
   border: 1px solid var(--line-subtle);
   border-radius: 8px;
   background: var(--surface-panel-strong);
@@ -721,7 +766,7 @@
 .uploadCoreGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.95rem;
+  gap: 0.8rem;
   align-items: stretch;
 }
 
@@ -740,7 +785,7 @@
   background: color-mix(in srgb, var(--primary-light) 40%, var(--surface-panel));
   color: var(--primary-color);
   border-radius: 8px;
-  padding: 0.4rem 0.8rem;
+  padding: 0.34rem 0.72rem;
   font-size: 0.76rem;
   font-weight: 800;
   line-height: 1;
@@ -757,7 +802,7 @@
 
 .uploadStageFooter {
   border-top: 1px solid var(--line-subtle);
-  padding-top: 0.75rem;
+  padding-top: 0.65rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -984,6 +1029,14 @@
   .subtitle,
   .stepDetail {
     display: none;
+  }
+
+  .navigationScroller {
+    display: none;
+  }
+
+  .mobileWorkflowNav {
+    display: flex;
   }
 
   .workflowStats {

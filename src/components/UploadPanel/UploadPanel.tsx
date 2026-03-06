@@ -17,6 +17,8 @@ interface UploadPanelProps {
   dragText: ReactNode;
   dropText: ReactNode;
   subText?: ReactNode;
+  browseLabel: ReactNode;
+  onBrowseClick: () => void;
   onClick: MouseEventHandler<HTMLDivElement>;
   onDragOver: DragEventHandler<HTMLDivElement>;
   onDragLeave: DragEventHandler<HTMLDivElement>;
@@ -47,6 +49,8 @@ export function UploadPanel({
   dragText,
   dropText,
   subText,
+  browseLabel,
+  onBrowseClick,
   onClick,
   onDragOver,
   onDragLeave,
@@ -78,6 +82,18 @@ export function UploadPanel({
             <>
               <p className={styles.dropText}>{dropText}</p>
               {subText ? <p className={styles.subText}>{subText}</p> : null}
+              <div className={styles.dropZoneActions}>
+                <button
+                  type="button"
+                  className={styles.browseAction}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onBrowseClick();
+                  }}
+                >
+                  {browseLabel}
+                </button>
+              </div>
             </>
           )}
         </div>

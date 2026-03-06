@@ -222,6 +222,23 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const placeholdersTotal = svgTemplate?.placeholders.length ?? 0;
   const recordCount = csvData?.rows.length ?? 0;
   const selectedCount = selectedRowIndices.length;
+  const currentStepItem =
+    stepsWithState.find((item) => item.step === currentStep) ?? stepsWithState[0];
+  const currentNavIndex = stepsWithState.findIndex(
+    (item) => item.step === currentStep,
+  );
+  const previousAvailableStep =
+    currentNavIndex > 0
+      ? [...stepsWithState.slice(0, currentNavIndex)]
+          .reverse()
+          .find((item) => item.state.isAvailable)?.step
+      : undefined;
+  const nextAvailableStep =
+    currentNavIndex >= 0
+      ? stepsWithState
+          .slice(currentNavIndex + 1)
+          .find((item) => item.state.isAvailable)?.step
+      : undefined;
   const mappingSummary =
     placeholdersTotal === 0
       ? { value: "0", label: "fields detected" }
@@ -320,6 +337,42 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               );
             })}
           </nav>
+        </div>
+
+        <div className={styles.mobileWorkflowNav}>
+          <button
+            type="button"
+            className={styles.mobileWorkflowButton}
+            onClick={() => {
+              if (!previousAvailableStep) return;
+              const { setCurrentStep } = useAppStore.getState();
+              setCurrentStep(previousAvailableStep);
+            }}
+            disabled={!previousAvailableStep}
+          >
+            Back
+          </button>
+          <div className={styles.mobileWorkflowSummary}>
+            <span className={styles.mobileWorkflowMeta}>
+              Step {currentStepIndex} of 5
+            </span>
+            <strong>{currentStepItem.label}</strong>
+            <span className={styles.mobileWorkflowDetail}>
+              {currentStepItem.detail}
+            </span>
+          </div>
+          <button
+            type="button"
+            className={styles.mobileWorkflowButton}
+            onClick={() => {
+              if (!nextAvailableStep) return;
+              const { setCurrentStep } = useAppStore.getState();
+              setCurrentStep(nextAvailableStep);
+            }}
+            disabled={!nextAvailableStep}
+          >
+            Next
+          </button>
         </div>
       </div>
     </header>

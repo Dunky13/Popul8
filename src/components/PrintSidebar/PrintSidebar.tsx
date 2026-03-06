@@ -421,6 +421,7 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
     rows: printLayout.rows + 1,
     columns: printLayout.columns + 1,
   });
+  const [showFieldSizeControls, setShowFieldSizeControls] = useState(false);
   const gridCollapseTimeoutRef = useRef<number | null>(null);
 
   const gridBaseRows = gridHover?.rows ?? printLayout.rows;
@@ -558,8 +559,39 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
 
   return (
     <aside className={`${styles.sidebar} ${className ?? ""}`.trim()}>
+      <div className={`${styles.sectionCard} ${styles.summaryCard}`}>
+        <div className={styles.summaryHeader}>
+          <div>
+            <p className={styles.summaryEyebrow}>Print controls</p>
+            <h4>Sheet settings</h4>
+          </div>
+          <span className={styles.summaryTarget}>
+            {selectedResizeCardIds.length === 0
+              ? "All cards targeted"
+              : `${selectedResizeCardIds.length} targeted`}
+          </span>
+        </div>
+        <div className={styles.summaryStats}>
+          <div className={styles.summaryStat}>
+            <span>Cards / sheet</span>
+            <strong>{cardsPerSheet}</strong>
+          </div>
+          <div className={styles.summaryStat}>
+            <span>Sheets</span>
+            <strong>{estimatedSheetCount}</strong>
+          </div>
+          <div className={styles.summaryStat}>
+            <span>Page</span>
+            <strong>{printLayout.pageSize}</strong>
+          </div>
+        </div>
+      </div>
+
       <div className={styles.sectionCard}>
         <div className={styles.sectionHeader}>Page Setup</div>
+        <p className={styles.sectionIntro}>
+          Set the sheet size, orientation, margin, and card grid.
+        </p>
         <div className={styles.layoutControls}>
           <div className={styles.controlGroup}>
             <label className={styles.controlLabel} htmlFor="page-size-select">
@@ -754,30 +786,57 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
           )}
         </div>
 
-        {svgTemplate?.placeholders.length ? (
-          <ResizeFieldList
-            key={
-              selectedResizeCardIds.length
-                ? selectedResizeCardIds.join("|")
-                : "__all__"
-            }
-            data={{
-              placeholders: svgTemplate.placeholders,
-              templateContent: svgTemplate.content,
-              fieldBaseSizes,
-            }}
-            resize={{
-              rules: textResizeRules,
-              onChangeRules: setTextResizeRules,
-              selectedCardIds: selectedResizeCardIds,
-            }}
-          />
-        ) : (
-          <div className={styles.resizeSection}>
-            <div className={styles.resizeSectionTitle}>Field Sizes</div>
-            <div className={styles.resizeEmpty}>No template fields detected.</div>
-          </div>
-        )}
+        <div className={styles.resizeDisclosure}>
+          <button
+            type="button"
+            className={styles.resizeDisclosureButton}
+            onClick={() => setShowFieldSizeControls((value) => !value)}
+            aria-expanded={showFieldSizeControls}
+          >
+            <span>
+              <span className={styles.resizeSectionTitle}>
+                Field Size Overrides
+              </span>
+              <span className={styles.resizeDisclosureMeta}>
+                {svgTemplate?.placeholders.length
+                  ? `${svgTemplate.placeholders.length} field${
+                      svgTemplate.placeholders.length === 1 ? "" : "s"
+                    } available`
+                  : "No template fields detected"}
+              </span>
+            </span>
+            <span className={styles.resizeDisclosureIndicator} aria-hidden="true">
+              {showFieldSizeControls ? "Hide" : "Show"}
+            </span>
+          </button>
+
+          {showFieldSizeControls &&
+            (svgTemplate?.placeholders.length ? (
+              <ResizeFieldList
+                key={
+                  selectedResizeCardIds.length
+                    ? selectedResizeCardIds.join("|")
+                    : "__all__"
+                }
+                data={{
+                  placeholders: svgTemplate.placeholders,
+                  templateContent: svgTemplate.content,
+                  fieldBaseSizes,
+                }}
+                resize={{
+                  rules: textResizeRules,
+                  onChangeRules: setTextResizeRules,
+                  selectedCardIds: selectedResizeCardIds,
+                }}
+              />
+            ) : (
+              <div className={styles.resizeSection}>
+                <div className={styles.resizeEmpty}>
+                  No template fields detected.
+                </div>
+              </div>
+            ))}
+        </div>
       </div>
     </aside>
   );

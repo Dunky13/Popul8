@@ -15,7 +15,73 @@
   border-radius: 14px;
   padding: 0.78rem;
   background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
-  box-shadow: 0 10px 22px rgb(var(--shadow-rgb) / 0.09);
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.summaryHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.summaryEyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.summaryHeader h4 {
+  margin: 0.14rem 0 0;
+  font-size: 0.96rem;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+}
+
+.summaryTarget {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.85rem;
+  padding: 0.2rem 0.52rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  background: color-mix(in srgb, var(--bg-primary) 86%, transparent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.summaryStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.42rem;
+}
+
+.summaryStat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+  padding: 0.5rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  background: color-mix(in srgb, var(--bg-primary) 86%, transparent);
+}
+
+.summaryStat span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.summaryStat strong {
+  font-size: 0.84rem;
+  color: var(--text-primary);
 }
 
 .sectionHeader {
@@ -25,6 +91,13 @@
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.sectionIntro {
+  margin: 0 0 0.55rem;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
 }
 
 .layoutControls {
@@ -239,6 +312,49 @@
   text-transform: uppercase;
 }
 
+.resizeDisclosure {
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 84%, transparent);
+  padding-top: 0.72rem;
+}
+
+.resizeDisclosureButton {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-primary) 84%, transparent);
+  color: var(--text-primary);
+  padding: 0.58rem 0.64rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.resizeDisclosureButton:hover {
+  border-color: color-mix(in srgb, var(--accent-cyan) 36%, transparent);
+}
+
+.resizeDisclosureButton .resizeSectionTitle {
+  display: block;
+  margin-bottom: 0.16rem;
+}
+
+.resizeDisclosureMeta {
+  display: block;
+  font-size: 0.73rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.resizeDisclosureIndicator {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
 .resizeCardList {
   display: flex;
   flex-direction: column;
@@ -374,6 +490,10 @@
 @media (max-width: 768px) {
   .sectionCard {
     padding: 0.92rem;
+  }
+
+  .summaryStats {
+    grid-template-columns: 1fr;
   }
 
   .layoutControls {

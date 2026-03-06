@@ -21,7 +21,11 @@ import {
   setSelection,
   type StoredFile,
 } from "../../utils/fileHistory";
-import { parseSVGTemplate, readSVGFile } from "../../utils/svgManipulator";
+import {
+  extractPlaceholders,
+  parseSVGTemplate,
+  readSVGFile,
+} from "../../utils/svgManipulator";
 import { handleTemplateValidationMessages } from "../../utils/templateValidation";
 import { validateTemplate } from "../../utils/validationUtils";
 import Icon from "../Icon/Icon";
@@ -31,6 +35,13 @@ import {
   UploadPanelButton,
 } from "../UploadPanel/UploadPanel";
 import styles from "./TemplateUpload.module.css";
+
+const compareStoredFiles = (a: StoredFile, b: StoredFile) => {
+  const uploadedAtDelta =
+    new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
+  if (uploadedAtDelta !== 0) return uploadedAtDelta;
+  return a.fileName.localeCompare(b.fileName);
+};
 
 export const TemplateUpload: React.FC = () => {
   const {
@@ -198,20 +209,20 @@ export const TemplateUpload: React.FC = () => {
     [historyItems, selectedHistoryId],
   );
 
-  const historyByDay = useMemo(() => {
-    return historyItems.reduce<Record<string, StoredFile[]>>((acc, item) => {
-      const key = new Date(item.uploadedAt).toISOString().slice(0, 10);
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(item);
-      return acc;
-    }, {});
-  }, [historyItems]);
-
-  const historyDayKeys = useMemo(
-    () => Object.keys(historyByDay).sort((a, b) => b.localeCompare(a)),
-    [historyByDay],
+  const sortedHistoryItems = useMemo(
+    () => [...historyItems].sort(compareStoredFiles),
+    [historyItems],
   );
-
+  const historyPlaceholderCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        historyItems.map((item) => [
+          item.id,
+          extractPlaceholders(item.content).length,
+        ]),
+      ),
+    [historyItems],
+  );
   const handleUseSelectedHistory = useCallback(async () => {
     if (!selectedHistory) return;
     try {
@@ -271,6 +282,8 @@ export const TemplateUpload: React.FC = () => {
       subText={`Maximum file size: ${Math.round(
         FILE_CONSTRAINTS.MAX_SVG_SIZE / 1024 / 1024,
       )}MB • Only SVG files accepted`}
+      browseLabel="Browse SVG File"
+      onBrowseClick={handleClick}
       onClick={handleClick}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -293,82 +306,57 @@ export const TemplateUpload: React.FC = () => {
         ) : undefined
       }
     >
-      {svgTemplate ? (
-        <div className={styles.templateInfo}>
-          <h4>Template Information</h4>
-          <div className={styles.infoGrid}>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>File Name:</span>
-              <span className={styles.infoValue}>
-                {svgTemplate.fileName || "Unknown"}
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Placeholders:</span>
-              <span className={styles.infoValue}>
-                {svgTemplate.placeholders.length}
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Element IDs:</span>
-              <span className={styles.infoValue}>
-                {svgTemplate.elementIds.length}
-              </span>
-            </div>
-          </div>
-
-          <div className={styles.placeholdersList}>
-            <span className={styles.placeholdersLabel}>
-              Detected Placeholders:
-            </span>
-            <div className={styles.placeholders}>
-              {svgTemplate.placeholders.length > 0 ? (
-                svgTemplate.placeholders.map((placeholder) => (
-                  <span key={placeholder} className={styles.placeholder}>
-                    {placeholder}
-                  </span>
-                ))
-              ) : (
-                <span className={styles.placeholder}>
-                  None yet - add them in the Edit Template step.
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
       {historyItems.length > 0 ? (
         <div className={styles.historySection}>
           <div className={styles.historyHeader}>
-            <div>
-              <h4>Previous SVG Templates</h4>
-              <p className={styles.historyHint}>Pick one template to reuse.</p>
+            <div className={styles.historyTitleBlock}>
+              <h4>Recent SVG Templates</h4>
+              <p className={styles.historyHint}>
+                Reuse an existing template when needed.
+              </p>
+            </div>
+            <div className={styles.historyHeaderActions}>
+              <span className={styles.historyMetaCount}>
+                {historyItems.length} saved
+              </span>
             </div>
           </div>
+          <div className={styles.historyToolbar}>
+            <div className={styles.historySelectionSummary}>
+              {selectedHistory ? "1 selected" : "Nothing selected"}
+            </div>
+          </div>
+          <div className={styles.historyColumns} aria-hidden="true">
+            <span>Template</span>
+            <span>Placeholders</span>
+            <span>Saved</span>
+          </div>
           <div className={styles.historyList}>
-            {historyDayKeys.map((dayKey) => (
-              <div key={dayKey} className={styles.historyGroup}>
-                <div className={styles.historyGroupLabel}>
-                  {new Date(dayKey).toLocaleDateString()}
+            {sortedHistoryItems.map((item) => (
+              <label
+                key={item.id}
+                className={`${styles.historyItem} ${
+                  selectedHistoryId === item.id
+                    ? styles.historyItemSelected
+                    : ""
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="svg-history"
+                  checked={selectedHistoryId === item.id}
+                  onChange={() => setSelectedHistoryId(item.id)}
+                />
+                <div className={styles.historyDetails}>
+                  <span className={styles.historyName}>{item.fileName}</span>
                 </div>
-                {historyByDay[dayKey].map((item) => (
-                  <label key={item.id} className={styles.historyItem}>
-                    <input
-                      type="radio"
-                      name="svg-history"
-                      checked={selectedHistoryId === item.id}
-                      onChange={() => setSelectedHistoryId(item.id)}
-                    />
-                    <div className={styles.historyDetails}>
-                      <span className={styles.historyName}>{item.fileName}</span>
-                      <span className={styles.historyMeta}>
-                        Uploaded {new Date(item.uploadedAt).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  </label>
-                ))}
-              </div>
+                <span className={styles.historyCount}>
+                  {historyPlaceholderCounts[item.id] ?? 0}
+                </span>
+                <span className={styles.historyTime}>
+                  {new Date(item.uploadedAt).toLocaleDateString()}
+                </span>
+              </label>
             ))}
           </div>
 
@@ -390,11 +378,8 @@ export const TemplateUpload: React.FC = () => {
         </div>
       ) : null}
 
-      <UploadPanelActions>
-        <UploadPanelButton variant="primary" onClick={handleClick}>
-          Browse Files
-        </UploadPanelButton>
-        {svgTemplate ? (
+      {svgTemplate ? (
+        <UploadPanelActions>
           <UploadPanelButton
             onClick={handleDownloadBootstrappedCsv}
             disabled={svgTemplate.placeholders.length === 0}
@@ -406,13 +391,11 @@ export const TemplateUpload: React.FC = () => {
           >
             Download Bootstrapped CSV
           </UploadPanelButton>
-        ) : null}
-        {svgTemplate ? (
           <UploadPanelButton onClick={handleClearTemplate}>
             Clear Template
           </UploadPanelButton>
-        ) : null}
-      </UploadPanelActions>
+        </UploadPanelActions>
+      ) : null}
     </UploadPanel>
   );
 };

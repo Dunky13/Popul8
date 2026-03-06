@@ -2,71 +2,112 @@
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  padding: 0.72rem;
-  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
-  border-radius: 13px;
-  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
+  padding: 0.7rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 12px;
+  background: var(--surface-panel-strong);
 }
 
 .historyHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.55rem;
+  gap: 0.7rem;
+}
+
+.historyTitleBlock {
+  min-width: 0;
 }
 
 .historyHeader h4 {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.83rem;
   color: var(--text-primary);
 }
 
 .historyHint {
-  margin: 0.2rem 0 0;
-  font-size: 0.73rem;
+  margin: 0.18rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.historyHeaderActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.historyMetaCount {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 8px;
+  background: var(--surface-panel);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.historyToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.historySelectionSummary {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.historyColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4rem 5.5rem;
+  gap: 0.6rem;
+  padding: 0 0.35rem;
+  font-size: 0.66rem;
+  font-weight: 700;
   color: var(--text-muted);
 }
 
 .historyList {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
-  max-height: 220px;
+  gap: 0.35rem;
+  max-height: 240px;
   overflow-y: auto;
-  padding-right: 0.25rem;
-}
-
-.historyGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.34rem;
-}
-
-.historyGroupLabel {
-  font-size: 0.69rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  padding-right: 0.15rem;
 }
 
 .historyItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  padding: 0.46rem 0.52rem;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--bg-primary) 90%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-color) 88%, transparent);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 4rem 5.5rem;
+  align-items: center;
+  gap: 0.55rem 0.6rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: var(--surface-panel);
+  border: 1px solid var(--line-subtle);
   cursor: pointer;
 }
 
 .historyItem:hover {
-  border-color: color-mix(in srgb, var(--accent-cyan) 42%, transparent);
+  border-color: color-mix(in srgb, var(--accent-cyan) 30%, var(--line-strong));
+}
+
+.historyItemSelected {
+  border-color: color-mix(in srgb, var(--accent-cyan) 42%, var(--line-subtle));
+  background: color-mix(in srgb, var(--primary-light) 34%, var(--surface-panel));
 }
 
 .historyItem input {
-  margin-top: 0.12rem;
+  margin: 0;
 }
 
 .historyDetails {
@@ -84,12 +125,48 @@
 }
 
 .historyMeta {
-  font-size: 0.7rem;
+  font-size: 0.69rem;
   color: var(--text-muted);
 }
 
+.historySize {
+  font-size: 0.69rem;
+  color: var(--text-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.historyTime {
+  font-size: 0.69rem;
+  color: var(--text-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
 @media (max-width: 768px) {
-  .historyHeader {
+  .historyHeader,
+  .historyHeaderActions {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .historyToolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .historyColumns {
+    display: none;
+  }
+
+  .historyItem {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.3rem 0.55rem;
+  }
+
+  .historySize,
+  .historyTime {
+    grid-column: 2;
+    text-align: left;
   }
 }

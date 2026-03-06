@@ -38,10 +38,11 @@ export const TemplateEditorHeader: React.FC<TemplateEditorHeaderProps> = ({
   return (
     <div className={styles.editorHeader}>
       <div className={styles.headerIntro}>
+        <p className={styles.editorEyebrow}>Template workspace</p>
         <h3>Template Editor</h3>
         <p>
-          Draw a region on the canvas, assign a placeholder name, and tune styles
-          before mapping data.
+          Keep the canvas primary, then use the inspector to refine placeholders
+          and advanced SVG behavior.
         </p>
       </div>
       <div className={styles.snapshotInline}>
@@ -75,32 +76,31 @@ export const TemplateEditorHeader: React.FC<TemplateEditorHeaderProps> = ({
           />
           <span>Advanced controls</span>
         </label>
-        {isAdvanced && (
-          <div className={styles.viewToggle}>
-            <button
-              className={`${styles.toggleButton} ${
-                viewMode === "visual" ? styles.toggleActive : ""
-              }`}
-              onClick={() => onSetViewMode("visual")}
-            >
-              <span className={styles.buttonIcon} aria-hidden="true">
-                <Icon name="visibility" size={16} />
-              </span>
-              Visual
-            </button>
-            <button
-              className={`${styles.toggleButton} ${
-                viewMode === "code" ? styles.toggleActive : ""
-              }`}
-              onClick={() => onSetViewMode("code")}
-            >
-              <span className={styles.buttonIcon} aria-hidden="true">
-                <Icon name="code" size={16} />
-              </span>
-              Code
-            </button>
-          </div>
-        )}
+        <div className={styles.viewToggle}>
+          <button
+            className={`${styles.toggleButton} ${
+              viewMode === "visual" ? styles.toggleActive : ""
+            }`}
+            onClick={() => onSetViewMode("visual")}
+          >
+            <span className={styles.buttonIcon} aria-hidden="true">
+              <Icon name="visibility" size={16} />
+            </span>
+            Visual
+          </button>
+          <button
+            className={`${styles.toggleButton} ${
+              viewMode === "code" ? styles.toggleActive : ""
+            }`}
+            onClick={() => onSetViewMode("code")}
+            disabled={!isAdvanced}
+          >
+            <span className={styles.buttonIcon} aria-hidden="true">
+              <Icon name="code" size={16} />
+            </span>
+            Code
+          </button>
+        </div>
       </div>
       <div className={styles.historyActions}>
         <button

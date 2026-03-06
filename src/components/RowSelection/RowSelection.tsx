@@ -92,6 +92,10 @@ export const RowSelection: React.FC = () => {
     () => new Set(filteredRowIndices),
     [filteredRowIndices]
   );
+  const previewHeaders = useMemo(
+    () => csvData?.headers.slice(0, 3) ?? [],
+    [csvData?.headers]
+  );
 
   const allFilteredSelected =
     filteredRowIndices.length > 0 &&
@@ -191,16 +195,27 @@ export const RowSelection: React.FC = () => {
 
   return (
     <div className={styles.rowSelection}>
-      <div className={styles.headerRow}>
-        <h3>Select Rows for Output</h3>
-        <span className={styles.selectionBadge}>
-          {selectedCount} selected
-        </span>
+      <div className={styles.header}>
+        <div className={styles.headerIntro}>
+          <p className={styles.eyebrow}>Output selection</p>
+          <div className={styles.headerRow}>
+            <h3>Select Rows for Output</h3>
+          </div>
+          <p>
+            Choose which CSV rows should generate cards. Unselected rows stay
+            out of the preview and print output.
+          </p>
+        </div>
+        <div className={styles.headerStats}>
+          <span className={styles.selectionBadge}>{selectedCount} selected</span>
+          <span className={styles.headerStat}>{filteredRowIndices.length} visible</span>
+          {missingRequiredRowIndices.length > 0 ? (
+            <span className={`${styles.headerStat} ${styles.headerStatWarning}`}>
+              {missingRequiredRowIndices.length} required rows flagged
+            </span>
+          ) : null}
+        </div>
       </div>
-      <p>
-        Choose which CSV rows should generate cards. Unselected rows stay out of
-        the preview and print output.
-      </p>
 
       <div className={styles.toolbar}>
         <div className={styles.filterWrap}>
@@ -249,9 +264,53 @@ export const RowSelection: React.FC = () => {
           Reset required overrides
         </button>
         <span className={styles.summary}>{selectionSummary}</span>
-        <span className={styles.filterMeta}>
-          {filteredRowIndices.length} visible
-        </span>
+      </div>
+
+      <div className={styles.mobileCards}>
+        {filteredRowIndices.map((rowIndex) => {
+          const row = csvData?.rows[rowIndex];
+          if (!row || !csvData) return null;
+          const isSelected = selectedRowSet.has(rowIndex);
+          const isRequired = missingRequiredSet.has(rowIndex);
+          return (
+            <div
+              key={`card-${rowIndex}`}
+              className={`${styles.mobileCard} ${
+                isSelected ? styles.mobileCardSelected : ""
+              }`}
+            >
+              <div className={styles.mobileCardHeader}>
+                <div className={styles.mobileCardToggle}>
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => handleToggleRow(rowIndex)}
+                  />
+                  <span>Row {rowIndex + 1}</span>
+                </div>
+                {isRequired ? (
+                  <span className={styles.mobileCardFlag}>Required</span>
+                ) : null}
+              </div>
+              <div className={styles.mobileCardBody}>
+                {previewHeaders.map((header) => (
+                  <div key={`card-${rowIndex}-${header}`} className={styles.mobileField}>
+                    <span className={styles.mobileFieldLabel}>{header}</span>
+                    <span className={styles.mobileFieldValue}>{row[header] || "—"}</span>
+                  </div>
+                ))}
+                {csvData.headers.length > previewHeaders.length ? (
+                  <span className={styles.mobileFieldMore}>
+                    +{csvData.headers.length - previewHeaders.length} more fields
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+        {filteredRowIndices.length === 0 ? (
+          <div className={styles.mobileEmptyState}>No rows match this filter.</div>
+        ) : null}
       </div>
 
       <div className={styles.tableWrapper}>
@@ -284,7 +343,12 @@ export const RowSelection: React.FC = () => {
                       onChange={() => handleToggleRow(rowIndex)}
                     />
                   </td>
-                  <td className={styles.indexCell}>{rowIndex + 1}</td>
+                  <td className={styles.indexCell}>
+                    <span>{rowIndex + 1}</span>
+                    {missingRequiredSet.has(rowIndex) ? (
+                      <span className={styles.requiredInline}>Required</span>
+                    ) : null}
+                  </td>
                   {csvData.headers.map((header) => (
                     <td key={`${rowIndex}-${header}`} className={styles.dataCell}>
                       {row[header] || ''}
