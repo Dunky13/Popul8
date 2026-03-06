@@ -23,34 +23,34 @@ const STEP_COPY: Record<
   { label: string; title: string; description: string }
 > = {
   upload: {
-    label: "Step 1",
-    title: "Bring In Source Files",
+    label: "Step 1 of 5",
+    title: "Load Source Files",
     description:
-      "Upload your CSV dataset and SVG template to start a complete generation run.",
+      "Start with one CSV dataset and one SVG template. Reuse history stays available inside each upload panel.",
   },
   edit: {
-    label: "Step 2",
-    title: "Tweak The Template",
+    label: "Step 2 of 5",
+    title: "Review The Template",
     description:
-      "Refine placeholders, CSS, and typography directly in the editor before mapping data.",
+      "Refine placeholders, CSS, and typography in the editor before connecting any data fields.",
   },
   mapping: {
-    label: "Step 3",
-    title: "Map Data To Placeholders",
+    label: "Step 3 of 5",
+    title: "Connect Data Fields",
     description:
-      "Connect template keys to CSV columns and validate the preview row before continuing.",
+      "Match template placeholders to CSV columns and verify the sample values before continuing.",
   },
   select: {
-    label: "Step 4",
-    title: "Select Records",
+    label: "Step 4 of 5",
+    title: "Choose Output Rows",
     description:
-      "Choose the exact rows that should be rendered and included in final output pages.",
+      "Choose which CSV rows should generate cards and appear in the final print sheets.",
   },
   preview: {
-    label: "Step 5",
-    title: "Preview And Print",
+    label: "Step 5 of 5",
+    title: "Check Print Output",
     description:
-      "Review generated cards, tune print layout, and export print-ready sheets.",
+      "Review generated cards, adjust the page layout, and print the final sheets.",
   },
 };
 
@@ -217,6 +217,22 @@ export const App: React.FC = () => {
     (item) => item.done,
   ).length;
   const totalChecklistCount = flowChecklist.length;
+  const stepSnapshot = (() => {
+    switch (currentStep) {
+      case "upload":
+        return `${Number(hasCsvUpload) + Number(hasTemplateUpload)}/2 files loaded`;
+      case "edit":
+        return `${placeholderCount} placeholders detected`;
+      case "mapping":
+        return `${mappedCount}/${placeholderCount} fields mapped`;
+      case "select":
+        return `${selectedCount} rows selected`;
+      case "preview":
+        return `${records.length} cards ready`;
+      default:
+        return "";
+    }
+  })();
 
   const prevStepRef = React.useRef<StepId | null>(null);
   React.useEffect(() => {
@@ -265,19 +281,49 @@ export const App: React.FC = () => {
                 <p className={styles.stepIntroDescription}>
                   {activeStep.description}
                 </p>
+                <div className={styles.stepStatRow}>
+                  <span className={styles.stepStat}>
+                    {completedChecklistCount}/{totalChecklistCount} checks done
+                  </span>
+                  <span className={styles.stepStat}>{stepSnapshot}</span>
+                </div>
               </div>
               <div
                 className={styles.stepIntroChecklistRail}
                 aria-label="Current step checklist"
               >
+                {flowAction && (
+                  <>
+                    <button
+                      type="button"
+                      className={`${styles.primaryButton} ${styles.flowActionButton}`}
+                      disabled={!flowAction.enabled}
+                      onClick={() => {
+                        if (flowAction.enabled) {
+                          setCurrentStep(flowAction.targetStep);
+                        }
+                      }}
+                    >
+                      {flowAction.label}
+                    </button>
+                    <p
+                      className={`${styles.flowActionHelper} ${
+                        flowAction.enabled
+                          ? styles.flowActionHelperReady
+                          : styles.flowActionHelperBlocked
+                      }`}
+                    >
+                      {flowAction.helper}
+                    </p>
+                  </>
+                )}
                 <div className={styles.stepIntroChecklistSummary}>
                   <div className={styles.stepIntroChecklistSummaryText}>
                     <p className={styles.stepIntroChecklistLabel}>
-                      Step checklist
+                      Checklist
                     </p>
                     <p className={styles.stepIntroChecklistProgress}>
-                      {completedChecklistCount}/{totalChecklistCount} steps
-                      completed
+                      {completedChecklistCount}/{totalChecklistCount} items done
                     </p>
                   </div>
                   <button
@@ -290,63 +336,38 @@ export const App: React.FC = () => {
                     }}
                   >
                     <Icon name="checklist" size={14} />
-                    {isChecklistExpanded ? "Hide" : "Show"}
+                    {isChecklistExpanded ? "Hide details" : "Show details"}
                   </button>
                 </div>
-                {isChecklistExpanded && (
-                  <ul
-                    id="current-step-checklist"
-                    className={styles.flowChecklist}
-                  >
-                    {flowChecklist.map((item) => (
-                      <li
-                        key={item.label}
-                        className={`${styles.flowChecklistItem} ${
-                          item.done
-                            ? styles.flowChecklistDone
-                            : styles.flowChecklistPending
-                        }`}
-                      >
-                        <span
-                          className={styles.flowChecklistIcon}
-                          aria-hidden="true"
-                        >
-                          <Icon
-                            name={item.done ? "check" : "close"}
-                            size={14}
-                          />
-                        </span>
-                        <span>{item.label}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </div>
             </div>
-            {flowAction && (
-              <div className={styles.flowActionRow}>
-                <button
-                  type="button"
-                  className={`${styles.primaryButton} ${styles.flowActionButton}`}
-                  disabled={!flowAction.enabled}
-                  onClick={() => {
-                    if (flowAction.enabled) {
-                      setCurrentStep(flowAction.targetStep);
-                    }
-                  }}
-                >
-                  {flowAction.label}
-                </button>
-                <p
-                  className={`${styles.flowActionHelper} ${
-                    flowAction.enabled
-                      ? styles.flowActionHelperReady
-                      : styles.flowActionHelperBlocked
-                  }`}
-                >
-                  {flowAction.helper}
-                </p>
-              </div>
+            {isChecklistExpanded && (
+              <ul
+                id="current-step-checklist"
+                className={styles.flowChecklist}
+              >
+                {flowChecklist.map((item) => (
+                  <li
+                    key={item.label}
+                    className={`${styles.flowChecklistItem} ${
+                      item.done
+                        ? styles.flowChecklistDone
+                        : styles.flowChecklistPending
+                    }`}
+                  >
+                    <span
+                      className={styles.flowChecklistIcon}
+                      aria-hidden="true"
+                    >
+                      <Icon
+                        name={item.done ? "check" : "close"}
+                        size={14}
+                      />
+                    </span>
+                    <span>{item.label}</span>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
         )}

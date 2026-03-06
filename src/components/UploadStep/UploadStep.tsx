@@ -36,13 +36,13 @@ export const UploadStep: React.FC = () => {
       <section className={styles.uploadStage} aria-label="Upload workflow">
         <div className={styles.uploadStageHeader}>
           <div className={styles.uploadStageText}>
-            <p className={styles.uploadStageEyebrow}>Step 1 Workflow</p>
+            <p className={styles.uploadStageEyebrow}>Source files</p>
             <h3 className={styles.uploadStageTitle}>
-              Load source files side by side
+              Load the CSV and template
             </h3>
             <p className={styles.uploadStageDescription}>
-              Start with CSV data and an SVG template. Continue only after both
-              files are uploaded or selected from history.
+              Upload the CSV dataset and SVG template first. File history and
+              previous-run reuse stay available inside each panel.
             </p>
           </div>
           <div className={styles.uploadStageAside}>
@@ -82,7 +82,7 @@ export const UploadStep: React.FC = () => {
                 }`}
               >
                 <Icon name={canContinue ? "check" : "close"} size={12} />
-                Editor unlocked
+                Ready for editor
               </span>
 
               {hasPreviousRun && (
@@ -116,8 +116,8 @@ export const UploadStep: React.FC = () => {
             }`}
           >
             {canContinue
-              ? "Both files are loaded. Continue to edit placeholders and styling."
-              : "Upload or select both CSV and SVG files to continue."}
+              ? "Both source files are ready. Continue to the template workspace."
+              : "Load both source files before opening the template workspace."}
           </p>
           <button
             type="button"
@@ -129,7 +129,7 @@ export const UploadStep: React.FC = () => {
             }}
             disabled={!canContinue}
           >
-            Continue To Template Editing
+            Open Template Workspace
           </button>
         </div>
       </section>

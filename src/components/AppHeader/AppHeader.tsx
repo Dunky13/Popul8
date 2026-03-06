@@ -10,7 +10,6 @@ import {
 } from "../../utils/editorPreferences";
 import type { StepId } from "../../types/app";
 import type { ThemeMode } from "../../hooks/useThemeMode";
-import Icon from "../Icon/Icon";
 import { ThemeSwitcher } from "../ThemeSwitcher/ThemeSwitcher";
 import styles from "../../styles/App.module.css";
 
@@ -21,9 +20,9 @@ type StepBadgeTone = "default" | "error";
 type StepButtonProps = {
   step: StepId;
   display: {
+    index: number;
     label: string;
     detail: string;
-    icon: React.ReactElement;
     badge?: string;
     badgeTone?: StepBadgeTone;
   };
@@ -45,37 +44,31 @@ const STEP_ITEMS: Array<{
   step: StepId;
   label: string;
   detail: string;
-  icon: React.ReactElement;
 }> = [
   {
     step: "upload",
     label: "Upload",
-    detail: "CSV + SVG",
-    icon: <Icon name="upload" size={20} />,
+    detail: "Source files",
   },
   {
     step: "edit",
     label: "Template",
-    detail: "Tweak structure",
-    icon: <Icon name="edit" size={20} />,
+    detail: "Review layout",
   },
   {
     step: "mapping",
     label: "Mapping",
-    detail: "Bind keys",
-    icon: <Icon name="schema" size={20} />,
+    detail: "Connect fields",
   },
   {
     step: "select",
     label: "Selection",
-    detail: "Pick rows",
-    icon: <Icon name="checklist" size={20} />,
+    detail: "Output rows",
   },
   {
     step: "preview",
     label: "Preview",
-    detail: "Print output",
-    icon: <Icon name="print" size={20} />,
+    detail: "Print sheets",
   },
 ];
 
@@ -85,9 +78,10 @@ const StepButton: React.FC<StepButtonProps> = ({
   state,
   onActivate,
 }) => {
-  const { label, detail, icon, badge, badgeTone = "default" } = display;
+  const { index, label, detail, badge, badgeTone = "default" } = display;
   const { isActive, isCompleted, isAvailable, isReady } = state;
-  const readyBadge = isReady && !badge ? "Ready" : badge;
+  const readyBadge =
+    badge ?? (isCompleted ? "Done" : isReady ? "Ready" : undefined);
   const badgeClassName = badgeTone === "error" ? styles.stepBadgeError : "";
 
   return (
@@ -106,19 +100,16 @@ const StepButton: React.FC<StepButtonProps> = ({
     >
       <div className={styles.stepTopRow}>
         <div className={styles.stepLead}>
-          <div className={styles.stepIcon}>{icon}</div>
+          <span className={styles.stepIcon} aria-hidden="true">
+            {index}
+          </span>
           <span className={styles.stepLabel}>{label}</span>
         </div>
         <div className={styles.stepStatus}>
-          {readyBadge && (
+          {readyBadge && !isActive && (
             <span className={`${styles.stepBadge} ${badgeClassName}`}>
               {readyBadge}
             </span>
-          )}
-          {isCompleted && (
-            <div className={styles.stepCheck}>
-              <Icon name="check" size={14} />
-            </div>
           )}
         </div>
       </div>
@@ -225,15 +216,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const completedSteps = stepsWithState.filter(
     (item) => item.state.isCompleted,
   ).length;
-  const progressValue = Math.round((completedSteps / STEP_ITEMS.length) * 100);
+  const currentStepIndex =
+    STEP_ITEMS.findIndex((item) => item.step === currentStep) + 1;
 
   const placeholdersTotal = svgTemplate?.placeholders.length ?? 0;
   const recordCount = csvData?.rows.length ?? 0;
   const selectedCount = selectedRowIndices.length;
+  const mappingSummary =
+    placeholdersTotal === 0
+      ? { value: "0", label: "fields detected" }
+      : {
+          value: `${mappedPlaceholders}/${placeholdersTotal}`,
+          label: "mapped",
+        };
+  const selectionSummary =
+    recordCount === 0
+      ? { value: "0", label: "rows loaded" }
+      : { value: `${selectedCount}/${recordCount}`, label: "selected" };
 
   return (
     <header className={styles.header}>
-      <div className={styles.headerGlow} aria-hidden="true" />
       <div className={styles.headerInner}>
         <div className={styles.headerMetaRow}>
           <div className={styles.headerContent}>
@@ -245,8 +247,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <div className={styles.headerText}>
               <h1 className={styles.title}>Popul8</h1>
               <p className={styles.subtitle}>
-                CSV + SVG workflow studio for mapping, tweaking, and print-ready
-                card generation.
+                Prepare card sheets from CSV data and SVG templates.
               </p>
             </div>
           </div>
@@ -254,28 +255,25 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <div className={styles.controlRail}>
             <div className={styles.workflowStats}>
               <span className={styles.workflowStat}>
-                <strong>
-                  {selectedCount} / {recordCount}
-                </strong>{" "}
-                selected rows
+                <strong>{currentStepIndex}/5</strong> current stage
               </span>
               <span className={styles.workflowStat}>
-                <strong>
-                  {mappedPlaceholders} / {placeholdersTotal}
-                </strong>{" "}
-                mapped placeholders
+                <strong>{completedSteps}/5</strong> complete
               </span>
-            </div>
-
-            <div className={styles.progressCard}>
-              <span className={styles.progressLabel}>Workflow Completion</span>
-              <span className={styles.progressValue}>{progressValue}%</span>
-              <div className={styles.progressBar}>
-                <div
-                  className={styles.progressFill}
-                  style={{ width: `${progressValue}%` }}
-                />
-              </div>
+              <span className={styles.workflowStat}>
+                <strong>{mappingSummary.value}</strong> {mappingSummary.label}
+              </span>
+              <span className={styles.workflowStat}>
+                <strong>{selectionSummary.value}</strong>{" "}
+                {selectionSummary.label}
+              </span>
+              {warningFontCount > 0 && (
+                <span
+                  className={`${styles.workflowStat} ${styles.workflowStatWarning}`}
+                >
+                  <strong>{warningFontCount}</strong> missing fonts
+                </span>
+              )}
             </div>
 
             <ThemeSwitcher
@@ -284,16 +282,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             />
           </div>
         </div>
-
-        {warningFontCount > 0 && (
-          <div className={styles.headerWarningRow}>
-            <span
-              className={`${styles.workflowStat} ${styles.workflowStatWarning}`}
-            >
-              <strong>{warningFontCount}</strong> missing fonts
-            </span>
-          </div>
-        )}
 
         <div className={styles.navigationScroller}>
           <nav className={styles.navigation} aria-label="Workflow steps">
@@ -314,9 +302,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   key={item.step}
                   step={item.step}
                   display={{
+                    index:
+                      STEP_ITEMS.findIndex(
+                        (stepItem) => stepItem.step === item.step,
+                      ) + 1,
                     label: item.label,
                     detail: item.detail,
-                    icon: item.icon,
                     badge,
                     badgeTone,
                   }}

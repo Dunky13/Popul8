@@ -1,3 +1,4 @@
+import { useId } from "react";
 import styles from "./ThemeSwitcher.module.css";
 
 type Props = {
@@ -10,6 +11,7 @@ export function ThemeSwitcher({
   onThemeModeChange,
 }: Props) {
   const isDark = themeMode === "dark";
+  const maskId = useId();
 
   return (
     <button
@@ -24,31 +26,48 @@ export function ThemeSwitcher({
       }
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        className={styles.themeIcon}
-      >
-        {/* Sun */}
-        <g className={`${styles.sunGroup} ${isDark ? styles.sunGroupHidden : ""}`}>
-          <circle cx="12" cy="12" r="5" fill="currentColor" />
-          <g stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-            <line x1="12" y1="1.5" x2="12" y2="4" />
-            <line x1="12" y1="20" x2="12" y2="22.5" />
-            <line x1="1.5" y1="12" x2="4" y2="12" />
-            <line x1="20" y1="12" x2="22.5" y2="12" />
-            <line x1="4.2" y1="4.2" x2="6" y2="6" />
-            <line x1="18" y1="18" x2="19.8" y2="19.8" />
-            <line x1="4.2" y1="19.8" x2="6" y2="18" />
-            <line x1="18" y1="6" x2="19.8" y2="4.2" />
-          </g>
-        </g>
+      <span className={styles.iconFrame} aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={styles.themeIcon}
+        >
+          <defs>
+            <mask id={maskId}>
+              <rect width="24" height="24" fill="black" />
+              <circle cx="12" cy="12" r="5.25" fill="white" />
+              <circle
+                cx="16.5"
+                cy="8"
+                r="5.2"
+                fill="black"
+                className={`${styles.maskCutout} ${
+                  isDark ? styles.maskCutoutDark : ""
+                }`}
+              />
+            </mask>
+          </defs>
 
-        {/* Moon */}
-        <g className={`${styles.moonGroup} ${isDark ? "" : styles.moonGroupHidden}`}>
-          <path d="M20.2 14.47A8.7 8.7 0 0 1 9.53 3.8a.75.75 0 0 0-.89-.89A9.5 9.5 0 1 0 21.1 15.36a.75.75 0 0 0-.9-.89Z" fill="currentColor" />
-        </g>
-      </svg>
+          <g className={`${styles.rays} ${isDark ? styles.raysHidden : ""}`}>
+            <line x1="12" y1="1.6" x2="12" y2="4.1" />
+            <line x1="12" y1="19.9" x2="12" y2="22.4" />
+            <line x1="1.6" y1="12" x2="4.1" y2="12" />
+            <line x1="19.9" y1="12" x2="22.4" y2="12" />
+            <line x1="4.6" y1="4.6" x2="6.4" y2="6.4" />
+            <line x1="17.6" y1="17.6" x2="19.4" y2="19.4" />
+            <line x1="4.6" y1="19.4" x2="6.4" y2="17.6" />
+            <line x1="17.6" y1="6.4" x2="19.4" y2="4.6" />
+          </g>
+
+          <circle
+            cx="12"
+            cy="12"
+            r="5.25"
+            className={styles.core}
+            mask={`url(#${maskId})`}
+          />
+        </svg>
+      </span>
 
       <span className="sr-only">
         {isDark ? "Dark mode" : "Light mode"}

@@ -28,6 +28,7 @@
   - card containers
 - Borders, shadows, spacing density, and emphasis patterns are inconsistent between steps.
 - Typography hierarchy is better than generic dashboard UI, but there is still too much uppercase meta labeling and too many competing text scales.
+- A first shell pass confirmed that the product becomes easier to scan when progress is expressed as compact state summaries and a single workflow rail instead of a dashboard header.
 
 ## Upload Findings
 - Upload is the clearest example of clutter.
@@ -42,6 +43,7 @@
   - footer CTA
 - History and reuse are useful, but they currently compete with the primary task instead of supporting it.
 - On mobile, the upload screen becomes a long stack of cards and actions, which increases scroll cost before the user can confirm readiness.
+- After the shell redesign, the remaining upload clutter is concentrated inside `FileUpload` and `TemplateUpload`, which makes those components the correct next redesign target.
 
 ## Template Editor Findings
 - The template editor is functionally rich and worth preserving.
@@ -81,7 +83,7 @@
 
 ## Theme Findings
 - The app already supports explicit light/dark mode with persisted preference and system-first behavior.
-- The current theme switch is a good foundation but is still a simple icon swap, not the requested morphing SVG interaction.
+- The theme switch now has a morphing SVG treatment, but the rest of the app still needs the same semantic token discipline to make both modes feel fully unified.
 - Theme styling still depends too much on step-specific visual treatments instead of one unified semantic token system.
 
 ## Mobile Findings
@@ -92,6 +94,7 @@
   - collapsible secondary detail
   - shorter action rows
   - alternate representations for wide data tables
+- The new shell improves readability on mobile, but the workflow rail still relies on horizontal scrolling at narrow widths and should be replaced with a more intentional compact navigation pattern.
 
 ## Technical Findings
 - The current architecture is favorable for redesign:
@@ -101,6 +104,7 @@
   - functionality is mostly separated by step
 - A shared design system can be introduced without rewriting the underlying CSV/SVG pipeline.
 - The redesign should focus on shared layout primitives and state presentation rather than changing business logic first.
+- The local PWA/service worker can keep serving stale UI during redesign verification, so future visual QA should either unregister the service worker in dev or use a development safeguard that disables stale caching.
 
 ## Functional Parity Findings
 - The following capabilities should be preserved unless intentionally changed later:

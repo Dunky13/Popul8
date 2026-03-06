@@ -192,14 +192,14 @@ export const RowSelection: React.FC = () => {
   return (
     <div className={styles.rowSelection}>
       <div className={styles.headerRow}>
-        <h3>Select Rows to Map</h3>
+        <h3>Select Rows for Output</h3>
         <span className={styles.selectionBadge}>
           {selectedCount} selected
         </span>
       </div>
       <p>
-        Choose the CSV rows you want to include. Unselected rows will be ignored
-        for printing.
+        Choose which CSV rows should generate cards. Unselected rows stay out of
+        the preview and print output.
       </p>
 
       <div className={styles.toolbar}>
