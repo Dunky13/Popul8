@@ -1,131 +1,116 @@
-# System Audit Findings (2026-03-02)
+# Current Findings
 
-## Scope
-- React + Vite frontend architecture
-- State management and workflow consistency
-- Build/runtime performance
-- Offline/print pipeline reliability
-- Safety and maintainability
+## Product-Level Findings
+- The app already has a complete end-to-end workflow and should be redesigned, not re-invented.
+- The core experience is a multi-step production tool, so the UI should behave like a workbench rather than a dashboard.
+- The strongest future value is better hierarchy and consistency, not more surface area.
 
-## Findings
+## App Shell Findings
+- The shell currently shows too many simultaneous guidance systems:
+  - header stats
+  - progress bar
+  - step navigation cards
+  - step intro copy
+  - step checklist
+  - step CTA/helper row
+- These layers often describe the same state in different forms, which makes the app feel busier than it is.
+- The current visual language uses gradients, pills, glows, rounded chips, and multiple card styles more often than the product needs.
+- The current styling conflicts with the direction in `Uncodixfy.md`, especially around decorative gradients, pill-heavy status patterns, and dashboard-like step cards.
 
-### F-01 (P0) - Production service worker precache list is invalid
-- Evidence:
-  - `public/sw.js` precaches `/vite.svg` and `/src/*.tsx` (`public/sw.js:2-10`)
-  - `cache.addAll` in install phase fails the install when any asset is missing (`public/sw.js:13-18`)
-  - Production output has hashed assets in `dist/assets/*` and no `/src/*.tsx`
-- Impact:
-  - Service worker install can fail in production, breaking offline behavior
-  - App claims offline support but can silently run without a valid active worker
-- Recommendation:
-  - Replace manual static list with build-generated asset manifest (e.g., `vite-plugin-pwa` or custom manifest injection)
-  - Version cache keys per build and add stale-cache cleanup strategy
+## Design System Findings
+- The app has global tokens, but many components still behave like one-off islands rather than a coherent system.
+- The same concepts recur with different implementations:
+  - summary metrics
+  - badges/chips
+  - empty states
+  - action bars
+  - section headers
+  - card containers
+- Borders, shadows, spacing density, and emphasis patterns are inconsistent between steps.
+- Typography hierarchy is better than generic dashboard UI, but there is still too much uppercase meta labeling and too many competing text scales.
 
-### F-02 (P1) - Zustand subscriptions are too broad and trigger unnecessary rerenders
-- Evidence:
-  - Multiple components call `useAppStore()` and destructure many keys directly (`src/App.tsx:18-22`, `src/components/PageGrid/PageGrid.tsx:17-26`, `src/components/AppHeader/AppHeader.tsx:66-76`, `src/components/DataMapping/DataMapping.tsx:15-25`)
-- Impact:
-  - Large render surface updates on unrelated state changes
-  - Increased UI latency as editor/preview complexity grows
-- Recommendation:
-  - Migrate to selector-based subscriptions and shallow equality (`useAppStore(selector, shallow)`)
-  - Split high-churn editor state from low-churn app workflow state
+## Upload Findings
+- Upload is the clearest example of clutter.
+- Users are asked to process:
+  - step framing
+  - readiness chips
+  - reuse previous run
+  - upload dropzone
+  - success banner
+  - history lists
+  - action buttons
+  - footer CTA
+- History and reuse are useful, but they currently compete with the primary task instead of supporting it.
+- On mobile, the upload screen becomes a long stack of cards and actions, which increases scroll cost before the user can confirm readiness.
 
-### F-03 (P1) - Character derivation has multiple competing update paths
-- Evidence:
-  - Global derivation in app-level hook (`src/App.tsx:25`, `src/hooks/useSelectedCharacters.ts:17-28`)
-  - Duplicate derivation in row selection (`src/components/RowSelection/RowSelection.tsx:75-91`)
-  - Direct writes during upload/reload (`src/components/FileUpload/FileUpload.tsx:69-76`, `src/hooks/usePreviousRunLoader.ts:78-81`)
-- Impact:
-  - No single source of truth for `characters`
-  - Hard-to-reason state transitions and risk of stale/overwritten results
-- Recommendation:
-  - Derive `characters` from `csvData + selectedRowIndices` in one place only
-  - Remove direct `setCharacters` writes outside that derivation boundary
+## Template Editor Findings
+- The template editor is functionally rich and worth preserving.
+- The editor has the right overall split between canvas and controls, but the right-side panels feel like stacked utilities rather than one coherent inspector.
+- Advanced workflows are present, but the boundary between default and advanced usage is not visually strong enough.
+- Placeholder management is powerful, though the surrounding framing still inherits the busy shell patterns from the rest of the app.
 
-### F-04 (P1) - Template validation rules conflict with editor workflow
-- Evidence:
-  - Validation rejects templates with no placeholders (`src/utils/svgManipulator.ts:525-527`)
-  - Upload UI states placeholders can be added later in editor (`src/components/TemplateUpload/TemplateUpload.tsx:240-245`)
-- Impact:
-  - Contradictory UX and blocked intended workflow
-- Recommendation:
-  - Treat zero placeholders as warning (not hard error) and enforce required mappings at preview/print gates
+## Mapping Findings
+- Mapping is structurally sound: table, preview value, filtering, unresolved-state support.
+- The current screen still adds dashboard patterns on top of a table workflow:
+  - summary metrics
+  - coverage bar
+  - unresolved chip group
+  - filter controls
+  - bottom action row
+- The unresolved state should be more central than the overall completion state.
+- The best future version is a calmer data workspace, not a more decorative one.
 
-### F-05 (P1) - Initial bundle is oversized and includes heavy edit-only dependencies
-- Evidence:
-  - Build output JS chunk is ~1.17 MB minified (`npm run build`, 2026-03-02)
-  - Runtime imports pull `prettier/standalone` + parser plugins in editor helper modules (`src/components/TemplateEditor/helpers.ts:7-8`, `src/components/TemplateEditor/cssHelpers.ts:1-2`)
-- Impact:
-  - Slow initial load and parse/execute cost, especially on lower-end devices
-- Recommendation:
-  - Lazy-load `TemplateEditor` and code-split advanced editor panels
-  - Dynamically import Prettier only when formatting is requested
+## Selection Findings
+- The row selection table is appropriate on desktop.
+- The current title "Select Rows to Map" does not match the actual purpose of the step, which is choosing what gets generated and printed.
+- The mobile experience will need a different presentation than the full table.
+- Summary controls are useful, but the toolbar becomes crowded quickly as screen width shrinks.
 
-### F-06 (P2) - Print flow monkey-patches `window.print`
-- Evidence:
-  - `handlePrint` overrides global `window.print`, injects dynamic style, then restores (`src/utils/printUtils.ts:59-146`)
-- Impact:
-  - Brittle global side effects and hard-to-debug race/failure modes
-  - Higher risk of regressions across browsers
-- Recommendation:
-  - Avoid monkey-patching; rely on print CSS + controlled pre/post print hooks
-  - Encapsulate print-specific layout changes with deterministic class toggles
+## Preview And Print Findings
+- Preview is powerful but dense.
+- The current screen combines:
+  - output preview
+  - selection targeting
+  - print action controls
+  - page setup
+  - layout presets
+  - text resize targeting
+  - field-by-field resize controls
+- This is valid functionality, but it needs clearer grouping and progressive disclosure.
+- The print sidebar should become a more deliberate inspector, with default controls surfaced first and expert controls nested.
 
-### F-07 (P2) - TypeScript path alias configuration is misplaced
-- Evidence:
-  - `paths` is outside `compilerOptions` in `tsconfig.app.json` (`tsconfig.app.json:29-31`)
-- Impact:
-  - Alias config is ignored by TypeScript
-  - Future path alias adoption can fail unexpectedly
-- Recommendation:
-  - Move `paths` under `compilerOptions` and add `baseUrl` if aliasing is required
+## Theme Findings
+- The app already supports explicit light/dark mode with persisted preference and system-first behavior.
+- The current theme switch is a good foundation but is still a simple icon swap, not the requested morphing SVG interaction.
+- Theme styling still depends too much on step-specific visual treatments instead of one unified semantic token system.
 
-### F-08 (P2) - Workflow state includes dead `print` step
-- Evidence:
-  - Store and step rendering include `"print"` (`src/store/appStore.ts:32`, `src/components/StepContent/StepContent.tsx:35`)
-  - No setter path transitions to `"print"` found in source
-- Impact:
-  - Dead state increases complexity and confusion in step logic
-- Recommendation:
-  - Remove unused step or implement explicit entry point and UI contract
+## Mobile Findings
+- The current mobile layout is usable but mostly created by stacking desktop structures.
+- Step navigation, upload history, selection tables, and preview controls all need mobile-specific presentation rules.
+- Mobile should prioritize:
+  - one primary action area
+  - collapsible secondary detail
+  - shorter action rows
+  - alternate representations for wide data tables
 
-### F-09 (P2) - Local file history stores full file contents without retention limits
-- Evidence:
-  - Stored file model keeps full `content` in localStorage (`src/utils/fileHistory.ts:14`)
-  - New entries are appended with no quota/TTL policy (`src/utils/fileHistory.ts:186-207`)
-- Impact:
-  - localStorage quota pressure and potential data persistence/privacy concerns
-- Recommendation:
-  - Add max item count/total byte budget + TTL purge
-  - Provide clear-user-history controls and optional encryption if required
+## Technical Findings
+- The current architecture is favorable for redesign:
+  - Zustand store is centralized
+  - step routing is simple
+  - the editor is already lazy-loaded
+  - functionality is mostly separated by step
+- A shared design system can be introduced without rewriting the underlying CSV/SVG pipeline.
+- The redesign should focus on shared layout primitives and state presentation rather than changing business logic first.
 
-### F-10 (P2) - Raw SVG markup is injected into DOM without sanitization
-- Evidence:
-  - SVG preview writes markup via `innerHTML` (`src/components/TemplateEditor/TemplateEditorStage.tsx:150`)
-- Impact:
-  - Potential unsafe markup execution path via uploaded/customized SVG
-- Recommendation:
-  - Sanitize SVG before DOM insertion (strip script/event attributes/external refs)
-  - Add allowlist-based parsing for editable SVG features
+## Functional Parity Findings
+- The following capabilities should be preserved unless intentionally changed later:
+  - CSV upload, multi-file combine, and history reuse
+  - SVG upload, template validation, and bootstrapped CSV export
+  - template editing, placeholder creation, filtering, duplicate detection, and export
+  - mapping autosuggest, default mapping, filtering, and preview values
+  - row filtering, bulk selection, and required-row behavior
+  - preview targeting, layout presets, printing, and text resizing
 
-### F-11 (P3) - No automated test command for core workflows
-- Evidence:
-  - `package.json` has `dev`, `build`, `lint`, `preview` only; no test script
-- Impact:
-  - Regression risk remains high for mapping/editor/print workflows
-- Recommendation:
-  - Add unit tests for utils/state transitions and at least one integration smoke test for upload→map→preview flow
-
-## Resolution Status (2026-03-02)
-- F-01: Resolved via build-generated `sw-assets.json`, production-only SW registration, cache versioning, and resilient install caching.
-- F-02: Resolved via selector-based Zustand subscriptions with `useShallow` across high-churn components.
-- F-03: Resolved by consolidating `characters` derivation into `useSelectedCharacters` and removing duplicate write paths.
-- F-04: Resolved by downgrading zero-placeholder validation to warning.
-- F-05: Resolved by lazy-loading editor surfaces and on-demand dynamic imports for Prettier.
-- F-06: Resolved by removing `window.print` monkey patch and using listener/class based print handling.
-- F-07: Resolved by moving TS alias config under `compilerOptions` and adding `baseUrl`.
-- F-08: Resolved by removing dead `print` workflow state from the app state machine.
-- F-09: Resolved via history TTL/item/storage budgets and clear-history controls.
-- F-10: Resolved by adding SVG sanitization before DOM insertion and sheet rendering.
-- F-11: Resolved by adding test infrastructure and core unit/integration smoke tests.
+## Planning Conclusion
+- No blocking functional ambiguity was found during this review.
+- The redesign can proceed as a staged UI-system refactor with functional parity as the guardrail.
