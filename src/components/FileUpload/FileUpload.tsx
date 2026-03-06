@@ -2,15 +2,21 @@
  * File upload component with drag and drop support
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { DataRecord } from '../../types/dataRecord';
-import { useAppStore } from '../../store/appStore';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import type { DataRecord } from "../../types/dataRecord";
+import { useAppStore } from "../../store/appStore";
 import { useShallow } from "zustand/react/shallow";
-import { useDragDrop } from '../../hooks/useDragDrop';
-import { useFileUpload } from '../../hooks/useFileUpload';
+import { useDragDrop } from "../../hooks/useDragDrop";
+import { useFileUpload } from "../../hooks/useFileUpload";
 import { parseCSVContent, parseCSVFile } from "../../utils/csvParser";
 import { validateAndCombineCsvData } from "../../utils/csvProcessing";
-import { FILE_CONSTRAINTS } from '../../constants';
+import { FILE_CONSTRAINTS } from "../../constants";
 import {
   addFilesToHistoryWithHashes,
   clearHistory,
@@ -20,17 +26,23 @@ import {
   setLastUsed,
   setSelection,
   storedFileToFile,
-  type StoredFile
-} from '../../utils/fileHistory';
-import { parseAcceptedFileRules, validateFileInput } from '../../utils/fileValidation';
-import { resolveCsvIdsForAppend, syncSelectedCsvFiles } from './csvSelectionHelpers';
+  type StoredFile,
+} from "../../utils/fileHistory";
+import {
+  parseAcceptedFileRules,
+  validateFileInput,
+} from "../../utils/fileValidation";
+import {
+  resolveCsvIdsForAppend,
+  syncSelectedCsvFiles,
+} from "./csvSelectionHelpers";
 import {
   resolveTodayHistorySelection,
   toggleCsvHistorySelection,
-} from './historySelectionHelpers';
-import styles from './FileUpload.module.css';
+} from "./historySelectionHelpers";
+import styles from "./FileUpload.module.css";
 import Icon from "../Icon/Icon";
-import { posthog } from '../../lib/posthog';
+import { posthog } from "../../lib/posthog";
 
 interface FileUploadProps {
   accept?: string;
@@ -40,10 +52,10 @@ interface FileUploadProps {
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({
-  accept = '.csv',
+  accept = ".csv",
   maxSize = FILE_CONSTRAINTS.MAX_CSV_SIZE,
   onFileProcessed,
-  multiple = true
+  multiple = true,
 }) => {
   const {
     setCsvData,
@@ -68,23 +80,25 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       setLoading: state.setLoading,
     })),
   );
-  const [historyItems, setHistoryItems] = useState<StoredFile[]>(() => listHistory('csv'));
+  const [historyItems, setHistoryItems] = useState<StoredFile[]>(() =>
+    listHistory("csv"),
+  );
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(
-    () => new Set(getSelection('csv') as string[])
+    () => new Set(getSelection("csv") as string[]),
   );
   const addFilesInputRef = useRef<HTMLInputElement>(null);
   const acceptedFileRules = useMemo(
     () => parseAcceptedFileRules(accept),
-    [accept]
+    [accept],
   );
 
   useEffect(() => {
-    setSelection('csv', Array.from(selectedHistoryIds));
+    setSelection("csv", Array.from(selectedHistoryIds));
   }, [selectedHistoryIds]);
 
   useEffect(() => {
     const handleSelectionSync = () => {
-      const nextSelection = getSelection('csv') as string[];
+      const nextSelection = getSelection("csv") as string[];
       setSelectedHistoryIds((prev) => {
         if (
           prev.size === nextSelection.length &&
@@ -95,8 +109,20 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         return new Set(nextSelection);
       });
     };
-    window.addEventListener('file-selection-updated', handleSelectionSync);
-    return () => window.removeEventListener('file-selection-updated', handleSelectionSync);
+    window.addEventListener("file-selection-updated", handleSelectionSync);
+    return () =>
+      window.removeEventListener("file-selection-updated", handleSelectionSync);
+  }, []);
+
+  useEffect(() => {
+    const handleHistorySync = () => {
+      setHistoryItems(listHistory("csv"));
+    };
+
+    window.addEventListener("file-history-updated", handleHistorySync);
+    return () => {
+      window.removeEventListener("file-history-updated", handleHistorySync);
+    };
   }, []);
 
   const applyCombinedCsvData = useCallback(
@@ -105,13 +131,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       setCsvData(combinedData);
       setSelectedRowIndices(combinedData.rows.map((_, index) => index));
       setCsvUploaded(true);
-      posthog.capture('csv uploaded', {
+      posthog.capture("csv uploaded", {
         row_count: combinedData.rows.length,
         column_count: combinedData.headers.length,
         file_count: fileCount,
       });
     },
-    [setCsvData, setCsvUploaded, setSelectedRowIndices]
+    [setCsvData, setCsvUploaded, setSelectedRowIndices],
   );
 
   const processor = useCallback(
@@ -127,10 +153,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       applyCombinedCsvData(combinedData, 1);
 
       try {
-        const { items: updated, fileHashes } = await addFilesToHistoryWithHashes(
-          "csv",
-          [file],
-        );
+        const { items: updated, fileHashes } =
+          await addFilesToHistoryWithHashes("csv", [file]);
         setHistoryItems(updated);
         const [fileHash] = fileHashes;
         setSelectedHistoryIds(new Set([fileHash]));
@@ -143,16 +167,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
       return records;
     },
-    [
-      applyCombinedCsvData,
-      setHistoryItems,
-      setSelectedHistoryIds,
-    ]
+    [applyCombinedCsvData, setHistoryItems, setSelectedHistoryIds],
   );
 
   const multiProcessor = useCallback(
     async (files: File[]) => {
-      const csvDataList = await Promise.all(files.map((file) => parseCSVFile(file)));
+      const csvDataList = await Promise.all(
+        files.map((file) => parseCSVFile(file)),
+      );
       const { combinedData, records, recordWarnings } =
         validateAndCombineCsvData(csvDataList);
 
@@ -163,10 +185,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       applyCombinedCsvData(combinedData, files.length);
 
       try {
-        const { items: updated, fileHashes } = await addFilesToHistoryWithHashes(
-          "csv",
-          files,
-        );
+        const { items: updated, fileHashes } =
+          await addFilesToHistoryWithHashes("csv", files);
         setHistoryItems(updated);
         setSelectedHistoryIds(new Set(fileHashes));
         setLastUsed({ csvIds: fileHashes });
@@ -178,17 +198,25 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
       return records;
     },
-    [applyCombinedCsvData, setHistoryItems, setSelectedHistoryIds]
+    [applyCombinedCsvData, setHistoryItems, setSelectedHistoryIds],
   );
 
   const validator = useCallback((file: File) => {
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      return 'Please upload a CSV file';
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      return "Please upload a CSV file";
     }
     return null;
   }, []);
 
-  const { uploadProgress, fileInputRef, handleFileSelect, handleClick, handleClear, processFile, processMultipleFiles } = useFileUpload<DataRecord[]>({
+  const {
+    uploadProgress,
+    fileInputRef,
+    handleFileSelect,
+    handleClick,
+    handleClear,
+    processFile,
+    processMultipleFiles,
+  } = useFileUpload<DataRecord[]>({
     accept,
     maxSize,
     onFileProcessed,
@@ -198,15 +226,18 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     multiProcessor,
   });
 
-  const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useDragDrop({
-    onDrop: (files) => {
-      if (files.length > 0) {
-        handleFileSelect({ target: { files } } as unknown as React.ChangeEvent<HTMLInputElement>);
-      }
-    },
-    accept: [accept],
-    multiple,
-  });
+  const { isDragging, handleDragOver, handleDragLeave, handleDrop } =
+    useDragDrop({
+      onDrop: (files) => {
+        if (files.length > 0) {
+          handleFileSelect({
+            target: { files },
+          } as unknown as React.ChangeEvent<HTMLInputElement>);
+        }
+      },
+      accept: [accept],
+      multiple,
+    });
 
   const handleClearData = useCallback(() => {
     handleClear();
@@ -235,7 +266,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         validator,
         acceptedRules: acceptedFileRules,
       }),
-    [accept, maxSize, validator, acceptedFileRules]
+    [accept, maxSize, validator, acceptedFileRules],
   );
 
   const handleAddFilesSelect = useCallback(
@@ -268,10 +299,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         }
 
         const csvDataList = await Promise.all(
-          filesArray.map((file) => parseCSVFile(file))
+          filesArray.map((file) => parseCSVFile(file)),
         );
-        const { combinedData, recordWarnings } =
-          validateAndCombineCsvData([csvData, ...csvDataList]);
+        const { combinedData, recordWarnings } = validateAndCombineCsvData([
+          csvData,
+          ...csvDataList,
+        ]);
 
         if (recordWarnings.length > 0 && import.meta.env.DEV) {
           console.warn("Record validation warnings:", recordWarnings);
@@ -292,7 +325,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         addError(
           `File processing failed: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`
+          }`,
         );
       } finally {
         setLoading(false);
@@ -313,12 +346,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       setSelectedHistoryIds,
       setLoading,
       validateAppendFile,
-    ]
+    ],
   );
 
   const selectedHistory = useMemo(
     () => historyItems.filter((item) => selectedHistoryIds.has(item.id)),
-    [historyItems, selectedHistoryIds]
+    [historyItems, selectedHistoryIds],
   );
 
   useEffect(() => {
@@ -351,7 +384,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         },
       },
     });
-  }, [addError, applyCombinedCsvData, selectedHistory, setCsvData, setCsvUploaded, setLoading, setSelectedRowIndices]);
+  }, [
+    addError,
+    applyCombinedCsvData,
+    selectedHistory,
+    setCsvData,
+    setCsvUploaded,
+    setLoading,
+    setSelectedRowIndices,
+  ]);
 
   const historyByDay = useMemo(() => {
     return historyItems.reduce<Record<string, StoredFile[]>>((acc, item) => {
@@ -365,18 +406,21 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const todayKey = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const historyDayKeys = useMemo(
     () => Object.keys(historyByDay).sort((a, b) => b.localeCompare(a)),
-    [historyByDay]
+    [historyByDay],
   );
 
-  const toggleHistorySelection = useCallback((id: string) => {
-    setSelectedHistoryIds((prev) => {
-      return toggleCsvHistorySelection({
-        currentIds: prev,
-        id,
-        multiple,
+  const toggleHistorySelection = useCallback(
+    (id: string) => {
+      setSelectedHistoryIds((prev) => {
+        return toggleCsvHistorySelection({
+          currentIds: prev,
+          id,
+          multiple,
+        });
       });
-    });
-  }, [multiple]);
+    },
+    [multiple],
+  );
 
   const handleSelectToday = useCallback(() => {
     const todaysItems = historyByDay[todayKey] || [];
@@ -408,10 +452,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     try {
       setLoading(true);
       const storedParsed = await Promise.all(
-        selectedHistory.map((item) => parseCSVContent(item.content, item.fileName))
+        selectedHistory.map((item) =>
+          parseCSVContent(item.content, item.fileName),
+        ),
       );
-      const { combinedData, recordWarnings } =
-        validateAndCombineCsvData([csvData, ...storedParsed]);
+      const { combinedData, recordWarnings } = validateAndCombineCsvData([
+        csvData,
+        ...storedParsed,
+      ]);
 
       if (recordWarnings.length > 0 && import.meta.env.DEV) {
         console.warn("Record validation warnings:", recordWarnings);
@@ -428,8 +476,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     } catch (error) {
       addError(
         `File processing failed: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
       );
     } finally {
       setLoading(false);
@@ -448,17 +496,19 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     <div className={styles.fileUpload}>
       <h3>Upload CSV Data</h3>
       <p>
-        {multiple ? 'Upload one or more CSV files' : 'Upload CSV file'} to populate your template.
+        {multiple ? "Upload one or more CSV files" : "Upload CSV file"} to
+        populate your template.
         {multiple && (
           <>
             <br />
-            <strong>Note:</strong> Multiple files must have matching headers to be combined.
+            <strong>Note:</strong> Multiple files must have matching headers to
+            be combined.
           </>
         )}
       </p>
 
       <div
-        className={`${styles.dropZone} ${isDragging ? styles.dragging : ''}`}
+        className={`${styles.dropZone} ${isDragging ? styles.dragging : ""}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -468,18 +518,20 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           <div className={styles.uploadIcon}>
             <Icon name="upload" size={36} />
           </div>
-          
+
           {isDragging ? (
             <p className={styles.dragText}>
-              Drop your CSV {multiple ? 'file(s)' : 'file'} here
+              Drop your CSV {multiple ? "file(s)" : "file"} here
             </p>
           ) : (
             <>
               <p className={styles.dropText}>
-                Drag and drop your CSV {multiple ? 'file(s)' : 'file'} here, or click to browse
+                Drag and drop your CSV {multiple ? "file(s)" : "file"} here, or
+                click to browse
               </p>
               <p className={styles.subText}>
-                Maximum file size: {Math.round(maxSize / 1024 / 1024)}MB per file
+                Maximum file size: {Math.round(maxSize / 1024 / 1024)}MB per
+                file
               </p>
             </>
           )}
@@ -506,8 +558,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       {uploadProgress > 0 && (
         <div className={styles.progressContainer}>
           <div className={styles.progressBar}>
-            <div 
-              className={styles.progressFill} 
+            <div
+              className={styles.progressFill}
               style={{ width: `${uploadProgress}%` }}
             />
           </div>
@@ -519,9 +571,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         <div className={styles.successMessage}>
           <Icon name="check" size={20} />
           <span>
-            {csvData?.fileName?.includes('Combined') 
-              ? 'CSV files combined and uploaded successfully!' 
-              : 'CSV file uploaded successfully!'}
+            {csvData?.fileName?.includes("Combined")
+              ? "CSV files combined and uploaded successfully!"
+              : "CSV file uploaded successfully!"}
           </span>
         </div>
       )}
@@ -531,7 +583,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           <div className={styles.historyHeader}>
             <div>
               <h4>Previous CSV Files</h4>
-              <p className={styles.historyHint}>Select one or more files to reuse.</p>
+              <p className={styles.historyHint}>
+                Select one or more files to reuse.
+              </p>
             </div>
             <button
               onClick={handleSelectToday}
@@ -555,9 +609,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                       onChange={() => toggleHistorySelection(item.id)}
                     />
                     <div className={styles.historyDetails}>
-                      <span className={styles.historyName}>{item.fileName}</span>
+                      <span className={styles.historyName}>
+                        {item.fileName}
+                      </span>
                       <span className={styles.historyMeta}>
-                        Uploaded {new Date(item.uploadedAt).toLocaleTimeString()}
+                        Uploaded{" "}
+                        {new Date(item.uploadedAt).toLocaleTimeString()}
                       </span>
                     </div>
                   </label>
@@ -593,26 +650,20 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       )}
 
       <div className={styles.actions}>
-        <button 
-          onClick={handleClick}
-          className={styles.primaryButton}
-        >
+        <button onClick={handleClick} className={styles.primaryButton}>
           Browse Files
         </button>
 
         {csvData && (
-          <button 
+          <button
             onClick={handleAddFilesClick}
             className={styles.secondaryButton}
           >
             Add Files
           </button>
         )}
-        
-        <button 
-          onClick={handleClearData}
-          className={styles.secondaryButton}
-        >
+
+        <button onClick={handleClearData} className={styles.secondaryButton}>
           Clear Data
         </button>
       </div>

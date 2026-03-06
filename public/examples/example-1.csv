@@ -1,0 +1,13 @@
+Name,Image URL,AC,Initiative,Hitpoints,Spell DC,Passive Perception,Race,Class,Speed,STR,DEX,CON,INT,WIS,CHA,Attack 1,Attack 2,Attack 3,Attack 4,Attack 5,Background Image
+,,,,,,,,,,,,,,,,,,,,,
+Bandit 1,https://api.sync.t3.chat/api/storage/33b58abe-f317-4ee5-a809-28d8546bfce1,12,,2d8+2,,10,Human,,30ft,11 (+0),12 (+1),12 (+1),10 (+0),10 (+0),10 (+0),Scimitar D20+3 1d6+1 5ft (s),Light Crossbow D20+3 1d8+1 80/320ft (p),,,,
+Bandit 2,https://api.sync.t3.chat/api/storage/7f7f3923-e347-4afb-a8c0-0d4241a3fb19,12,,2d8+2,,10,Human,,30ft,11 (+0),12 (+1),12 (+1),10 (+0),10 (+0),10 (+0),Scimitar D20+3 1d6+1 5ft (s),Light Crossbow D20+3 1d8+1 80/320ft (p),,,,
+Bandit 3,https://api.sync.t3.chat/api/storage/7f7f3923-e347-4afb-a8c0-0d4241a3fb19,12,,2d8+2,,10,Human,,30ft,11 (+0),12 (+1),12 (+1),10 (+0),10 (+0),10 (+0),Scimitar D20+3 1d6+1 5ft (s),Light Crossbow D20+3 1d8+1 80/320ft (p),,,,
+Bandit 4,https://api.sync.t3.chat/api/storage/bf323b89-9e2f-4bdc-9862-65db16dfd2a0,12,,2d8+2,,10,Human,,30ft,11 (+0),12 (+1),12 (+1),10 (+0),10 (+0),10 (+0),Scimitar D20+3 1d6+1 5ft (s),Light Crossbow D20+3 1d8+1 80/320ft (p),,,,
+,,,,,,,,,,,,,,,,,,,,,
+Goblin 1,https://api.sync.t3.chat/api/storage/d33edb6e-2e50-454d-9a93-35a82449101d,15,,2d6+2,,9,Goblin,,30ft,8 (-1),14 (+2),10 (+0),10 (+0),8 (-1),8 (-1),Scimitar D20+4 1d6+2 5ft (s),Shortbow D20+4 1d6+2 80/320ft (p),Nimble Escape (Disengage or Hide as bonus action),,,
+Goblin 2,https://api.sync.t3.chat/api/storage/c19534e3-1ff6-40d1-a536-222fa7053c07,15,,2d6+2,,9,Goblin,,30ft,8 (-1),14 (+2),10 (+0),10 (+0),8 (-1),8 (-1),Scimitar D20+4 1d6+2 5ft (s),Shortbow D20+4 1d6+2 80/320ft (p),Nimble Escape (Disengage or Hide as bonus action),,,
+Goblin 3,https://api.sync.t3.chat/api/storage/24298a27-4f1a-45c1-bca7-f6195c3fca91,15,,2d6+2,,9,Goblin,,30ft,8 (-1),14 (+2),10 (+0),10 (+0),8 (-1),8 (-1),Scimitar D20+4 1d6+2 5ft (s),Shortbow D20+4 1d6+2 80/320ft (p),Nimble Escape (Disengage or Hide as bonus action),,,
+Goblin 4,https://api.sync.t3.chat/api/storage/82802fba-5257-4a6b-9746-13c98ec403cd,15,,2d6+2,,9,Goblin,,30ft,8 (-1),14 (+2),10 (+0),10 (+0),8 (-1),8 (-1),Scimitar D20+4 1d6+2 5ft (s),Shortbow D20+4 1d6+2 80/320ft (p),Nimble Escape (Disengage or Hide as bonus action),,,
+Goblin 5,https://api.sync.t3.chat/api/storage/a5e4320e-202d-4dd3-98bf-5046cdc21a46,15,,2d6+2,,9,Goblin,,30ft,8 (-1),14 (+2),10 (+0),10 (+0),8 (-1),8 (-1),Scimitar D20+4 1d6+2 5ft (s),Shortbow D20+4 1d6+2 80/320ft (p),Nimble Escape (Disengage or Hide as bonus action),,,
+Goblin 6,https://api.sync.t3.chat/api/storage/c78438a1-9fea-4576-89af-c0078699c568,15,,2d6+2,,9,Goblin,,30ft,8 (-1),14 (+2),10 (+0),10 (+0),8 (-1),8 (-1),Scimitar D20+4 1d6+2 5ft (s),Shortbow D20+4 1d6+2 80/320ft (p),Nimble Escape (Disengage or Hide as bonus action),,,

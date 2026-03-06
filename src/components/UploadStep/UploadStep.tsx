@@ -20,6 +20,16 @@ export const UploadStep: React.FC = () => {
   const hasCsvUpload = csvData !== null;
   const hasTemplateUpload = svgTemplate !== null;
   const canContinue = hasCsvUpload && hasTemplateUpload;
+  const hasAutoLoadedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (hasAutoLoadedRef.current) return;
+    if (!hasPreviousRun) return;
+    if (canContinue) return;
+
+    hasAutoLoadedRef.current = true;
+    void handleUseLastUsed();
+  }, [canContinue, handleUseLastUsed, hasPreviousRun]);
 
   return (
     <div className={styles.uploadStep}>
@@ -27,7 +37,9 @@ export const UploadStep: React.FC = () => {
         <div className={styles.uploadStageHeader}>
           <div className={styles.uploadStageText}>
             <p className={styles.uploadStageEyebrow}>Step 1 Workflow</p>
-            <h3 className={styles.uploadStageTitle}>Load source files side by side</h3>
+            <h3 className={styles.uploadStageTitle}>
+              Load source files side by side
+            </h3>
             <p className={styles.uploadStageDescription}>
               Start with CSV data and an SVG template. Continue only after both
               files are uploaded or selected from history.
@@ -42,7 +54,9 @@ export const UploadStep: React.FC = () => {
               <span
                 role="listitem"
                 className={`${styles.uploadStageCheck} ${
-                  hasCsvUpload ? styles.uploadStageCheckDone : styles.uploadStageCheckPending
+                  hasCsvUpload
+                    ? styles.uploadStageCheckDone
+                    : styles.uploadStageCheckPending
                 }`}
               >
                 <Icon name={hasCsvUpload ? "check" : "close"} size={12} />
@@ -62,7 +76,9 @@ export const UploadStep: React.FC = () => {
               <span
                 role="listitem"
                 className={`${styles.uploadStageCheck} ${
-                  canContinue ? styles.uploadStageCheckDone : styles.uploadStageCheckPending
+                  canContinue
+                    ? styles.uploadStageCheckDone
+                    : styles.uploadStageCheckPending
                 }`}
               >
                 <Icon name={canContinue ? "check" : "close"} size={12} />
@@ -94,7 +110,9 @@ export const UploadStep: React.FC = () => {
         <div className={styles.uploadStageFooter}>
           <p
             className={`${styles.uploadStageHint} ${
-              canContinue ? styles.uploadStageHintReady : styles.uploadStageHintBlocked
+              canContinue
+                ? styles.uploadStageHintReady
+                : styles.uploadStageHintBlocked
             }`}
           >
             {canContinue

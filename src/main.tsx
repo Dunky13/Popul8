@@ -1,16 +1,16 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { App } from './App.tsx'
-import './styles/globals.css'
-import { getInitialThemeMode } from './hooks/useThemeMode'
-import './lib/posthog'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { App } from "./App.tsx";
+import "./styles/globals.css";
+import { getInitialThemeMode } from "./hooks/useThemeMode";
+import { ensureDefaultExamplesAvailable } from "./utils/defaultExamples";
+import "./lib/posthog";
 
 const initialThemeMode = getInitialThemeMode();
 document.documentElement.dataset.theme = initialThemeMode;
 
 if (import.meta.env.PROD) {
-  // eslint-disable-next-line no-console
-  console.log('Build commit SHA:', import.meta.env.VITE_COMMIT_SHA);
+  console.log("Build commit SHA:", import.meta.env.VITE_COMMIT_SHA);
 }
 
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
@@ -27,8 +27,14 @@ if (import.meta.env.PROD && "serviceWorker" in navigator) {
   });
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+void ensureDefaultExamplesAvailable().catch((error) => {
+  if (import.meta.env.DEV) {
+    console.warn("Failed to initialize default example files.", error);
+  }
+});
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
-)
+);

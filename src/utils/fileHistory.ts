@@ -19,6 +19,10 @@ export interface AddFilesToHistoryResult {
   fileHashes: string[];
 }
 
+export interface AddFilesToHistoryOptions {
+  uploadedAt?: string;
+}
+
 interface FileHistory {
   csv: StoredFile[];
   svg: StoredFile[];
@@ -31,6 +35,14 @@ const EMPTY_HISTORY: FileHistory = { csv: [], svg: [] };
 const MAX_ITEMS_PER_TYPE = 40;
 const MAX_HISTORY_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_STORAGE_BYTES = 4_000_000;
+const PINNED_DEFAULT_FILE_NAMES = new Set([
+  "example-1.csv",
+  "example-2.csv",
+  "example-svg-template.svg",
+]);
+
+const isPinnedDefaultFile = (fileName: string) =>
+  PINNED_DEFAULT_FILE_NAMES.has(fileName.toLowerCase());
 
 const areStringArraysEqual = (a: string[], b: string[]) => {
   if (a.length !== b.length) return false;
@@ -40,6 +52,11 @@ const areStringArraysEqual = (a: string[], b: string[]) => {
 const dispatchFileSelectionUpdated = () => {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event("file-selection-updated"));
+};
+
+const dispatchFileHistoryUpdated = () => {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event("file-history-updated"));
 };
 
 const dispatchFileLastUsedUpdated = () => {
@@ -66,16 +83,25 @@ const normalizeEntries = (entries: StoredFile[], type: StoredFileType) => {
   const normalized = entries
     .filter((entry) => {
       if (!entry || typeof entry !== "object") return false;
-      if (!entry.id || !entry.hash || !entry.fileName || !entry.uploadedAt) return false;
+      if (!entry.id || !entry.hash || !entry.fileName || !entry.uploadedAt)
+        return false;
       if (entry.type !== type) return false;
       const uploadedAt = getUploadedAtTime(entry.uploadedAt);
       if (!uploadedAt) return false;
-      if (now - uploadedAt > MAX_HISTORY_AGE_MS) return false;
+      if (
+        !isPinnedDefaultFile(entry.fileName) &&
+        now - uploadedAt > MAX_HISTORY_AGE_MS
+      ) {
+        return false;
+      }
       if (seen.has(entry.hash)) return false;
       seen.add(entry.hash);
       return true;
     })
-    .sort((a, b) => getUploadedAtTime(b.uploadedAt) - getUploadedAtTime(a.uploadedAt))
+    .sort(
+      (a, b) =>
+        getUploadedAtTime(b.uploadedAt) - getUploadedAtTime(a.uploadedAt),
+    )
     .slice(0, MAX_ITEMS_PER_TYPE);
   return normalized;
 };
@@ -327,6 +353,7 @@ export const getStoredFile = (
 export const addFilesToHistoryWithHashes = async (
   type: StoredFileType,
   files: File[],
+  options: AddFilesToHistoryOptions = {},
 ): Promise<AddFilesToHistoryResult> => {
   if (!files.length) {
     return { items: listHistory(type), fileHashes: [] };
@@ -334,6 +361,7 @@ export const addFilesToHistoryWithHashes = async (
   const history = loadHistory();
   const items = history[type];
   const fileHashes: string[] = [];
+  let didMutateHistory = false;
 
   for (const file of files) {
     const content = await file.text();
@@ -342,22 +370,30 @@ export const addFilesToHistoryWithHashes = async (
     const exists = items.some((item) => item.hash === hash);
     if (exists) continue;
 
+    const uploadedAt = options.uploadedAt
+      ? new Date(options.uploadedAt).toISOString()
+      : new Date().toISOString();
+
     const storedFile: StoredFile = {
       id: hash,
       hash,
       fileName: file.name,
       size: file.size,
       type,
-      uploadedAt: new Date().toISOString(),
+      uploadedAt,
       content,
     };
 
     items.unshift(storedFile);
+    didMutateHistory = true;
   }
 
   const normalizedHistory = normalizeHistory(history);
   saveHistory(normalizedHistory);
   normalizeSelectionState(normalizedHistory);
+  if (didMutateHistory) {
+    dispatchFileHistoryUpdated();
+  }
   return {
     items: listHistory(type),
     fileHashes,
@@ -367,8 +403,9 @@ export const addFilesToHistoryWithHashes = async (
 export const addFilesToHistory = async (
   type: StoredFileType,
   files: File[],
+  options: AddFilesToHistoryOptions = {},
 ): Promise<StoredFile[]> => {
-  const { items } = await addFilesToHistoryWithHashes(type, files);
+  const { items } = await addFilesToHistoryWithHashes(type, files, options);
   return items;
 };
 
@@ -378,8 +415,14 @@ export const clearHistory = (type?: StoredFileType) => {
     csv: type === "svg" ? history.csv : [],
     svg: type === "csv" ? history.svg : [],
   };
+  const didMutateHistory =
+    history.csv.length !== nextHistory.csv.length ||
+    history.svg.length !== nextHistory.svg.length;
   saveHistory(nextHistory);
   normalizeSelectionState(nextHistory);
+  if (didMutateHistory) {
+    dispatchFileHistoryUpdated();
+  }
 };
 
 export const getSelection = (

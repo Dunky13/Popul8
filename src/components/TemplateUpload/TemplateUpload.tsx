@@ -2,21 +2,30 @@
  * SVG template upload component
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import type { SVGTemplate } from '../../types/template';
-import { useAppStore } from '../../store/appStore';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import type { SVGTemplate } from "../../types/template";
+import { useAppStore } from "../../store/appStore";
 import { useShallow } from "zustand/react/shallow";
-import { useDragDrop } from '../../hooks/useDragDrop';
-import { useFileUpload } from '../../hooks/useFileUpload';
-import { parseSVGTemplate, readSVGFile } from '../../utils/svgManipulator';
-import { validateTemplate } from '../../utils/validationUtils';
-import { handleTemplateValidationMessages } from '../../utils/templateValidation';
-import { buildBootstrappedCsvFromPlaceholders } from '../../utils/bootstrapCsv';
-import { FILE_CONSTRAINTS } from '../../constants';
-import { addFilesToHistoryWithHashes, clearHistory, getLastUsed, getSelection, listHistory, setLastUsed, setSelection, type StoredFile } from '../../utils/fileHistory';
-import styles from './TemplateUpload.module.css';
+import { useDragDrop } from "../../hooks/useDragDrop";
+import { useFileUpload } from "../../hooks/useFileUpload";
+import { parseSVGTemplate, readSVGFile } from "../../utils/svgManipulator";
+import { validateTemplate } from "../../utils/validationUtils";
+import { handleTemplateValidationMessages } from "../../utils/templateValidation";
+import { buildBootstrappedCsvFromPlaceholders } from "../../utils/bootstrapCsv";
+import { FILE_CONSTRAINTS } from "../../constants";
+import {
+  addFilesToHistoryWithHashes,
+  clearHistory,
+  getLastUsed,
+  getSelection,
+  listHistory,
+  setLastUsed,
+  setSelection,
+  type StoredFile,
+} from "../../utils/fileHistory";
+import styles from "./TemplateUpload.module.css";
 import Icon from "../Icon/Icon";
-import { posthog } from '../../lib/posthog';
+import { posthog } from "../../lib/posthog";
 
 export const TemplateUpload: React.FC = () => {
   const {
@@ -38,28 +47,43 @@ export const TemplateUpload: React.FC = () => {
       svgTemplate: state.svgTemplate,
     })),
   );
-  const [historyItems, setHistoryItems] = useState<StoredFile[]>(() => listHistory('svg'));
-  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(() => {
-    const lastUsed = getLastUsed();
-    if (lastUsed.svgId) return lastUsed.svgId;
-    const selection = getSelection('svg');
-    return typeof selection === 'string' ? selection : null;
-  });
+  const [historyItems, setHistoryItems] = useState<StoredFile[]>(() =>
+    listHistory("svg"),
+  );
+  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(
+    () => {
+      const lastUsed = getLastUsed();
+      if (lastUsed.svgId) return lastUsed.svgId;
+      const selection = getSelection("svg");
+      return typeof selection === "string" ? selection : null;
+    },
+  );
 
   useEffect(() => {
-    setSelection('svg', selectedHistoryId);
+    setSelection("svg", selectedHistoryId);
   }, [selectedHistoryId]);
 
   useEffect(() => {
     const handleSelectionSync = () => {
-      const selection = getSelection('svg');
-      const nextSelection = typeof selection === 'string' ? selection : null;
+      const selection = getSelection("svg");
+      const nextSelection = typeof selection === "string" ? selection : null;
       setSelectedHistoryId((prev) =>
-        prev === nextSelection ? prev : nextSelection
+        prev === nextSelection ? prev : nextSelection,
       );
     };
-    window.addEventListener('file-selection-updated', handleSelectionSync);
-    return () => window.removeEventListener('file-selection-updated', handleSelectionSync);
+    window.addEventListener("file-selection-updated", handleSelectionSync);
+    return () =>
+      window.removeEventListener("file-selection-updated", handleSelectionSync);
+  }, []);
+
+  useEffect(() => {
+    const handleHistorySync = () => {
+      setHistoryItems(listHistory("svg"));
+    };
+
+    window.addEventListener("file-history-updated", handleHistorySync);
+    return () =>
+      window.removeEventListener("file-history-updated", handleHistorySync);
   }, []);
 
   const handleTemplateWarnings = useCallback((message: string) => {
@@ -76,7 +100,7 @@ export const TemplateUpload: React.FC = () => {
     );
     if (!bootstrappedCsv) return;
 
-    posthog.capture('bootstrapped csv downloaded', {
+    posthog.capture("bootstrapped csv downloaded", {
       placeholder_count: svgTemplate.placeholders.length,
     });
     const url = URL.createObjectURL(bootstrappedCsv.file);
@@ -89,61 +113,71 @@ export const TemplateUpload: React.FC = () => {
     URL.revokeObjectURL(url);
   }, [svgTemplate]);
 
-  const processor = useCallback(async (file: File) => {
-    const template = await readSVGFile(file);
-    
-    const templateErrors = validateTemplate(template);
-    handleTemplateValidationMessages(templateErrors, handleTemplateWarnings);
+  const processor = useCallback(
+    async (file: File) => {
+      const template = await readSVGFile(file);
 
-    setSvgTemplate(template);
-    setSvgUploaded(true);
-    posthog.capture('template uploaded', {
-      placeholder_count: template.placeholders.length,
-      element_id_count: template.elementIds.length,
-    });
-    try {
-      const { items: updated, fileHashes } = await addFilesToHistoryWithHashes(
-        "svg",
-        [file],
-      );
-      setHistoryItems(updated);
-      const [uploadedHash] = fileHashes;
-      if (uploadedHash) {
-        setSelectedHistoryId(uploadedHash);
-        setLastUsed({ svgId: uploadedHash });
+      const templateErrors = validateTemplate(template);
+      handleTemplateValidationMessages(templateErrors, handleTemplateWarnings);
+
+      setSvgTemplate(template);
+      setSvgUploaded(true);
+      posthog.capture("template uploaded", {
+        placeholder_count: template.placeholders.length,
+        element_id_count: template.elementIds.length,
+      });
+      try {
+        const { items: updated, fileHashes } =
+          await addFilesToHistoryWithHashes("svg", [file]);
+        setHistoryItems(updated);
+        const [uploadedHash] = fileHashes;
+        if (uploadedHash) {
+          setSelectedHistoryId(uploadedHash);
+          setLastUsed({ svgId: uploadedHash });
+        }
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.warn("Failed to store SVG file history.", error);
+        }
       }
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.warn("Failed to store SVG file history.", error);
-      }
-    }
-    return template;
-  }, [handleTemplateWarnings, setSvgTemplate, setSvgUploaded]);
+      return template;
+    },
+    [handleTemplateWarnings, setSvgTemplate, setSvgUploaded],
+  );
 
   const validator = useCallback((file: File) => {
-    if (!file.name.toLowerCase().endsWith('.svg')) {
-      return 'Please upload an SVG file';
+    if (!file.name.toLowerCase().endsWith(".svg")) {
+      return "Please upload an SVG file";
     }
     return null;
   }, []);
 
-  const { uploadProgress, fileInputRef, handleFileSelect, handleClick, handleClear } = useFileUpload<SVGTemplate>({
-    accept: '.svg',
+  const {
+    uploadProgress,
+    fileInputRef,
+    handleFileSelect,
+    handleClick,
+    handleClear,
+  } = useFileUpload<SVGTemplate>({
+    accept: ".svg",
     maxSize: FILE_CONSTRAINTS.MAX_SVG_SIZE,
 
     processor,
     validator,
   });
 
-  const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useDragDrop({
-    onDrop: (files) => {
-      if (files.length > 0) {
-        handleFileSelect({ target: { files } } as unknown as React.ChangeEvent<HTMLInputElement>);
-      }
-    },
-    accept: ['.svg'],
-    multiple: false,
-  });
+  const { isDragging, handleDragOver, handleDragLeave, handleDrop } =
+    useDragDrop({
+      onDrop: (files) => {
+        if (files.length > 0) {
+          handleFileSelect({
+            target: { files },
+          } as unknown as React.ChangeEvent<HTMLInputElement>);
+        }
+      },
+      accept: [".svg"],
+      multiple: false,
+    });
 
   const handleClearTemplate = useCallback(() => {
     handleClear();
@@ -155,29 +189,46 @@ export const TemplateUpload: React.FC = () => {
 
   const selectedHistory = useMemo(
     () => historyItems.find((item) => item.id === selectedHistoryId) || null,
-    [historyItems, selectedHistoryId]
+    [historyItems, selectedHistoryId],
+  );
+
+  const historyByDay = useMemo(() => {
+    return historyItems.reduce<Record<string, StoredFile[]>>((acc, item) => {
+      const key = new Date(item.uploadedAt).toISOString().slice(0, 10);
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    }, {});
+  }, [historyItems]);
+
+  const historyDayKeys = useMemo(
+    () => Object.keys(historyByDay).sort((a, b) => b.localeCompare(a)),
+    [historyByDay],
   );
 
   const handleUseSelectedHistory = useCallback(async () => {
     if (!selectedHistory) return;
     try {
       setLoading(true);
-      const template = parseSVGTemplate(selectedHistory.content, selectedHistory.fileName);
+      const template = parseSVGTemplate(
+        selectedHistory.content,
+        selectedHistory.fileName,
+      );
       const templateErrors = validateTemplate(template);
       handleTemplateValidationMessages(templateErrors, handleTemplateWarnings);
       setSvgTemplate(template);
       setSvgUploaded(true);
       setSelectedHistoryId(selectedHistory.id);
       setLastUsed({ svgId: selectedHistory.id });
-      posthog.capture('template from history used', {
+      posthog.capture("template from history used", {
         placeholder_count: template.placeholders.length,
         element_id_count: template.elementIds.length,
       });
     } catch (error) {
       addError(
         `File processing failed: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
       );
     } finally {
       setLoading(false);
@@ -201,12 +252,12 @@ export const TemplateUpload: React.FC = () => {
     <div className={styles.templateUpload}>
       <h3>Upload SVG Template</h3>
       <p>
-        Upload SVG template with {'{{placeholder}}'} elements.
-        Example: {'{{name}}'}, {'{{title}}'}, etc.
+        Upload SVG template with {"{{placeholder}}"} elements. Example:{" "}
+        {"{{name}}"}, {"{{title}}"}, etc.
       </p>
 
       <div
-        className={`${styles.dropZone} ${isDragging ? styles.dragging : ''}`}
+        className={`${styles.dropZone} ${isDragging ? styles.dragging : ""}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -216,7 +267,7 @@ export const TemplateUpload: React.FC = () => {
           <div className={styles.uploadIcon}>
             <Icon name="image" size={36} />
           </div>
-          
+
           {isDragging ? (
             <p className={styles.dragText}>Drop your SVG file here</p>
           ) : (
@@ -225,7 +276,9 @@ export const TemplateUpload: React.FC = () => {
                 Drag and drop your SVG template, or click to browse
               </p>
               <p className={styles.subText}>
-                Maximum file size: {Math.round(FILE_CONSTRAINTS.MAX_SVG_SIZE / 1024 / 1024)}MB • Only SVG files accepted
+                Maximum file size:{" "}
+                {Math.round(FILE_CONSTRAINTS.MAX_SVG_SIZE / 1024 / 1024)}MB •
+                Only SVG files accepted
               </p>
             </>
           )}
@@ -243,8 +296,8 @@ export const TemplateUpload: React.FC = () => {
       {uploadProgress > 0 && (
         <div className={styles.progressContainer}>
           <div className={styles.progressBar}>
-            <div 
-              className={styles.progressFill} 
+            <div
+              className={styles.progressFill}
               style={{ width: `${uploadProgress}%` }}
             />
           </div>
@@ -265,23 +318,31 @@ export const TemplateUpload: React.FC = () => {
           <div className={styles.infoGrid}>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>File Name:</span>
-              <span className={styles.infoValue}>{svgTemplate.fileName || 'Unknown'}</span>
+              <span className={styles.infoValue}>
+                {svgTemplate.fileName || "Unknown"}
+              </span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Placeholders:</span>
-              <span className={styles.infoValue}>{svgTemplate.placeholders.length}</span>
+              <span className={styles.infoValue}>
+                {svgTemplate.placeholders.length}
+              </span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Element IDs:</span>
-              <span className={styles.infoValue}>{svgTemplate.elementIds.length}</span>
+              <span className={styles.infoValue}>
+                {svgTemplate.elementIds.length}
+              </span>
             </div>
           </div>
-          
+
           {svgTemplate.placeholders.length > 0 && (
             <div className={styles.placeholdersList}>
-              <span className={styles.placeholdersLabel}>Detected Placeholders:</span>
+              <span className={styles.placeholdersLabel}>
+                Detected Placeholders:
+              </span>
               <div className={styles.placeholders}>
-                {svgTemplate.placeholders.map(placeholder => (
+                {svgTemplate.placeholders.map((placeholder) => (
                   <span key={placeholder} className={styles.placeholder}>
                     {placeholder}
                   </span>
@@ -291,9 +352,13 @@ export const TemplateUpload: React.FC = () => {
           )}
           {svgTemplate.placeholders.length === 0 && (
             <div className={styles.placeholdersList}>
-              <span className={styles.placeholdersLabel}>Detected Placeholders:</span>
+              <span className={styles.placeholdersLabel}>
+                Detected Placeholders:
+              </span>
               <div className={styles.placeholders}>
-                <span className={styles.placeholder}>None yet — add them in the Edit Template step.</span>
+                <span className={styles.placeholder}>
+                  None yet — add them in the Edit Template step.
+                </span>
               </div>
             </div>
           )}
@@ -309,21 +374,31 @@ export const TemplateUpload: React.FC = () => {
             </div>
           </div>
           <div className={styles.historyList}>
-            {historyItems.map((item) => (
-              <label key={item.id} className={styles.historyItem}>
-                <input
-                  type="radio"
-                  name="svg-history"
-                  checked={selectedHistoryId === item.id}
-                  onChange={() => setSelectedHistoryId(item.id)}
-                />
-                <div className={styles.historyDetails}>
-                  <span className={styles.historyName}>{item.fileName}</span>
-                  <span className={styles.historyMeta}>
-                    Uploaded {new Date(item.uploadedAt).toLocaleString()}
-                  </span>
+            {historyDayKeys.map((dayKey) => (
+              <div key={dayKey} className={styles.historyGroup}>
+                <div className={styles.historyGroupLabel}>
+                  {new Date(dayKey).toLocaleDateString()}
                 </div>
-              </label>
+                {historyByDay[dayKey].map((item) => (
+                  <label key={item.id} className={styles.historyItem}>
+                    <input
+                      type="radio"
+                      name="svg-history"
+                      checked={selectedHistoryId === item.id}
+                      onChange={() => setSelectedHistoryId(item.id)}
+                    />
+                    <div className={styles.historyDetails}>
+                      <span className={styles.historyName}>
+                        {item.fileName}
+                      </span>
+                      <span className={styles.historyMeta}>
+                        Uploaded{" "}
+                        {new Date(item.uploadedAt).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </label>
+                ))}
+              </div>
             ))}
           </div>
 
@@ -347,10 +422,7 @@ export const TemplateUpload: React.FC = () => {
       )}
 
       <div className={styles.actions}>
-        <button 
-          onClick={handleClick}
-          className={styles.primaryButton}
-        >
+        <button onClick={handleClick} className={styles.primaryButton}>
           Browse Files
         </button>
 
@@ -368,15 +440,15 @@ export const TemplateUpload: React.FC = () => {
             Download Bootstrapped CSV
           </button>
         )}
-        
-          {svgTemplate && (
-            <button 
-              onClick={handleClearTemplate}
-              className={styles.secondaryButton}
-            >
-              Clear Template
-            </button>
-          )}
+
+        {svgTemplate && (
+          <button
+            onClick={handleClearTemplate}
+            className={styles.secondaryButton}
+          >
+            Clear Template
+          </button>
+        )}
       </div>
     </div>
   );

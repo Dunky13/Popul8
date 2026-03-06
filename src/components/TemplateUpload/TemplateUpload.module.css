@@ -31,8 +31,11 @@
   text-align: center;
   cursor: pointer;
   transition: all 220ms ease;
-  background:
-    linear-gradient(160deg, color-mix(in srgb, var(--bg-secondary) 88%, transparent), color-mix(in srgb, var(--bg-primary) 90%, transparent));
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--bg-secondary) 88%, transparent),
+    color-mix(in srgb, var(--bg-primary) 90%, transparent)
+  );
   position: relative;
   min-height: 156px;
   display: flex;
@@ -42,7 +45,8 @@
 
 .dropZone:hover {
   border-color: color-mix(in srgb, var(--accent-orange) 58%, transparent);
-  box-shadow: 0 10px 26px color-mix(in srgb, var(--accent-orange) 14%, transparent);
+  box-shadow: 0 10px 26px
+    color-mix(in srgb, var(--accent-orange) 14%, transparent);
   transform: translateY(-1px);
 }
 
@@ -119,10 +123,14 @@
   flex-direction: column;
   gap: 0.55rem;
   padding: 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--accent-orange) 30%, var(--border-color));
+  border: 1px solid
+    color-mix(in srgb, var(--accent-orange) 30%, var(--border-color));
   border-radius: 13px;
-  background:
-    linear-gradient(155deg, color-mix(in srgb, var(--accent-orange) 10%, transparent), color-mix(in srgb, var(--bg-secondary) 85%, transparent));
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--accent-orange) 10%, transparent),
+    color-mix(in srgb, var(--bg-secondary) 85%, transparent)
+  );
 }
 
 .templateInfo h4 {
@@ -227,6 +235,20 @@
   padding-right: 0.25rem;
 }
 
+.historyGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+}
+
+.historyGroupLabel {
+  font-size: 0.69rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .historyItem {
   display: flex;
   align-items: flex-start;
@@ -291,7 +313,11 @@
 
 .primaryButton {
   border: 1px solid transparent;
-  background: linear-gradient(140deg, var(--accent-orange), color-mix(in srgb, var(--accent-orange) 64%, var(--accent-cyan)));
+  background: linear-gradient(
+    140deg,
+    var(--accent-orange),
+    color-mix(in srgb, var(--accent-orange) 64%, var(--accent-cyan))
+  );
   color: #fff;
 }
 
