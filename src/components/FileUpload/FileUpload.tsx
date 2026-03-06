@@ -9,14 +9,15 @@ import React, {
   useRef,
   useState,
 } from "react";
-import type { DataRecord } from "../../types/dataRecord";
-import { useAppStore } from "../../store/appStore";
 import { useShallow } from "zustand/react/shallow";
+import { FILE_CONSTRAINTS } from "../../constants";
 import { useDragDrop } from "../../hooks/useDragDrop";
 import { useFileUpload } from "../../hooks/useFileUpload";
-import { parseCSVContent, parseCSVFile } from "../../utils/csvParser";
+import { posthog } from "../../lib/posthog";
+import { useAppStore } from "../../store/appStore";
+import type { DataRecord } from "../../types/dataRecord";
 import { validateAndCombineCsvData } from "../../utils/csvProcessing";
-import { FILE_CONSTRAINTS } from "../../constants";
+import { parseCSVContent, parseCSVFile } from "../../utils/csvParser";
 import {
   addFilesToHistoryWithHashes,
   clearHistory,
@@ -32,17 +33,21 @@ import {
   parseAcceptedFileRules,
   validateFileInput,
 } from "../../utils/fileValidation";
+import Icon from "../Icon/Icon";
+import {
+  UploadPanel,
+  UploadPanelActions,
+  UploadPanelButton,
+} from "../UploadPanel/UploadPanel";
 import {
   resolveCsvIdsForAppend,
   syncSelectedCsvFiles,
 } from "./csvSelectionHelpers";
+import styles from "./FileUpload.module.css";
 import {
   resolveTodayHistorySelection,
   toggleCsvHistorySelection,
 } from "./historySelectionHelpers";
-import styles from "./FileUpload.module.css";
-import Icon from "../Icon/Icon";
-import { posthog } from "../../lib/posthog";
 
 interface FileUploadProps {
   accept?: string;
@@ -167,7 +172,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
       return records;
     },
-    [applyCombinedCsvData, setHistoryItems, setSelectedHistoryIds],
+    [applyCombinedCsvData],
   );
 
   const multiProcessor = useCallback(
@@ -198,7 +203,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
       return records;
     },
-    [applyCombinedCsvData, setHistoryItems, setSelectedHistoryIds],
+    [applyCombinedCsvData],
   );
 
   const validator = useCallback((file: File) => {
@@ -244,10 +249,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     clearErrors();
     setCsvUploaded(false);
     clearRequiredRowOverrides();
-    const { setCsvData, setSelectedRowIndices } = useAppStore.getState();
-    setCsvData(null);
-    setSelectedRowIndices([]);
-  }, [handleClear, clearErrors, setCsvUploaded, clearRequiredRowOverrides]);
+    const { setCsvData: clearCsvData, setSelectedRowIndices: clearSelection } =
+      useAppStore.getState();
+    clearCsvData(null);
+    clearSelection([]);
+  }, [clearErrors, clearRequiredRowOverrides, handleClear, setCsvUploaded]);
 
   const handleAddFilesClick = useCallback(() => {
     const input = addFilesInputRef.current;
@@ -266,12 +272,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         validator,
         acceptedRules: acceptedFileRules,
       }),
-    [accept, maxSize, validator, acceptedFileRules],
+    [accept, acceptedFileRules, maxSize, validator],
   );
 
   const handleAddFilesSelect = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
       if (!files || files.length === 0) return;
       const filesArray = Array.from(files);
 
@@ -342,8 +348,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       processFile,
       processMultipleFiles,
       selectedHistoryIds,
-      setHistoryItems,
-      setSelectedHistoryIds,
       setLoading,
       validateAppendFile,
     ],
@@ -372,7 +376,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       applyCombinedCsvData,
       setLoading,
       addError,
-      // use hook variable from outer scope instead of destructured one
       updateSelection: setSelectedRowIndices,
       deps: {
         parseContent: parseCSVContent,
@@ -411,13 +414,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   const toggleHistorySelection = useCallback(
     (id: string) => {
-      setSelectedHistoryIds((prev) => {
-        return toggleCsvHistorySelection({
+      setSelectedHistoryIds((prev) =>
+        toggleCsvHistorySelection({
           currentIds: prev,
           id,
           multiple,
-        });
-      });
+        }),
+      );
     },
     [multiple],
   );
@@ -439,7 +442,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     } else {
       await processFile(files[0]);
     }
-  }, [processFile, processMultipleFiles, selectedHistory, multiple]);
+  }, [multiple, processFile, processMultipleFiles, selectedHistory]);
 
   const handleClearCsvHistory = useCallback(() => {
     clearHistory("csv");
@@ -486,99 +489,75 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     addError,
     applyCombinedCsvData,
     csvData,
-    selectedHistoryIds,
     selectedHistory,
+    selectedHistoryIds,
     setLoading,
-    setSelectedHistoryIds,
   ]);
 
   return (
-    <div className={styles.fileUpload}>
-      <h3>Upload CSV Data</h3>
-      <p>
-        {multiple ? "Upload one or more CSV files" : "Upload CSV file"} to
-        populate your template.
-        {multiple && (
-          <>
-            <br />
-            <strong>Note:</strong> Multiple files must have matching headers to
-            be combined.
-          </>
-        )}
-      </p>
-
-      <div
-        className={`${styles.dropZone} ${isDragging ? styles.dragging : ""}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={handleClick}
-      >
-        <div className={styles.dropZoneContent}>
-          <div className={styles.uploadIcon}>
-            <Icon name="upload" size={36} />
-          </div>
-
-          {isDragging ? (
-            <p className={styles.dragText}>
-              Drop your CSV {multiple ? "file(s)" : "file"} here
-            </p>
-          ) : (
+    <UploadPanel
+      tone="csv"
+      title="Upload CSV Data"
+      description={
+        <p>
+          {multiple ? "Upload one or more CSV files" : "Upload CSV file"} to
+          populate your template.
+          {multiple ? (
             <>
-              <p className={styles.dropText}>
-                Drag and drop your CSV {multiple ? "file(s)" : "file"} here, or
-                click to browse
-              </p>
-              <p className={styles.subText}>
-                Maximum file size: {Math.round(maxSize / 1024 / 1024)}MB per
-                file
-              </p>
+              <br />
+              <strong>Note:</strong> Multiple files must have matching headers
+              to be combined.
             </>
-          )}
-        </div>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={accept}
-          multiple={multiple}
-          onChange={handleFileSelect}
-          className={styles.fileInput}
-        />
-        <input
-          ref={addFilesInputRef}
-          type="file"
-          accept={accept}
-          multiple={multiple}
-          onChange={handleAddFilesSelect}
-          className={styles.fileInput}
-        />
-      </div>
-
-      {uploadProgress > 0 && (
-        <div className={styles.progressContainer}>
-          <div className={styles.progressBar}>
-            <div
-              className={styles.progressFill}
-              style={{ width: `${uploadProgress}%` }}
-            />
-          </div>
-          <span className={styles.progressText}>{uploadProgress}%</span>
-        </div>
-      )}
-
-      {csvUploaded && !uploadProgress && (
-        <div className={styles.successMessage}>
-          <Icon name="check" size={20} />
-          <span>
-            {csvData?.fileName?.includes("Combined")
-              ? "CSV files combined and uploaded successfully!"
-              : "CSV file uploaded successfully!"}
-          </span>
-        </div>
-      )}
-
-      {historyItems.length > 0 && (
+          ) : null}
+        </p>
+      }
+      icon={<Icon name="upload" size={36} />}
+      isDragging={isDragging}
+      dragText={`Drop your CSV ${multiple ? "file(s)" : "file"} here`}
+      dropText={
+        <>
+          Drag and drop your CSV {multiple ? "file(s)" : "file"} here, or click
+          to browse
+        </>
+      }
+      subText={`Maximum file size: ${Math.round(maxSize / 1024 / 1024)}MB per file`}
+      onClick={handleClick}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      fileInputs={
+        <>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={accept}
+            multiple={multiple}
+            onChange={handleFileSelect}
+          />
+          <input
+            ref={addFilesInputRef}
+            type="file"
+            accept={accept}
+            multiple={multiple}
+            onChange={handleAddFilesSelect}
+          />
+        </>
+      }
+      uploadProgress={uploadProgress}
+      successMessage={
+        csvUploaded && !uploadProgress ? (
+          <>
+            <Icon name="check" size={20} />
+            <span>
+              {csvData?.fileName?.includes("Combined")
+                ? "CSV files combined and uploaded successfully!"
+                : "CSV file uploaded successfully!"}
+            </span>
+          </>
+        ) : undefined
+      }
+    >
+      {historyItems.length > 0 ? (
         <div className={styles.historySection}>
           <div className={styles.historyHeader}>
             <div>
@@ -587,14 +566,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 Select one or more files to reuse.
               </p>
             </div>
-            <button
+            <UploadPanelButton
+              variant="ghost"
               onClick={handleSelectToday}
-              className={styles.ghostButton}
               disabled={!historyByDay[todayKey]?.length}
             >
               Select Today&apos;s Files
-            </button>
+            </UploadPanelButton>
           </div>
+
           <div className={styles.historyList}>
             {historyDayKeys.map((dayKey) => (
               <div key={dayKey} className={styles.historyGroup}>
@@ -609,12 +589,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                       onChange={() => toggleHistorySelection(item.id)}
                     />
                     <div className={styles.historyDetails}>
-                      <span className={styles.historyName}>
-                        {item.fileName}
-                      </span>
+                      <span className={styles.historyName}>{item.fileName}</span>
                       <span className={styles.historyMeta}>
-                        Uploaded{" "}
-                        {new Date(item.uploadedAt).toLocaleTimeString()}
+                        Uploaded {new Date(item.uploadedAt).toLocaleTimeString()}
                       </span>
                     </div>
                   </label>
@@ -623,50 +600,43 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             ))}
           </div>
 
-          <div className={styles.historyActions}>
-            <button
+          <UploadPanelActions>
+            <UploadPanelButton
+              variant="primary"
               onClick={handleUseSelectedHistory}
-              className={styles.primaryButton}
               disabled={selectedHistory.length === 0}
             >
               Use Selected CSVs
-            </button>
-            <button
+            </UploadPanelButton>
+            <UploadPanelButton
               onClick={handleAddSelectedToCurrent}
-              className={styles.secondaryButton}
               disabled={!csvData || selectedHistory.length === 0}
             >
               Add to Current Upload
-            </button>
-            <button
+            </UploadPanelButton>
+            <UploadPanelButton
               onClick={handleClearCsvHistory}
-              className={styles.secondaryButton}
               disabled={historyItems.length === 0}
             >
               Clear CSV History
-            </button>
-          </div>
+            </UploadPanelButton>
+          </UploadPanelActions>
         </div>
-      )}
+      ) : null}
 
-      <div className={styles.actions}>
-        <button onClick={handleClick} className={styles.primaryButton}>
+      <UploadPanelActions>
+        <UploadPanelButton variant="primary" onClick={handleClick}>
           Browse Files
-        </button>
-
-        {csvData && (
-          <button
-            onClick={handleAddFilesClick}
-            className={styles.secondaryButton}
-          >
+        </UploadPanelButton>
+        {csvData ? (
+          <UploadPanelButton onClick={handleAddFilesClick}>
             Add Files
-          </button>
-        )}
-
-        <button onClick={handleClearData} className={styles.secondaryButton}>
+          </UploadPanelButton>
+        ) : null}
+        <UploadPanelButton onClick={handleClearData}>
           Clear Data
-        </button>
-      </div>
-    </div>
+        </UploadPanelButton>
+      </UploadPanelActions>
+    </UploadPanel>
   );
 };

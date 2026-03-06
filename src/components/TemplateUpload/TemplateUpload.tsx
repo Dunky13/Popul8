@@ -3,16 +3,14 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import type { SVGTemplate } from "../../types/template";
-import { useAppStore } from "../../store/appStore";
 import { useShallow } from "zustand/react/shallow";
+import { FILE_CONSTRAINTS } from "../../constants";
 import { useDragDrop } from "../../hooks/useDragDrop";
 import { useFileUpload } from "../../hooks/useFileUpload";
-import { parseSVGTemplate, readSVGFile } from "../../utils/svgManipulator";
-import { validateTemplate } from "../../utils/validationUtils";
-import { handleTemplateValidationMessages } from "../../utils/templateValidation";
+import { posthog } from "../../lib/posthog";
+import { useAppStore } from "../../store/appStore";
+import type { SVGTemplate } from "../../types/template";
 import { buildBootstrappedCsvFromPlaceholders } from "../../utils/bootstrapCsv";
-import { FILE_CONSTRAINTS } from "../../constants";
 import {
   addFilesToHistoryWithHashes,
   clearHistory,
@@ -23,9 +21,16 @@ import {
   setSelection,
   type StoredFile,
 } from "../../utils/fileHistory";
-import styles from "./TemplateUpload.module.css";
+import { parseSVGTemplate, readSVGFile } from "../../utils/svgManipulator";
+import { handleTemplateValidationMessages } from "../../utils/templateValidation";
+import { validateTemplate } from "../../utils/validationUtils";
 import Icon from "../Icon/Icon";
-import { posthog } from "../../lib/posthog";
+import {
+  UploadPanel,
+  UploadPanelActions,
+  UploadPanelButton,
+} from "../UploadPanel/UploadPanel";
+import styles from "./TemplateUpload.module.css";
 
 export const TemplateUpload: React.FC = () => {
   const {
@@ -126,6 +131,7 @@ export const TemplateUpload: React.FC = () => {
         placeholder_count: template.placeholders.length,
         element_id_count: template.elementIds.length,
       });
+
       try {
         const { items: updated, fileHashes } =
           await addFilesToHistoryWithHashes("svg", [file]);
@@ -140,6 +146,7 @@ export const TemplateUpload: React.FC = () => {
           console.warn("Failed to store SVG file history.", error);
         }
       }
+
       return template;
     },
     [handleTemplateWarnings, setSvgTemplate, setSvgUploaded],
@@ -161,7 +168,6 @@ export const TemplateUpload: React.FC = () => {
   } = useFileUpload<SVGTemplate>({
     accept: ".svg",
     maxSize: FILE_CONSTRAINTS.MAX_SVG_SIZE,
-
     processor,
     validator,
   });
@@ -183,9 +189,9 @@ export const TemplateUpload: React.FC = () => {
     handleClear();
     clearErrors();
     setSvgUploaded(false);
-    const { setSvgTemplate } = useAppStore.getState();
-    setSvgTemplate(null);
-  }, [handleClear, clearErrors, setSvgUploaded]);
+    const { setSvgTemplate: clearTemplate } = useAppStore.getState();
+    clearTemplate(null);
+  }, [clearErrors, handleClear, setSvgUploaded]);
 
   const selectedHistory = useMemo(
     () => historyItems.find((item) => item.id === selectedHistoryId) || null,
@@ -249,70 +255,45 @@ export const TemplateUpload: React.FC = () => {
   }, []);
 
   return (
-    <div className={styles.templateUpload}>
-      <h3>Upload SVG Template</h3>
-      <p>
-        Upload SVG template with {"{{placeholder}}"} elements. Example:{" "}
-        {"{{name}}"}, {"{{title}}"}, etc.
-      </p>
-
-      <div
-        className={`${styles.dropZone} ${isDragging ? styles.dragging : ""}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={handleClick}
-      >
-        <div className={styles.dropZoneContent}>
-          <div className={styles.uploadIcon}>
-            <Icon name="image" size={36} />
-          </div>
-
-          {isDragging ? (
-            <p className={styles.dragText}>Drop your SVG file here</p>
-          ) : (
-            <>
-              <p className={styles.dropText}>
-                Drag and drop your SVG template, or click to browse
-              </p>
-              <p className={styles.subText}>
-                Maximum file size:{" "}
-                {Math.round(FILE_CONSTRAINTS.MAX_SVG_SIZE / 1024 / 1024)}MB •
-                Only SVG files accepted
-              </p>
-            </>
-          )}
-        </div>
-
+    <UploadPanel
+      tone="svg"
+      title="Upload SVG Template"
+      description={
+        <p>
+          Upload SVG template with {"{{placeholder}}"} elements. Example:
+          {" {{name}}, {{title}}"}, etc.
+        </p>
+      }
+      icon={<Icon name="image" size={36} />}
+      isDragging={isDragging}
+      dragText="Drop your SVG file here"
+      dropText={<>Drag and drop your SVG template, or click to browse</>}
+      subText={`Maximum file size: ${Math.round(
+        FILE_CONSTRAINTS.MAX_SVG_SIZE / 1024 / 1024,
+      )}MB • Only SVG files accepted`}
+      onClick={handleClick}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      fileInputs={
         <input
           ref={fileInputRef}
           type="file"
           accept=".svg"
           onChange={handleFileSelect}
-          className={styles.fileInput}
         />
-      </div>
-
-      {uploadProgress > 0 && (
-        <div className={styles.progressContainer}>
-          <div className={styles.progressBar}>
-            <div
-              className={styles.progressFill}
-              style={{ width: `${uploadProgress}%` }}
-            />
-          </div>
-          <span className={styles.progressText}>{uploadProgress}%</span>
-        </div>
-      )}
-
-      {svgUploaded && !uploadProgress && (
-        <div className={styles.successMessage}>
-          <Icon name="check" size={20} />
-          <span>SVG template uploaded successfully!</span>
-        </div>
-      )}
-
-      {svgTemplate && (
+      }
+      uploadProgress={uploadProgress}
+      successMessage={
+        svgUploaded && !uploadProgress ? (
+          <>
+            <Icon name="check" size={20} />
+            <span>SVG template uploaded successfully!</span>
+          </>
+        ) : undefined
+      }
+    >
+      {svgTemplate ? (
         <div className={styles.templateInfo}>
           <h4>Template Information</h4>
           <div className={styles.infoGrid}>
@@ -336,36 +317,28 @@ export const TemplateUpload: React.FC = () => {
             </div>
           </div>
 
-          {svgTemplate.placeholders.length > 0 && (
-            <div className={styles.placeholdersList}>
-              <span className={styles.placeholdersLabel}>
-                Detected Placeholders:
-              </span>
-              <div className={styles.placeholders}>
-                {svgTemplate.placeholders.map((placeholder) => (
+          <div className={styles.placeholdersList}>
+            <span className={styles.placeholdersLabel}>
+              Detected Placeholders:
+            </span>
+            <div className={styles.placeholders}>
+              {svgTemplate.placeholders.length > 0 ? (
+                svgTemplate.placeholders.map((placeholder) => (
                   <span key={placeholder} className={styles.placeholder}>
                     {placeholder}
                   </span>
-                ))}
-              </div>
-            </div>
-          )}
-          {svgTemplate.placeholders.length === 0 && (
-            <div className={styles.placeholdersList}>
-              <span className={styles.placeholdersLabel}>
-                Detected Placeholders:
-              </span>
-              <div className={styles.placeholders}>
+                ))
+              ) : (
                 <span className={styles.placeholder}>
-                  None yet — add them in the Edit Template step.
+                  None yet - add them in the Edit Template step.
                 </span>
-              </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
-      )}
+      ) : null}
 
-      {historyItems.length > 0 && (
+      {historyItems.length > 0 ? (
         <div className={styles.historySection}>
           <div className={styles.historyHeader}>
             <div>
@@ -388,12 +361,9 @@ export const TemplateUpload: React.FC = () => {
                       onChange={() => setSelectedHistoryId(item.id)}
                     />
                     <div className={styles.historyDetails}>
-                      <span className={styles.historyName}>
-                        {item.fileName}
-                      </span>
+                      <span className={styles.historyName}>{item.fileName}</span>
                       <span className={styles.historyMeta}>
-                        Uploaded{" "}
-                        {new Date(item.uploadedAt).toLocaleTimeString()}
+                        Uploaded {new Date(item.uploadedAt).toLocaleTimeString()}
                       </span>
                     </div>
                   </label>
@@ -402,34 +372,31 @@ export const TemplateUpload: React.FC = () => {
             ))}
           </div>
 
-          <div className={styles.historyActions}>
-            <button
+          <UploadPanelActions>
+            <UploadPanelButton
+              variant="primary"
               onClick={handleUseSelectedHistory}
-              className={styles.primaryButton}
               disabled={!selectedHistory}
             >
               Use Selected Template
-            </button>
-            <button
+            </UploadPanelButton>
+            <UploadPanelButton
               onClick={handleClearSvgHistory}
-              className={styles.secondaryButton}
               disabled={historyItems.length === 0}
             >
               Clear SVG History
-            </button>
-          </div>
+            </UploadPanelButton>
+          </UploadPanelActions>
         </div>
-      )}
+      ) : null}
 
-      <div className={styles.actions}>
-        <button onClick={handleClick} className={styles.primaryButton}>
+      <UploadPanelActions>
+        <UploadPanelButton variant="primary" onClick={handleClick}>
           Browse Files
-        </button>
-
-        {svgTemplate && (
-          <button
+        </UploadPanelButton>
+        {svgTemplate ? (
+          <UploadPanelButton
             onClick={handleDownloadBootstrappedCsv}
-            className={styles.secondaryButton}
             disabled={svgTemplate.placeholders.length === 0}
             title={
               svgTemplate.placeholders.length > 0
@@ -438,18 +405,14 @@ export const TemplateUpload: React.FC = () => {
             }
           >
             Download Bootstrapped CSV
-          </button>
-        )}
-
-        {svgTemplate && (
-          <button
-            onClick={handleClearTemplate}
-            className={styles.secondaryButton}
-          >
+          </UploadPanelButton>
+        ) : null}
+        {svgTemplate ? (
+          <UploadPanelButton onClick={handleClearTemplate}>
             Clear Template
-          </button>
-        )}
-      </div>
-    </div>
+          </UploadPanelButton>
+        ) : null}
+      </UploadPanelActions>
+    </UploadPanel>
   );
 };
