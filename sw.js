@@ -1,5 +1,5 @@
 const BASE_PATH = "/";
-const CACHE_VERSION = "3429f0ccbd21";
+const CACHE_VERSION = "1a0fa259e0f9";
 const CACHE_NAME = `popul8-${CACHE_VERSION}`;
 const APP_SHELL_ASSETS = [
   BASE_PATH,
@@ -75,6 +75,12 @@ self.addEventListener("activate", (event) => {
       await self.clients.claim();
     })(),
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    void self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
