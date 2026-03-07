@@ -132,6 +132,7 @@
 - The redesign can be A/B tested without forking the app logic by restoring the old UI into side-by-side legacy components and switching only the top-level rendered component tree.
 - For this experiment, `new-redesign = test` maps to the redesigned UI and the control/default path maps to the restored legacy UI.
 - A lightweight query/localStorage override is useful for QA because feature-flag experiments are otherwise awkward to verify locally.
+- A small shared beta toggle works better than duplicating experiment controls into both headers because it keeps the opt-in behavior consistent across stable and redesigned variants.
 
 ## Functional Parity Findings
 - The following capabilities should be preserved unless intentionally changed later:

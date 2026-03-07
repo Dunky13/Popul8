@@ -2,6 +2,8 @@ import React from "react";
 import { useFeatureFlagVariantKey } from "posthog-js/react";
 import { App as RedesignedApp } from "./App";
 import { App as LegacyApp } from "./AppLegacy";
+import { posthog } from "./lib/posthog";
+import styles from "./styles/AppExperiment.module.css";
 
 type UiVariant = "legacy" | "redesign";
 
@@ -37,6 +39,7 @@ export const AppExperiment: React.FC = () => {
   const [override, setOverride] = React.useState<UiVariant | null>(() =>
     readOverride(),
   );
+  const [isPending, startTransition] = React.useTransition();
 
   React.useEffect(() => {
     const handlePopState = () => {
@@ -47,8 +50,49 @@ export const AppExperiment: React.FC = () => {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  const uiVariant =
-    override ?? (import.meta.env.DEV ? "redesign" : resolveFlagVariant(flagVariant));
+  const assignedVariant =
+    import.meta.env.DEV ? "redesign" : resolveFlagVariant(flagVariant);
+  const uiVariant = override ?? assignedVariant;
 
-  return uiVariant === "redesign" ? <RedesignedApp /> : <LegacyApp />;
+  const handleVariantChange = (nextVariant: UiVariant) => {
+    if (typeof window === "undefined") return;
+
+    startTransition(() => {
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.set(QUERY_PARAM, nextVariant);
+      window.history.replaceState({}, "", nextUrl);
+      window.localStorage.setItem(STORAGE_KEY, nextVariant);
+      setOverride(nextVariant);
+      posthog.capture("ui variant manually selected", {
+        from_variant: uiVariant,
+        to_variant: nextVariant,
+        assigned_variant: assignedVariant,
+      });
+    });
+  };
+
+  return (
+    <>
+      {uiVariant === "redesign" ? <RedesignedApp /> : <LegacyApp />}
+      <div className={styles.betaSwitcher}>
+        <span className={styles.betaLabel}>
+          {uiVariant === "redesign" ? "Beta active" : "New interface"}
+        </span>
+        <button
+          type="button"
+          className={`${styles.betaButton} ${
+            uiVariant === "redesign" ? styles.betaButtonSecondary : ""
+          }`}
+          onClick={() =>
+            handleVariantChange(
+              uiVariant === "redesign" ? "legacy" : "redesign",
+            )
+          }
+          disabled={isPending}
+        >
+          {uiVariant === "redesign" ? "Leave beta" : "Try beta"}
+        </button>
+      </div>
+    </>
+  );
 };

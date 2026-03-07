@@ -36,6 +36,7 @@
 - [x] Restored the pre-redesign UI from commit `c1a3998dfd2e6b4d5501d19f77ffe670a919eff2` into side-by-side legacy components for experiment use.
 - [x] Added a PostHog-powered app variant switch using the `new-redesign` feature flag, with `test` routed to the redesigned UI and control/default routed to the legacy UI.
 - [x] Added local `uiVariant` overrides for browser verification of both branches without changing the PostHog flag.
+- [x] Added a persistent beta toggle so users can opt into the redesigned UI or return to the stable UI without relying on query parameters.
 
 ## Immediate Next Steps
 - [x] Apply the system to editor, mapping, selection, and preview.
@@ -51,3 +52,4 @@
 - The redesign roadmap in `PLAN.md` has now been implemented end to end, with verification completed after the final pass.
 - The mobile mapping redesign preserves the same mapping model and controls as desktop; only the narrow-screen presentation changed.
 - The A/B test implementation keeps the same application state and business logic underneath both variants; only the UI component tree changes.
+- The beta toggle is implemented on top of the same override mechanism as the experiment QA tools, so user opt-in does not require any separate routing or deployment.
