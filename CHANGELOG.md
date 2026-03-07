@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Dunky13/Popul8/compare/v1.2.0...v1.3.0) (2026-03-07)
+
+
+### Features
+
+* tighten design ([c010e69](https://github.com/Dunky13/Popul8/commit/c010e69a7a52c5f7951136ab5a1cad5068c49bde))
+
 ## [1.2.0](https://github.com/Dunky13/Popul8/compare/v1.1.0...v1.2.0) (2026-03-07)
 
 
