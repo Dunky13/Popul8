@@ -1,0 +1,7 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect id="background" width="100%" height="100%" rx="29px"
+        fill="#0e1e34"></rect>
+    <text id="text" x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
+        fill="#fdebce" font-family="'Inter', system-ui, sans-serif"
+        font-weight="800" font-size="88" letter-spacing="-0.02em">P8</text>
+</svg>
