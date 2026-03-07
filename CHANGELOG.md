@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/Dunky13/Popul8/compare/v1.4.0...v1.5.0) (2026-03-07)
+
+
+### Features
+
+* add build-time to sw.js ([dbc0c69](https://github.com/Dunky13/Popul8/commit/dbc0c69454c6f4193cbd78d9cfa4b06de14755b4))
+
 ## [1.4.0](https://github.com/Dunky13/Popul8/compare/v1.3.0...v1.4.0) (2026-03-07)
 
 
