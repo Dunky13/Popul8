@@ -29,6 +29,7 @@ import { DetectedPlaceholders } from "./DetectedPlaceholders";
 import { formatSvg, normalizeFontSize, parseSvgInfo } from "./helpers";
 import { CanvasToolbar } from "./CanvasToolbar";
 import { TemplateEditorStage } from "./TemplateEditorStage";
+import Icon from "../Icon/Icon";
 import { usePlaceholderBlocks } from "./hooks/usePlaceholderBlocks";
 import { useCanvasSelection } from "./hooks/useCanvasSelection";
 import { useDebouncedValue } from "./hooks/useDebouncedValue";
@@ -46,7 +47,6 @@ import {
   applySelectedMarkupToContent,
   updatePlaceholder,
 } from "./placeholderActions";
-import { TemplateEditorHeader } from "./TemplateEditorHeader";
 
 const GRID_SIZE = 1;
 const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
@@ -833,17 +833,6 @@ export const TemplateEditorWorkspace: React.FC<
 
   return (
     <>
-      <TemplateEditorHeader
-        stats={{ fileName, placeholderCount, elementIdCount }}
-        view={{
-          isAdvanced,
-          viewMode,
-          onToggleAdvanced: onToggleAdvanced,
-          onSetViewMode,
-        }}
-        actions={{ onDownload }}
-        history={{ onUndo, onRedo, canUndo, canRedo }}
-      />
       <div className={styles.editorBody}>
         <div className={styles.canvasPanel}>
           {viewMode === "visual" && (
@@ -907,6 +896,95 @@ export const TemplateEditorWorkspace: React.FC<
         </div>
 
         <div className={styles.controlsPanel}>
+          <div className={`${styles.formCard} ${styles.sidebarSummaryCard}`}>
+            <div className={styles.sidebarSummaryTopRow}>
+              <div className={styles.sidebarSummaryFile}>
+                <span className={styles.sidebarSummaryFileLabel}>File</span>
+                <span className={styles.sidebarSummaryFileValue} title={fileName}>
+                  {fileName}
+                </span>
+              </div>
+              <div className={styles.sidebarSummaryStats}>
+                <div className={styles.sidebarSummaryStat}>
+                  <span>Placeholders</span>
+                  <strong>{placeholderCount}</strong>
+                </div>
+                <div className={styles.sidebarSummaryStat}>
+                  <span>Element IDs</span>
+                  <strong>{elementIdCount}</strong>
+                </div>
+              </div>
+              <button
+                className={`${styles.secondaryButton} ${styles.sidebarSummaryExportButton}`}
+                onClick={onDownload}
+              >
+                <span className={styles.buttonIcon} aria-hidden="true">
+                  <Icon name="download" size={16} />
+                </span>
+                Export
+              </button>
+            </div>
+            <div className={styles.sidebarSummaryControls}>
+              <label
+                className={`${styles.advancedToggle} ${styles.sidebarSummaryAdvancedToggle}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isAdvanced}
+                  onChange={(event) => onToggleAdvanced(event.target.checked)}
+                />
+                <span>Advanced</span>
+              </label>
+              <div className={styles.viewToggle}>
+                <button
+                  className={`${styles.toggleButton} ${
+                    viewMode === "visual" ? styles.toggleActive : ""
+                  }`}
+                  onClick={() => onSetViewMode("visual")}
+                >
+                  <span className={styles.buttonIcon} aria-hidden="true">
+                    <Icon name="visibility" size={16} />
+                  </span>
+                  Visual
+                </button>
+                <button
+                  className={`${styles.toggleButton} ${
+                    viewMode === "code" ? styles.toggleActive : ""
+                  }`}
+                  onClick={() => onSetViewMode("code")}
+                  disabled={!isAdvanced}
+                >
+                  <span className={styles.buttonIcon} aria-hidden="true">
+                    <Icon name="code" size={16} />
+                  </span>
+                  Code
+                </button>
+              </div>
+              <div className={styles.sidebarSummaryHistory}>
+                <button
+                  className={styles.secondaryButton}
+                  onClick={onUndo}
+                  disabled={!canUndo}
+                >
+                  <span className={styles.buttonIcon} aria-hidden="true">
+                    <Icon name="undo" size={16} />
+                  </span>
+                  Undo
+                </button>
+                <button
+                  className={styles.secondaryButton}
+                  onClick={onRedo}
+                  disabled={!canRedo}
+                >
+                  <span className={styles.buttonIcon} aria-hidden="true">
+                    <Icon name="redo" size={16} />
+                  </span>
+                  Redo
+                </button>
+              </div>
+            </div>
+          </div>
+
           <PlaceholderPanel
             panel={{
               shouldShow: shouldShowPlaceholderPanel,

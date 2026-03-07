@@ -126,7 +126,15 @@
   color: var(--warning-text);
 }
 
+.workflowStrip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+  gap: 0.6rem;
+  align-items: start;
+}
+
 .navigationScroller {
+  min-width: 0;
   overflow-x: auto;
   overflow-y: visible;
   scrollbar-width: thin;
@@ -450,210 +458,107 @@
   gap: 1rem;
 }
 
-.stepIntro {
-  border: 1px solid var(--line-subtle);
-  border-radius: 14px;
-  padding: 1rem;
-  background: var(--surface-panel);
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.stepIntroTopRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-  gap: 0.9rem;
-  align-items: start;
-}
-
-.stepIntroLead {
-  min-width: 0;
-}
-
-.stepIntroMeta {
-  margin: 0;
-  font-size: 0.82rem;
-  line-height: 1.25;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.stepIntroTitle {
-  margin: 0.18rem 0 0.35rem;
-  font-size: clamp(1.15rem, 1rem + 0.7vw, 1.55rem);
-  line-height: 1.08;
-  font-family: var(--font-display);
-  color: var(--text-primary);
-}
-
-.stepIntroDescription {
-  margin: 0;
-  max-width: 60ch;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.45;
-}
-
-.stepStatRow {
-  margin-top: 0.7rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-}
-
-.stepStat {
-  border: 1px solid var(--line-subtle);
-  border-radius: 8px;
-  background: var(--surface-panel-strong);
-  padding: 0.3rem 0.55rem;
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-
-.stepIntroChecklistRail {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
+.currentStepCard {
   border: 1px solid var(--line-subtle);
   border-radius: 12px;
-  background: var(--surface-panel-strong);
-  padding: 0.8rem;
+  background: var(--surface-panel);
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 4.1rem;
 }
 
-.stepIntroChecklistSummary {
+.currentStepCardTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.6rem;
+  gap: 0.55rem;
+  width: 100%;
 }
 
-.stepIntroChecklistSummaryText {
+.currentStepLead {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   min-width: 0;
 }
 
-.stepIntroChecklistLabel {
+.currentStepIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 32%, var(--line-subtle));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary-light) 60%, var(--surface-panel));
+  color: var(--primary-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.currentStepCopy {
+  min-width: 0;
+}
+
+.currentStepMeta {
   margin: 0;
-  font-size: 0.74rem;
+  font-size: 0.72rem;
+  line-height: 1.25;
   color: var(--text-muted);
   font-weight: 700;
 }
 
-.stepIntroChecklistProgress {
-  margin: 0.12rem 0 0;
-  font-size: 0.82rem;
-  line-height: 1.3;
+.currentStepTitle {
+  margin: 0.1rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.1;
   color: var(--text-primary);
+  font-family: inherit;
   font-weight: 700;
 }
 
-.stepIntroChecklistToggle {
-  appearance: none;
-  border: 1px solid var(--line-subtle);
-  background: var(--surface-panel);
-  color: var(--text-primary);
-  border-radius: 8px;
-  min-height: 2rem;
-  padding: 0.3rem 0.65rem;
-  font-size: 0.76rem;
-  font-weight: 700;
+.currentStepSummary {
+  margin: 0.12rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.currentStepActionButton {
+  min-width: 0;
+  white-space: nowrap;
+  min-height: 1.9rem;
+  padding: 0.32rem 0.58rem;
+  font-size: 0.74rem;
+}
+
+.currentStepActionButton:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+}
+
+.currentStepBadge {
   display: inline-flex;
   align-items: center;
-  gap: 0.32rem;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.stepIntroChecklistToggle:hover {
-  border-color: var(--line-strong);
+  justify-content: center;
+  min-height: 1.45rem;
+  padding: 0 0.42rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 8px;
   background: var(--surface-panel-strong);
-}
-
-.stepIntroChecklistToggle[aria-expanded="true"] {
-  border-color: color-mix(in srgb, var(--primary-color) 32%, var(--line-subtle));
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .stepContent {
   display: flex;
   gap: 1rem;
   min-height: 0;
-}
-
-.flowChecklist {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-}
-
-.flowChecklistItem {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: 2.7rem;
-  border-radius: 10px;
-  border: 1px solid var(--line-subtle);
-  background: var(--surface-panel-strong);
-  padding: 0.45rem 0.55rem;
-  font-size: 0.77rem;
-  font-weight: 600;
-}
-
-.flowChecklistIcon {
-  width: 1.1rem;
-  height: 1.1rem;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.flowChecklistDone {
-  color: color-mix(in srgb, var(--success-color) 84%, var(--text-primary));
-  border-color: color-mix(in srgb, var(--success-color) 30%, var(--line-subtle));
-  background: color-mix(in srgb, var(--success-bg) 70%, var(--surface-panel));
-}
-
-.flowChecklistDone .flowChecklistIcon {
-  color: var(--success-color);
-  background: color-mix(in srgb, var(--success-color) 14%, transparent);
-}
-
-.flowChecklistPending {
-  color: var(--text-secondary);
-}
-
-.flowChecklistPending .flowChecklistIcon {
-  color: color-mix(in srgb, var(--warning-color) 74%, var(--text-primary));
-  background: color-mix(in srgb, var(--warning-bg) 74%, transparent);
-}
-
-.flowActionButton {
-  width: 100%;
-  justify-content: center;
-}
-
-.flowActionButton:disabled {
-  opacity: 0.52;
-  cursor: not-allowed;
-}
-
-.flowActionHelper {
-  margin: 0;
-  font-size: 0.79rem;
-  line-height: 1.4;
-}
-
-.flowActionHelperReady {
-  color: color-mix(in srgb, var(--success-color) 84%, var(--text-primary));
-}
-
-.flowActionHelperBlocked {
-  color: color-mix(in srgb, var(--warning-text) 92%, var(--text-primary));
 }
 
 .stepStage {
@@ -909,8 +814,7 @@
 @media print {
   .offlineIndicator,
   .header,
-  .messages,
-  .stepIntro {
+  .messages {
     display: none !important;
   }
 
@@ -946,7 +850,7 @@
     justify-content: space-between;
   }
 
-  .stepIntroTopRow,
+  .workflowStrip,
   .uploadStageHeader {
     grid-template-columns: 1fr;
   }
@@ -991,10 +895,6 @@
 
   .stepContent {
     flex-direction: column;
-  }
-
-  .flowChecklist {
-    grid-template-columns: 1fr;
   }
 
   .uploadCoreGrid {
@@ -1043,21 +943,21 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .stepIntro,
+  .currentStepCard,
   .uploadStage {
     padding: 0.85rem;
   }
 
-  .stepIntroChecklistSummary {
-    flex-direction: column;
+  .currentStepCardTop {
     align-items: stretch;
+    flex-direction: column;
   }
 
-  .stepIntroChecklistToggle {
-    justify-content: center;
+  .currentStepLead {
+    width: 100%;
   }
 
-  .flowActionButton,
+  .currentStepActionButton,
   .reuseRunAction {
     width: 100%;
   }
