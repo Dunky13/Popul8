@@ -1,0 +1,366 @@
+.pageGridContainer {
+  padding: 0.95rem;
+  background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  box-shadow: 0 18px 34px rgb(var(--shadow-rgb) / 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 84%, transparent);
+  padding-bottom: 0.62rem;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.08rem;
+  font-family: var(--font-display);
+}
+
+.stats {
+  display: flex;
+  gap: 0.42rem;
+  flex-wrap: wrap;
+}
+
+.stats span {
+  padding: 0.24rem 0.54rem;
+  background: color-mix(in srgb, var(--bg-secondary) 84%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.secondaryButton,
+.printButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.48rem 0.74rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.secondaryButton {
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
+  color: var(--text-primary);
+}
+
+.secondaryButton:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.secondaryButton:hover:enabled {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent-cyan) 42%, transparent);
+}
+
+.printButton {
+  border: none;
+  background: linear-gradient(140deg, var(--accent-cyan), color-mix(in srgb, var(--accent-cyan) 62%, var(--accent-orange)));
+  color: #fff;
+}
+
+.printButton:hover {
+  transform: translateY(-1px);
+}
+
+.previewGuidance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.guidanceItem {
+  border: 1px solid color-mix(in srgb, var(--border-color) 84%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
+  padding: 0.48rem 0.56rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.guidanceItem p {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.guidanceNumber {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(140deg, var(--accent-cyan), var(--accent-orange));
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.notReady {
+  text-align: center;
+  padding: 1.3rem 1rem;
+  background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
+  border-radius: 12px;
+}
+
+.requirements,
+.errors,
+.warnings {
+  text-align: left;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.requirements h4,
+.errors h4,
+.warnings h4 {
+  margin: 0 0 0.55rem;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.requirements ul,
+.errors ul,
+.warnings ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.requirements li {
+  margin: 0.28rem 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.errors li {
+  margin: 0.28rem 0;
+  color: color-mix(in srgb, var(--error-color) 85%, var(--text-primary));
+  font-size: 0.8rem;
+}
+
+.warnings li {
+  margin: 0.28rem 0;
+  color: color-mix(in srgb, var(--warning-text) 85%, var(--text-primary));
+  font-size: 0.8rem;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+  height: 100%;
+}
+
+.previewLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 0.95rem;
+  align-items: stretch;
+  height: calc(100vh - 278px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pageGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr;
+  gap: 2mm;
+  width: 100%;
+  aspect-ratio: 297/210;
+  background: color-mix(in srgb, var(--bg-primary) 96%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+  border-radius: 8px;
+  padding: 2mm;
+  box-sizing: border-box;
+}
+
+.recordCardContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg-primary) 96%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+  border-radius: 7px;
+  position: relative;
+  overflow: hidden;
+  min-height: 100px;
+  cursor: pointer;
+}
+
+.recordCardSelected {
+  border: 2px solid color-mix(in srgb, var(--accent-cyan) 75%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-cyan) 20%, transparent);
+}
+
+.selectionBadge {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  padding: 0.16rem 0.4rem;
+  background: color-mix(in srgb, var(--accent-cyan) 82%, transparent);
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 999px;
+}
+
+.recordCardSelected .selectionBadge {
+  background: color-mix(in srgb, var(--success-color) 82%, transparent);
+}
+
+.resizeBadge {
+  position: absolute;
+  bottom: 0.35rem;
+  right: 0.35rem;
+  padding: 0.22rem 0.42rem;
+  background: color-mix(in srgb, var(--accent-orange) 86%, transparent);
+  color: #1f252e;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.07rem;
+  font-size: 0.61rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.resizeBadgecard {
+  background: color-mix(in srgb, var(--success-color) 88%, transparent);
+  color: #fff;
+}
+
+.resizeBadgeall {
+  background: color-mix(in srgb, var(--accent-cyan) 88%, transparent);
+  color: #fff;
+}
+
+.resizeBadgeboth {
+  background: color-mix(in srgb, var(--accent-orange) 88%, transparent);
+  color: #1f252e;
+}
+
+.resizeBadgeTitle {
+  line-height: 1;
+}
+
+.resizeBadgeDetail {
+  font-size: 0.58rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
+.emptySlot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg-secondary) 84%, transparent);
+  border: 2px dashed color-mix(in srgb, var(--border-color) 86%, transparent);
+  border-radius: 6px;
+  min-height: 100px;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.77rem;
+}
+
+@media (max-width: 1024px) {
+  .previewLayout {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: 0;
+  }
+
+  .preview {
+    max-height: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageGridContainer {
+    padding: 0.78rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .headerActions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .secondaryButton,
+  .printButton {
+    flex: 1 1 180px;
+    justify-content: center;
+  }
+
+  .previewGuidance {
+    grid-template-columns: 1fr;
+  }
+
+  .pageGrid:not(.printing) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1mm;
+    padding: 1mm;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageGrid {
+    grid-template-columns: 1fr;
+    aspect-ratio: 297/525;
+  }
+
+  .stats {
+    gap: 0.35rem;
+  }
+
+  .secondaryButton,
+  .printButton {
+    flex-basis: 100%;
+  }
+}

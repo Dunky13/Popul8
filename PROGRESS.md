@@ -33,6 +33,9 @@
 - [x] Demoted field-by-field print resizing behind an explicit disclosure so page setup remains the default visible path.
 - [x] Ran the final responsive and functional verification pass across desktop and mobile for the redesigned workflow.
 - [x] Replaced the mobile mapping stacked-table fallback with a guided one-placeholder-at-a-time flow, including previous/next navigation, next-unresolved shortcut, and jump strip.
+- [x] Restored the pre-redesign UI from commit `c1a3998dfd2e6b4d5501d19f77ffe670a919eff2` into side-by-side legacy components for experiment use.
+- [x] Added a PostHog-powered app variant switch using the `new-redesign` feature flag, with `test` routed to the redesigned UI and control/default routed to the legacy UI.
+- [x] Added local `uiVariant` overrides for browser verification of both branches without changing the PostHog flag.
 
 ## Immediate Next Steps
 - [x] Apply the system to editor, mapping, selection, and preview.
@@ -47,3 +50,4 @@
 - Functional parity remains intact for the editor, mapping, selection, and preview redesign passes; the work stayed on layout, hierarchy, and disclosure rather than workflow capability changes.
 - The redesign roadmap in `PLAN.md` has now been implemented end to end, with verification completed after the final pass.
 - The mobile mapping redesign preserves the same mapping model and controls as desktop; only the narrow-screen presentation changed.
+- The A/B test implementation keeps the same application state and business logic underneath both variants; only the UI component tree changes.

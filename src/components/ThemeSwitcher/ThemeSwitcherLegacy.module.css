@@ -1,0 +1,53 @@
+.themeSwitcher {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #f59e0b;
+  cursor: pointer;
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease,
+    transform 0.2s ease;
+}
+
+.themeSwitcher:hover {
+  background: rgb(0 0 0 / 0.06);
+}
+
+.themeSwitcher:active {
+  transform: scale(0.96);
+}
+
+.themeSwitcher:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.themeSwitcherDark {
+  color: #cbd5e1;
+}
+
+.themeIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: block;
+}
+
+.sunGroup,
+.moonGroup {
+  transition: opacity 0.3s ease;
+}
+
+.sunGroupHidden {
+  opacity: 0;
+}
+
+.moonGroupHidden {
+  opacity: 0;
+}

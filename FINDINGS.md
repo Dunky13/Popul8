@@ -129,6 +129,9 @@
 - The redesign should focus on shared layout primitives and state presentation rather than changing business logic first.
 - The local PWA/service worker can keep serving stale UI during redesign verification, so future visual QA should either unregister the service worker in dev or use a development safeguard that disables stale caching.
 - The current step architecture and scoped CSS modules made it possible to complete the redesign incrementally without destabilizing the underlying CSV/SVG processing flow.
+- The redesign can be A/B tested without forking the app logic by restoring the old UI into side-by-side legacy components and switching only the top-level rendered component tree.
+- For this experiment, `new-redesign = test` maps to the redesigned UI and the control/default path maps to the restored legacy UI.
+- A lightweight query/localStorage override is useful for QA because feature-flag experiments are otherwise awkward to verify locally.
 
 ## Functional Parity Findings
 - The following capabilities should be preserved unless intentionally changed later:

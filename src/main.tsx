@@ -1,10 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { App } from "./App.tsx";
+import { PostHogProvider } from "posthog-js/react";
+import { AppExperiment } from "./AppExperiment.tsx";
 import "./styles/globals.css";
 import { getInitialThemeMode } from "./hooks/useThemeMode";
 import { ensureDefaultExamplesAvailable } from "./utils/defaultExamples";
-import "./lib/posthog";
+import { posthog } from "./lib/posthog";
 
 const initialThemeMode = getInitialThemeMode();
 document.documentElement.dataset.theme = initialThemeMode;
@@ -35,6 +36,8 @@ void ensureDefaultExamplesAvailable().catch((error) => {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <PostHogProvider client={posthog}>
+      <AppExperiment />
+    </PostHogProvider>
   </React.StrictMode>,
 );

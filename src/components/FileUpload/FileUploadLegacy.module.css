@@ -1,0 +1,95 @@
+.historySection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
+}
+
+.historyHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.historyHeader h4 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.historyHint {
+  margin: 0.2rem 0 0;
+  font-size: 0.73rem;
+  color: var(--text-muted);
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.historyGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+}
+
+.historyGroupLabel {
+  font-size: 0.69rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.historyItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.46rem 0.52rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-primary) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 88%, transparent);
+  cursor: pointer;
+}
+
+.historyItem:hover {
+  border-color: color-mix(in srgb, var(--accent-cyan) 42%, transparent);
+}
+
+.historyItem input {
+  margin-top: 0.12rem;
+}
+
+.historyDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+  min-width: 0;
+}
+
+.historyName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.historyMeta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .historyHeader {
+    flex-direction: column;
+  }
+}
