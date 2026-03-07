@@ -9,6 +9,7 @@ import {
   readAdvancedEditorSettings,
   shouldAutoLoadMissingFonts,
 } from "../../utils/editorPreferences";
+import { getFlowAction } from "../../utils/flowActions";
 import { getMissingFonts } from "../../utils/svgFonts";
 import { validateDataMapping } from "../../utils/validationUtils";
 import { ThemeSwitcher } from "../ThemeSwitcher/ThemeSwitcher";
@@ -17,13 +18,6 @@ import styles from "../../styles/App.module.css";
 const APP_LOGO_URL = "/branding/popul8-logo.svg";
 
 type StepBadgeTone = "default" | "error" | "warning";
-
-type FlowAction = {
-  label: string;
-  shortLabel: string;
-  targetStep: StepId;
-  enabled: boolean;
-};
 
 type StepButtonProps = {
   step: StepId;
@@ -254,52 +248,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         mappingValidation.warnings.length > 0),
   );
 
-  const flowAction: FlowAction | null = (() => {
-    switch (currentStep) {
-      case "upload":
-        return {
-          label: hasTemplateUpload
-            ? "Continue To Template Editing"
-            : "Upload SVG To Continue",
-          shortLabel: hasTemplateUpload ? "Continue" : "Upload SVG",
-          targetStep: "edit",
-          enabled: hasTemplateUpload,
-        };
-      case "edit":
-        return {
-          label: readyForMapping
-            ? "Continue To Data Mapping"
-            : "Upload CSV To Start Mapping",
-          shortLabel: readyForMapping ? "Continue" : "Upload CSV",
-          targetStep: "mapping",
-          enabled: readyForMapping,
-        };
-      case "mapping":
-        return {
-          label: readyForPreview
-            ? "Continue To Row Selection"
-            : "Finish Mapping To Continue",
-          shortLabel: readyForPreview ? "Continue" : "Finish mapping",
-          targetStep: "select",
-          enabled: readyForPreview,
-        };
-      case "select":
-        return {
-          label:
-            readyForPreview && selectedCount > 0
-              ? "Open Preview"
-              : "Select Rows To Preview",
-          shortLabel:
-            readyForPreview && selectedCount > 0
-              ? "Open preview"
-              : "Select rows",
-          targetStep: "preview",
-          enabled: readyForPreview && selectedCount > 0,
-        };
-      default:
-        return null;
-    }
-  })();
+  const flowAction = getFlowAction({
+    currentStep,
+    hasCsvUpload,
+    hasTemplateUpload,
+    readyForMapping,
+    readyForPreview,
+    selectedCount,
+    remainingPlaceholderCount: placeholderCount - mappedPlaceholders,
+  });
 
   const getStepState = (step: StepId) => {
     const isActive = currentStep === step;

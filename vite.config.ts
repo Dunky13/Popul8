@@ -17,21 +17,67 @@ const normalizeBasePath = (candidate: string | undefined): string => {
 
 const basePath = normalizeBasePath(process.env.VITE_BASE_PATH);
 
+const GENERATED_PWA_ASSETS = [
+  "favicon.ico",
+  "favicon-16x16.png",
+  "favicon-32x32.png",
+  "favicon-48x48.png",
+  "apple-touch-icon-180x180.png",
+  "pwa-64x64.png",
+  "pwa-192x192.png",
+  "pwa-512x512.png",
+  "maskable-icon-512x512.png",
+] as const;
+
+const resolvePwaAssetName = (
+  type: "transparent" | "maskable" | "apple",
+  size: { width: number; height: number },
+): string => {
+  if (type === "transparent") {
+    if (
+      size.width === size.height &&
+      [16, 32, 48].includes(size.width)
+    ) {
+      return `favicon-${size.width}x${size.height}.png`;
+    }
+    return `pwa-${size.width}x${size.height}.png`;
+  }
+
+  if (type === "maskable") {
+    return `maskable-icon-${size.width}x${size.height}.png`;
+  }
+
+  return `apple-touch-icon-${size.width}x${size.height}.png`;
+};
+
+const areGeneratedPwaAssetsPresent = async (): Promise<boolean> => {
+  const publicDir = path.resolve(process.cwd(), "public");
+  const results = await Promise.all(
+    GENERATED_PWA_ASSETS.map((fileName) =>
+      stat(path.join(publicDir, fileName))
+        .then(() => true)
+        .catch(() => false),
+    ),
+  );
+
+  return results.every(Boolean);
+};
+
 // ─── PWA Asset Generation ────────────────────────────────────────────────────
 // Generates all favicon + PWA icon sizes from the SVG at build/dev start.
 // Icons are written to public/ so Vite copies them to dist/ automatically,
 // and manifest.json + index.html can reference them as static paths.
 //
-// Files produced (via minimal2023Preset):
+// Files produced:
 //   public/favicon.ico
 //   public/favicon-16x16.png
 //   public/favicon-32x32.png
 //   public/favicon-48x48.png
-//   public/apple-touch-icon-180x180.png  ← iOS home screen
+//   public/apple-touch-icon-180x180.png
 //   public/pwa-64x64.png
 //   public/pwa-192x192.png
-//   public/pwa-512x512.png               ← Android launcher
-//   public/maskable-icon-512x512.png     ← Android adaptive icon (safe-zone padded)
+//   public/pwa-512x512.png
+//   public/maskable-icon-512x512.png
 const pwaAssetsPlugin = (): Plugin => {
   const SOURCE_SVG = "public/branding/popul8-logo.svg";
   const STAMP_FILE = "public/.pwa-assets-stamp";
@@ -48,7 +94,8 @@ const pwaAssetsPlugin = (): Plugin => {
           stat(srcPath),
           stat(stampPath),
         ]);
-        if (stampStat.mtimeMs >= svgStat.mtimeMs) return;
+        const assetsReady = await areGeneratedPwaAssetsPresent();
+        if (stampStat.mtimeMs >= svgStat.mtimeMs && assetsReady) return;
       } catch {
         // stamp missing → first run, fall through
       }
@@ -78,6 +125,11 @@ const pwaAssetsPlugin = (): Plugin => {
           resizeOptions: { background: "white" },
           padding: 0.1,
         },
+        transparent: {
+          ...minimal2023Preset.transparent,
+          sizes: [16, 32, 48, ...minimal2023Preset.transparent.sizes],
+        },
+        assetName: resolvePwaAssetName,
       };
 
       const imageAssets = {
@@ -110,16 +162,7 @@ const swAssetManifestPlugin = (resolvedBasePath: string): Plugin => ({
       `${resolvedBasePath}manifest.json`,
       `${resolvedBasePath}branding/popul8-logo.svg`,
       `${resolvedBasePath}sw.js`,
-      // PWA icons — SW can pre-cache these so the app installs fully offline
-      `${resolvedBasePath}favicon.ico`,
-      `${resolvedBasePath}favicon-16x16.png`,
-      `${resolvedBasePath}favicon-32x32.png`,
-      `${resolvedBasePath}favicon-48x48.png`,
-      `${resolvedBasePath}apple-touch-icon-180x180.png`,
-      `${resolvedBasePath}pwa-64x64.png`,
-      `${resolvedBasePath}pwa-192x192.png`,
-      `${resolvedBasePath}pwa-512x512.png`,
-      `${resolvedBasePath}maskable-icon-512x512.png`,
+      ...GENERATED_PWA_ASSETS.map((fileName) => `${resolvedBasePath}${fileName}`),
     ]);
 
     Object.values(bundle).forEach((output) => {

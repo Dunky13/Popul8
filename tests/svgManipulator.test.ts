@@ -10,7 +10,7 @@ test("preserves explicit empty mapped values during replacement", () => {
     Name: "Fallback",
   };
 
-  const output = replacePlaceholders(svg, record, mapping);
+  const output = replacePlaceholders(svg, record, mapping, ["name"]);
 
   assert.equal(output.includes("Fallback"), false);
   assert.equal(output.includes("{{name}}"), false);
@@ -23,7 +23,7 @@ test("falls back to mapped CSV column when template key is missing", () => {
     Name: "Aria",
   };
 
-  const output = replacePlaceholders(svg, record, mapping);
+  const output = replacePlaceholders(svg, record, mapping, ["name"]);
 
   assert.equal(output.includes("Aria"), true);
   assert.equal(output.includes("{{name}}"), false);

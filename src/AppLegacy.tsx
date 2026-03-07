@@ -18,6 +18,7 @@ import type { StepId } from "./types/app";
 import Icon from "./components/Icon/Icon";
 import styles from "./styles/AppLegacy.module.css";
 import { posthog } from "./lib/posthog";
+import { getFlowAction } from "./utils/flowActions";
 
 const STEP_COPY: Record<
   StepId,
@@ -58,13 +59,6 @@ const STEP_COPY: Record<
 type ChecklistItem = {
   label: string;
   done: boolean;
-};
-
-type FlowAction = {
-  label: string;
-  helper: string;
-  targetStep: StepId;
-  enabled: boolean;
 };
 
 export const App: React.FC = () => {
@@ -157,62 +151,15 @@ export const App: React.FC = () => {
     }
   })();
 
-  const flowAction: FlowAction | null = (() => {
-    switch (currentStep) {
-      case "upload":
-        return {
-          label: hasTemplateUpload
-            ? "Continue To Template Editing"
-            : "Upload SVG To Continue",
-          helper: hasTemplateUpload
-            ? hasCsvUpload
-              ? "Both files are loaded. Open the editor to refine placeholder regions."
-              : "CSV can be uploaded now or right before mapping."
-            : "The SVG template unlocks the editor and placeholder workflow.",
-          targetStep: "edit",
-          enabled: hasTemplateUpload,
-        };
-      case "edit":
-        return {
-          label: readyForMapping
-            ? "Continue To Data Mapping"
-            : "Upload CSV To Start Mapping",
-          helper: readyForMapping
-            ? "Template and CSV are ready. Connect each placeholder to a column."
-            : "Data mapping requires both an SVG template and a CSV dataset.",
-          targetStep: "mapping",
-          enabled: readyForMapping,
-        };
-      case "mapping":
-        return {
-          label: readyForPreview
-            ? "Continue To Row Selection"
-            : "Finish Mapping To Continue",
-          helper: readyForPreview
-            ? "Mapping is complete. Pick the rows you want to generate."
-            : `${Math.max(placeholderCount - mappedCount, 0)} placeholder${
-                placeholderCount - mappedCount === 1 ? "" : "s"
-              } still need mapping.`,
-          targetStep: "select",
-          enabled: readyForPreview,
-        };
-      case "select":
-        return {
-          label:
-            readyForPreview && selectedCount > 0
-              ? "Open Preview"
-              : "Select Rows To Preview",
-          helper:
-            readyForPreview && selectedCount > 0
-              ? "Preview is available with your current row selection."
-              : "Select at least one row so cards can be generated.",
-          targetStep: "preview",
-          enabled: readyForPreview && selectedCount > 0,
-        };
-      default:
-        return null;
-    }
-  })();
+  const flowAction = getFlowAction({
+    currentStep,
+    hasCsvUpload,
+    hasTemplateUpload,
+    readyForMapping,
+    readyForPreview,
+    selectedCount,
+    remainingPlaceholderCount: placeholderCount - mappedCount,
+  });
 
   const completedChecklistCount = flowChecklist.filter(
     (item) => item.done,
