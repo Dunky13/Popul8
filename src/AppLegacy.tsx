@@ -5,6 +5,7 @@
 import React from "react";
 import { AppHeader } from "./components/AppHeader/AppHeaderLegacy";
 import { AppMessages } from "./components/AppMessages/AppMessages";
+import { ServiceWorkerUpdateBanner } from "./components/ServiceWorkerUpdateBanner/ServiceWorkerUpdateBanner";
 import { StepContent } from "./components/StepContent/StepContentLegacy";
 import { useAppStore } from "./store/appStore";
 import { useShallow } from "zustand/react/shallow";
@@ -245,6 +246,7 @@ export const App: React.FC = () => {
 
   return (
     <div className={styles.app}>
+      <ServiceWorkerUpdateBanner />
       {showOfflineIndicator && (
         <div className={styles.offlineIndicator}>
           <Icon name="wifiOff" size={16} />

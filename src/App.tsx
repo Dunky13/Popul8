@@ -7,6 +7,7 @@ import { useShallow } from "zustand/react/shallow";
 import { AppHeader } from "./components/AppHeader/AppHeader";
 import { AppMessages } from "./components/AppMessages/AppMessages";
 import Icon from "./components/Icon/Icon";
+import { ServiceWorkerUpdateBanner } from "./components/ServiceWorkerUpdateBanner/ServiceWorkerUpdateBanner";
 import { StepContent } from "./components/StepContent/StepContent";
 import { useAppKeyboardShortcuts } from "./hooks/useAppKeyboardShortcuts";
 import { useDefaultMappingSync } from "./hooks/useDefaultMappingSync";
@@ -95,6 +96,7 @@ export const App: React.FC = () => {
 
   return (
     <div className={styles.app}>
+      <ServiceWorkerUpdateBanner />
       {showOfflineIndicator && (
         <div className={styles.offlineIndicator}>
           <Icon name="wifiOff" size={16} />
