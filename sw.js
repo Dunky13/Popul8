@@ -1,5 +1,6 @@
 const BASE_PATH = "/";
-const CACHE_VERSION = "1a0fa259e0f9";
+const CACHE_VERSION = "9877fc672636";
+const BUILD_TIME = "2026-03-07T20:29:28.614Z";
 const CACHE_NAME = `popul8-${CACHE_VERSION}`;
 const APP_SHELL_ASSETS = [
   BASE_PATH,
