@@ -1,0 +1,32 @@
+{
+  "assets": [
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/index.html",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/manifest.json",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/branding/popul8-logo.svg",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/sw.js",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/favicon.ico",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/favicon-16x16.png",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/favicon-32x32.png",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/favicon-48x48.png",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/apple-touch-icon-180x180.png",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/pwa-64x64.png",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/pwa-192x192.png",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/pwa-512x512.png",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/maskable-icon-512x512.png",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/index-C5FJeDF3.css",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/TemplateEditorLegacy-C6VeW-ts.css",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/useEditorSettings-BHcL2ugB.css",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/vendor-CfGDyC5f.js",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/csv-CzNEY5VS.js",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/codemirror-DtPrcejA.js",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/prettier-CtfhWL_X.js",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/index-DudcyRKI.js",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/TemplateEditor-PYocEYTX.js",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/TemplateEditorLegacy-Bj32bm63.js",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/useEditorSettings-CtZmqDu3.js",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/CodeEditorPanel-Bg47iQaK.js",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/CssEditorPanel-BQ8_F5tw.js",
+    "/preview/2c3a430a1565ec3056d27f59209f794df66c6d6e/assets/FontSourcesPanel-CFm3HupY.js"
+  ]
+}
