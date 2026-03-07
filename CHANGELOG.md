@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/Dunky13/Popul8/compare/v1.3.0...v1.4.0) (2026-03-07)
+
+
+### Features
+
+* sw update ([6a5bd91](https://github.com/Dunky13/Popul8/commit/6a5bd9180fd3da9438d1e5743716d64a0427987e))
+
 ## [1.3.0](https://github.com/Dunky13/Popul8/compare/v1.2.0...v1.3.0) (2026-03-07)
 
 
