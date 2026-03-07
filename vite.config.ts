@@ -164,11 +164,12 @@ const swCacheVersionPlugin = (resolvedBasePath: string): Plugin => ({
       hash.update("|");
     }
     const version = hash.digest("hex").slice(0, 12);
-
+    const buildTime = new Date().toISOString();
     try {
       const source = await readFile(swPath, "utf8");
       const replaced = source
         .replace("__P8_CACHE_VERSION__", version)
+        .replace("__P8_BUILD_TIME__", buildTime)
         .replaceAll("__P8_BASE_PATH__", resolvedBasePath);
       if (replaced !== source) {
         await writeFile(swPath, replaced, "utf8");

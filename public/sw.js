@@ -1,5 +1,6 @@
 const BASE_PATH = "__P8_BASE_PATH__";
 const CACHE_VERSION = "__P8_CACHE_VERSION__";
+const BUILD_TIME = "__P8_BUILD_TIME__";
 const CACHE_NAME = `popul8-${CACHE_VERSION}`;
 const APP_SHELL_ASSETS = [
   BASE_PATH,
