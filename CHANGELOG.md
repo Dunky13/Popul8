@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Dunky13/Popul8/compare/v1.1.0...v1.2.0) (2026-03-07)
+
+
+### Features
+
+* light dark mode button ([396cb92](https://github.com/Dunky13/Popul8/commit/396cb926cad7e3d1300504afba741909a69e4684))
+
 ## [1.1.0](https://github.com/Dunky13/Popul8/compare/v1.0.1...v1.1.0) (2026-03-05)
 
 
