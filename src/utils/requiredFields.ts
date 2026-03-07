@@ -16,6 +16,22 @@ export const stripRequiredSuffix = (placeholder: string): string => {
   return trimmed.slice(0, -1).trim();
 };
 
+export const getRequiredPlaceholders = (
+  placeholders: string[],
+): string[] => placeholders.filter(isRequiredPlaceholder);
+
+export const getUnmappedRequiredPlaceholders = (params: {
+  placeholders: string[];
+  dataMapping: DataMapping;
+}): string[] => {
+  const { placeholders, dataMapping } = params;
+
+  return getRequiredPlaceholders(placeholders).filter((placeholder) => {
+    const baseKey = stripRequiredSuffix(placeholder);
+    return !dataMapping[placeholder] && !dataMapping[baseKey];
+  });
+};
+
 const normalizeKey = (value: string): string => value.trim().toLowerCase();
 
 const buildHeaderLookup = (headers: string[]): Map<string, string> => {
@@ -73,9 +89,7 @@ export const getMissingRequiredRowIndices = (params: {
   const { csvData, svgTemplate, dataMapping } = params;
   if (!csvData || !svgTemplate) return [];
 
-  const requiredPlaceholders = svgTemplate.placeholders.filter(
-    isRequiredPlaceholder
-  );
+  const requiredPlaceholders = getRequiredPlaceholders(svgTemplate.placeholders);
   if (requiredPlaceholders.length === 0) return [];
 
   const headerLookup = buildHeaderLookup(csvData.headers);

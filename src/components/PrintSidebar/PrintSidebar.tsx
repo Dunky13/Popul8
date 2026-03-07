@@ -1,10 +1,17 @@
 import React, { useEffect, useState, useRef } from "react";
-import type { PrintLayout, PrintOrientation, PrintPageSize } from "../../types/printLayout";
+import type {
+  PrintLayout,
+  PrintOrientation,
+  PrintPageSize,
+} from "../../types/printLayout";
 import type { DataRecord } from "../../types/dataRecord";
 import type { SVGTemplate } from "../../types/template";
 import type { TextResizeRules, TextResizeUnit } from "../../types/textResize";
 import { getFieldOverride } from "../../utils/textResize";
-import { extractPlaceholdersFromString, parseFirstNumberToken } from "../../utils/regexUtils";
+import {
+  extractPlaceholdersFromString,
+  parseFirstNumberToken,
+} from "../../utils/regexUtils";
 import { removeDraftField, removeFieldResizeRules } from "./resizeHelpers";
 import styles from "./PrintSidebar.module.css";
 import { posthog } from "../../lib/posthog";
@@ -108,10 +115,7 @@ interface ResizeFieldListProps {
   };
 }
 
-const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
-  data,
-  resize,
-}) => {
+const ResizeFieldList: React.FC<ResizeFieldListProps> = ({ data, resize }) => {
   const { placeholders, templateContent, fieldBaseSizes } = data;
   const {
     rules: textResizeRules,
@@ -123,10 +127,7 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
   const sortedPlaceholders = React.useMemo(() => {
     if (placeholders.length === 0) return placeholders;
     const parser = new DOMParser();
-    const doc = parser.parseFromString(
-      templateContent ?? "",
-      "image/svg+xml"
-    );
+    const doc = parser.parseFromString(templateContent ?? "", "image/svg+xml");
     const svg = doc.querySelector("svg");
     if (!svg) return placeholders;
 
@@ -158,14 +159,14 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
 
     const placeholderPositions = new Map<string, { x: number; y: number }>();
     const elements = Array.from(
-      svg.querySelectorAll("foreignObject, image, text")
+      svg.querySelectorAll("foreignObject, image, text"),
     );
     const positionEpsilon = 0.5;
 
     elements.forEach((element) => {
       const matches = new Set<string>();
       extractPlaceholdersFromString(element.textContent ?? "").forEach((name) =>
-        matches.add(name)
+        matches.add(name),
       );
       const href =
         element.getAttribute("href") ??
@@ -185,7 +186,8 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
         }
         const yDiff = rect.y - current.y;
         if (Math.abs(yDiff) > positionEpsilon) {
-          if (yDiff < 0) placeholderPositions.set(name, { x: rect.x, y: rect.y });
+          if (yDiff < 0)
+            placeholderPositions.set(name, { x: rect.x, y: rect.y });
           return;
         }
         const xDiff = rect.x - current.x;
@@ -195,7 +197,9 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
       });
     });
 
-    const fallbackIndex = new Map(placeholders.map((name, index) => [name, index]));
+    const fallbackIndex = new Map(
+      placeholders.map((name, index) => [name, index]),
+    );
 
     return [...placeholders].sort((a, b) => {
       const aPos = placeholderPositions.get(a);
@@ -216,7 +220,7 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
   useEffect(() => {
     return () => {
       Object.values(debounceTimersRef.current).forEach((timer) =>
-        window.clearTimeout(timer)
+        window.clearTimeout(timer),
       );
       debounceTimersRef.current = {};
     };
@@ -230,7 +234,7 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
   };
 
   const getDisplayValue = (
-    field: string
+    field: string,
   ): { value: number | null; unit: TextResizeUnit; isMixed: boolean } => {
     const baseSize = fieldBaseSizes[field];
     const defaultUnit: TextResizeUnit = baseSize ? "px" : "percent";
@@ -239,7 +243,7 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
       const { override, isExplicit } = getFieldOverride(
         textResizeRules,
         "__all__",
-        field
+        field,
       );
       if (!isExplicit) {
         return { value: null, unit: defaultUnit, isMixed: false };
@@ -248,7 +252,7 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
     }
 
     const overrides = selectedResizeCardIds.map((cardId) =>
-      getFieldOverride(textResizeRules, cardId, field)
+      getFieldOverride(textResizeRules, cardId, field),
     );
     const explicitOverrides = overrides.filter((entry) => entry.isExplicit);
 
@@ -260,7 +264,7 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
     const matches = explicitOverrides.every(
       (entry) =>
         entry.override.unit === first.unit &&
-        Math.abs(entry.override.value - first.value) < 0.001
+        Math.abs(entry.override.value - first.value) < 0.001,
     );
 
     if (!matches || explicitOverrides.length !== overrides.length) {
@@ -273,7 +277,7 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
   const applyResizeValue = (
     field: string,
     value: string,
-    unit: TextResizeUnit
+    unit: TextResizeUnit,
   ) => {
     if (value.trim() === "") return;
     const numeric = Number(value);
@@ -308,7 +312,7 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
   const handleResizeChange = (
     field: string,
     value: string,
-    unit: TextResizeUnit
+    unit: TextResizeUnit,
   ) => {
     setDraftValues((prev) => ({ ...prev, [field]: value }));
     clearFieldDebounceTimer(field);
@@ -360,7 +364,7 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
                   min={displayValue.unit === "px" ? 0.1 : 50}
                   max={displayValue.unit === "px" ? 96 : 150}
                   step={displayValue.unit === "px" ? 0.1 : 1}
-                  value={draftValue ?? (displayValue.value ?? "")}
+                  value={draftValue ?? displayValue.value ?? ""}
                   placeholder={
                     displayValue.isMixed
                       ? "Mixed"
@@ -374,7 +378,7 @@ const ResizeFieldList: React.FC<ResizeFieldListProps> = ({
                     handleResizeChange(
                       placeholder,
                       event.target.value,
-                      displayValue.unit
+                      displayValue.unit,
                     )
                   }
                   onBlur={() =>
@@ -416,11 +420,15 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
     onToggleCard: onToggleResizeCard,
     onClearSelection: onClearResizeSelection,
   } = resize;
-  const [gridHover, setGridHover] = useState<{ rows: number; columns: number } | null>(null);
+  const [gridHover, setGridHover] = useState<{
+    rows: number;
+    columns: number;
+  } | null>(null);
   const [gridMax, setGridMax] = useState<{ rows: number; columns: number }>({
     rows: printLayout.rows + 1,
     columns: printLayout.columns + 1,
   });
+  const [isPageSetupCollapsed, setIsPageSetupCollapsed] = useState(true);
   const [showFieldSizeControls, setShowFieldSizeControls] = useState(false);
   const gridCollapseTimeoutRef = useRef<number | null>(null);
 
@@ -428,14 +436,20 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
   const gridBaseCols = gridHover?.columns ?? printLayout.columns;
   const nextMaxRows = Math.min(
     GRID_MAX_LIMIT,
-    Math.max(gridBaseRows + 1, printLayout.rows)
+    Math.max(gridBaseRows + 1, printLayout.rows),
   );
   const nextMaxCols = Math.min(
     GRID_MAX_LIMIT,
-    Math.max(gridBaseCols + 1, printLayout.columns)
+    Math.max(gridBaseCols + 1, printLayout.columns),
   );
-  const gridMaxRows = Math.min(GRID_MAX_LIMIT, Math.max(gridMax.rows, nextMaxRows));
-  const gridMaxCols = Math.min(GRID_MAX_LIMIT, Math.max(gridMax.columns, nextMaxCols));
+  const gridMaxRows = Math.min(
+    GRID_MAX_LIMIT,
+    Math.max(gridMax.rows, nextMaxRows),
+  );
+  const gridMaxCols = Math.min(
+    GRID_MAX_LIMIT,
+    Math.max(gridMax.columns, nextMaxCols),
+  );
 
   const clearGridCollapseTimeout = () => {
     if (gridCollapseTimeoutRef.current !== null) {
@@ -462,6 +476,9 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
   const cardsPerSheet = Math.max(1, printLayout.rows * printLayout.columns);
   const estimatedSheetCount =
     records.length === 0 ? 0 : Math.ceil(records.length / cardsPerSheet);
+  const pageSetupSummary = `${printLayout.pageSize} ${
+    printLayout.orientation === "landscape" ? "L" : "P"
+  } ${printLayout.rows}x${printLayout.columns}`;
 
   const updateGridBounds = (rows: number, columns: number) => {
     setGridHover(null);
@@ -493,12 +510,12 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
     const nextLayout = { ...printLayout, rows: nextRows, columns: nextCols };
     setPrintLayout(nextLayout);
     updateGridBounds(nextRows, nextCols);
-    posthog.capture('print layout configured', {
+    posthog.capture("print layout configured", {
       page_size: nextLayout.pageSize,
       orientation: nextLayout.orientation,
       rows: nextRows,
       columns: nextCols,
-      source: 'grid',
+      source: "grid",
     });
   };
 
@@ -515,18 +532,21 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
     };
     setPrintLayout(nextLayout);
     updateGridBounds(nextRows, nextCols);
-    posthog.capture('print layout configured', {
+    posthog.capture("print layout configured", {
       page_size: nextLayout.pageSize,
       orientation: nextOrientation,
       rows: nextRows,
       columns: nextCols,
-      source: 'preset',
+      source: "preset",
       preset_id: preset.id,
     });
   };
 
   const isPresetActive = (preset: LayoutPreset) => {
-    if (printLayout.rows !== preset.rows || printLayout.columns !== preset.columns) {
+    if (
+      printLayout.rows !== preset.rows ||
+      printLayout.columns !== preset.columns
+    ) {
       return false;
     }
     if (!preset.orientation) return true;
@@ -535,7 +555,7 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
 
   const getRecordLabel = (record: DataRecord, index: number) => {
     const nameKey = Object.keys(record).find((key) =>
-      key.toLowerCase().includes("name")
+      key.toLowerCase().includes("name"),
     );
     const nameValue = nameKey ? String(record[nameKey] ?? "").trim() : "";
     if (nameValue) return `${index + 1}. ${nameValue}`;
@@ -548,197 +568,211 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
     setGridMax((prev) => ({
       rows: Math.min(
         GRID_MAX_LIMIT,
-        Math.max(prev.rows, rows + 1, printLayout.rows + 1)
+        Math.max(prev.rows, rows + 1, printLayout.rows + 1),
       ),
       columns: Math.min(
         GRID_MAX_LIMIT,
-        Math.max(prev.columns, columns + 1, printLayout.columns + 1)
+        Math.max(prev.columns, columns + 1, printLayout.columns + 1),
       ),
     }));
   };
 
   return (
     <aside className={`${styles.sidebar} ${className ?? ""}`.trim()}>
-      <div className={`${styles.sectionCard} ${styles.summaryCard}`}>
-        <div className={styles.summaryHeader}>
-          <div>
-            <p className={styles.summaryEyebrow}>Print controls</p>
-            <h4>Sheet settings</h4>
-          </div>
-          <span className={styles.summaryTarget}>
-            {selectedResizeCardIds.length === 0
-              ? "All cards targeted"
-              : `${selectedResizeCardIds.length} targeted`}
-          </span>
-        </div>
-        <div className={styles.summaryStats}>
-          <div className={styles.summaryStat}>
-            <span>Cards / sheet</span>
-            <strong>{cardsPerSheet}</strong>
-          </div>
-          <div className={styles.summaryStat}>
-            <span>Sheets</span>
-            <strong>{estimatedSheetCount}</strong>
-          </div>
-          <div className={styles.summaryStat}>
-            <span>Page</span>
-            <strong>{printLayout.pageSize}</strong>
-          </div>
-        </div>
-      </div>
-
       <div className={styles.sectionCard}>
-        <div className={styles.sectionHeader}>Page Setup</div>
-        <p className={styles.sectionIntro}>
-          Set the sheet size, orientation, margin, and card grid.
-        </p>
-        <div className={styles.layoutControls}>
-          <div className={styles.controlGroup}>
-            <label className={styles.controlLabel} htmlFor="page-size-select">
-              Page size
-            </label>
-            <select
-              id="page-size-select"
-              className={styles.controlSelect}
-              value={printLayout.pageSize}
-              onChange={(event) =>
-                handlePageSizeChange(event.target.value as PrintPageSize)
-              }
-            >
-              {PAGE_SIZE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.controlGroup}>
-            <label className={styles.controlLabel} htmlFor="page-orientation-select">
-              Orientation
-            </label>
-            <select
-              id="page-orientation-select"
-              className={styles.controlSelect}
-              value={printLayout.orientation}
-              onChange={(event) =>
-                handleOrientationChange(event.target.value as PrintOrientation)
-              }
-            >
-              {ORIENTATION_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.controlGroup}>
-            <label className={styles.controlLabel} htmlFor="page-margin-input">
-              Margin (mm)
-            </label>
-            <input
-              id="page-margin-input"
-              type="number"
-              min={MARGIN_MIN_MM}
-              max={MARGIN_MAX_MM}
-              step={MARGIN_STEP_MM}
-              value={printLayout.marginMm}
-              onChange={(event) => handleMarginChange(event.target.value)}
-              className={styles.controlInput}
-            />
-            <div className={styles.layoutHint}>
-              Adjusts printable area for the page.
+        <button
+          type="button"
+          className={styles.sectionToggle}
+          onClick={() => setIsPageSetupCollapsed((value) => !value)}
+          aria-expanded={!isPageSetupCollapsed}
+        >
+          <span className={styles.sectionToggleLead}>
+            <span className={styles.sectionToggleCaret} aria-hidden="true">
+              {isPageSetupCollapsed ? "▸" : "▾"}
+            </span>
+          </span>
+          <span className={styles.sectionToggleMain}>
+            <span className={styles.sectionToggleTitle}>Page setup</span>
+            <span className={styles.sectionToggleSummary}>
+              {pageSetupSummary}
+            </span>
+          </span>
+          <span className={styles.sectionToggleIndicator}>
+            {isPageSetupCollapsed ? "Edit" : "Collapse"}
+          </span>
+        </button>
+        {!isPageSetupCollapsed && (
+          <div className={styles.sectionBody}>
+            <p className={styles.sectionIntro}>
+              Set the sheet size, orientation, margin, and card grid.
+            </p>
+            <div className={styles.layoutControls}>
+              <div className={styles.controlGroup}>
+                <label
+                  className={styles.controlLabel}
+                  htmlFor="page-size-select"
+                >
+                  Page size
+                </label>
+                <select
+                  id="page-size-select"
+                  className={styles.controlSelect}
+                  value={printLayout.pageSize}
+                  onChange={(event) =>
+                    handlePageSizeChange(event.target.value as PrintPageSize)
+                  }
+                >
+                  {PAGE_SIZE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.controlGroup}>
+                <label
+                  className={styles.controlLabel}
+                  htmlFor="page-orientation-select"
+                >
+                  Orientation
+                </label>
+                <select
+                  id="page-orientation-select"
+                  className={styles.controlSelect}
+                  value={printLayout.orientation}
+                  onChange={(event) =>
+                    handleOrientationChange(
+                      event.target.value as PrintOrientation,
+                    )
+                  }
+                >
+                  {ORIENTATION_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.controlGroup}>
+                <label
+                  className={styles.controlLabel}
+                  htmlFor="page-margin-input"
+                >
+                  Margin (mm)
+                </label>
+                <input
+                  id="page-margin-input"
+                  type="number"
+                  min={MARGIN_MIN_MM}
+                  max={MARGIN_MAX_MM}
+                  step={MARGIN_STEP_MM}
+                  value={printLayout.marginMm}
+                  onChange={(event) => handleMarginChange(event.target.value)}
+                  className={styles.controlInput}
+                />
+                <div className={styles.layoutHint}>
+                  Adjusts printable area for the page.
+                </div>
+              </div>
+              <div className={styles.controlGroup}>
+                <div className={styles.controlLabel}>Layout</div>
+                <div className={styles.layoutValue}>
+                  {gridHover
+                    ? `${gridHover.rows} × ${gridHover.columns}`
+                    : `${printLayout.rows} × ${printLayout.columns}`}
+                </div>
+                <div
+                  id="grid-picker"
+                  className={styles.gridPicker}
+                  role="grid"
+                  aria-label="Choose rows and columns"
+                  onMouseEnter={() => clearGridCollapseTimeout()}
+                  onMouseLeave={() => {
+                    setGridHover(null);
+                    scheduleGridCollapse();
+                  }}
+                  style={{ gridTemplateRows: `repeat(${gridMaxRows}, 1fr)` }}
+                >
+                  {Array.from({ length: gridMaxRows }).map((_, rowIndex) => {
+                    const row = rowIndex + 1;
+                    return (
+                      <div
+                        key={`row-${row}`}
+                        className={styles.gridRow}
+                        role="row"
+                        style={{
+                          gridTemplateColumns: `repeat(${gridMaxCols}, ${GRID_CELL_SIZE}px)`,
+                        }}
+                      >
+                        {Array.from({ length: gridMaxCols }).map(
+                          (__, colIndex) => {
+                            const col = colIndex + 1;
+                            const hoverRows =
+                              gridHover?.rows ?? printLayout.rows;
+                            const hoverCols =
+                              gridHover?.columns ?? printLayout.columns;
+                            const isActive =
+                              row <= hoverRows && col <= hoverCols;
+                            const isSelected =
+                              row <= printLayout.rows &&
+                              col <= printLayout.columns;
+                            return (
+                              <button
+                                key={`cell-${row}-${col}`}
+                                type="button"
+                                className={`${styles.gridCell} ${
+                                  isActive ? styles.gridCellActive : ""
+                                } ${isSelected ? styles.gridCellSelected : ""}`}
+                                role="gridcell"
+                                aria-label={`${row} rows by ${col} columns`}
+                                onMouseEnter={() => handleGridHover(row, col)}
+                                onFocus={() => handleGridHover(row, col)}
+                                onClick={() => handleGridSelect(row, col)}
+                              />
+                            );
+                          },
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className={styles.layoutHint}>
+                  Click a square to set rows and columns.
+                </div>
+              </div>
             </div>
-          </div>
-          <div className={styles.controlGroup}>
-            <div className={styles.controlLabel}>Layout</div>
-            <div className={styles.layoutValue}>
-              {gridHover
-                ? `${gridHover.rows} × ${gridHover.columns}`
-                : `${printLayout.rows} × ${printLayout.columns}`}
-            </div>
-            <div
-              id="grid-picker"
-              className={styles.gridPicker}
-              role="grid"
-              aria-label="Choose rows and columns"
-              onMouseEnter={() => clearGridCollapseTimeout()}
-              onMouseLeave={() => {
-                setGridHover(null);
-                scheduleGridCollapse();
-              }}
-              style={{ gridTemplateRows: `repeat(${gridMaxRows}, 1fr)` }}
-            >
-              {Array.from({ length: gridMaxRows }).map((_, rowIndex) => {
-                const row = rowIndex + 1;
-                return (
-                  <div
-                    key={`row-${row}`}
-                    className={styles.gridRow}
-                    role="row"
-                    style={{
-                      gridTemplateColumns: `repeat(${gridMaxCols}, ${GRID_CELL_SIZE}px)`,
-                    }}
+            <div className={styles.presetSection}>
+              <div className={styles.controlLabel}>Quick presets</div>
+              <div className={styles.presetGrid}>
+                {LAYOUT_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    className={`${styles.presetButton} ${
+                      isPresetActive(preset) ? styles.presetButtonActive : ""
+                    }`}
+                    onClick={() => handlePresetSelect(preset)}
                   >
-                    {Array.from({ length: gridMaxCols }).map((__, colIndex) => {
-                      const col = colIndex + 1;
-                      const hoverRows = gridHover?.rows ?? printLayout.rows;
-                      const hoverCols = gridHover?.columns ?? printLayout.columns;
-                      const isActive = row <= hoverRows && col <= hoverCols;
-                      const isSelected =
-                        row <= printLayout.rows && col <= printLayout.columns;
-                      return (
-                        <button
-                          key={`cell-${row}-${col}`}
-                          type="button"
-                          className={`${styles.gridCell} ${
-                            isActive ? styles.gridCellActive : ""
-                          } ${isSelected ? styles.gridCellSelected : ""}`}
-                          role="gridcell"
-                          aria-label={`${row} rows by ${col} columns`}
-                          onMouseEnter={() => handleGridHover(row, col)}
-                          onFocus={() => handleGridHover(row, col)}
-                          onClick={() => handleGridSelect(row, col)}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })}
+                    <span className={styles.presetLabel}>{preset.label}</span>
+                    <span className={styles.presetDetail}>{preset.detail}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className={styles.layoutHint}>
-              Click a square to set rows and columns.
+            <div className={styles.layoutSummaryRow}>
+              <span className={styles.layoutSummaryChip}>
+                {cardsPerSheet} cards per sheet
+              </span>
+              <span className={styles.layoutSummaryChip}>
+                {estimatedSheetCount} sheet
+                {estimatedSheetCount === 1 ? "" : "s"} total
+              </span>
             </div>
           </div>
-        </div>
-        <div className={styles.presetSection}>
-          <div className={styles.controlLabel}>Quick presets</div>
-          <div className={styles.presetGrid}>
-            {LAYOUT_PRESETS.map((preset) => (
-              <button
-                key={preset.id}
-                type="button"
-                className={`${styles.presetButton} ${
-                  isPresetActive(preset) ? styles.presetButtonActive : ""
-                }`}
-                onClick={() => handlePresetSelect(preset)}
-              >
-                <span className={styles.presetLabel}>{preset.label}</span>
-                <span className={styles.presetDetail}>{preset.detail}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className={styles.layoutSummaryRow}>
-          <span className={styles.layoutSummaryChip}>
-            {cardsPerSheet} cards per sheet
-          </span>
-          <span className={styles.layoutSummaryChip}>
-            {estimatedSheetCount} sheet{estimatedSheetCount === 1 ? "" : "s"} total
-          </span>
-        </div>
+        )}
       </div>
 
-      <div className={styles.sectionCard}>
+      <div className={`${styles.sectionCard} ${styles.resizePanel}`}>
         <div className={styles.resizeHeader}>
           <h4>Text Resize</h4>
           <span className={styles.resizeSummary}>
@@ -747,11 +781,10 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
               : `${selectedResizeCardIds.length} card(s) selected`}
           </span>
         </div>
-        <p className={styles.resizeHelp}>
-          Select cards in the preview, then set per-field font sizes.
-        </p>
+        <p className={styles.resizeHelp}>Set overrides on specific cards</p>
         <div className={styles.resizeRuleNote}>
-          Card-specific rules override all-cards rules, which override template defaults.
+          Card-specific rules override all-cards rules, which override template
+          defaults.
         </div>
 
         <div className={styles.resizeSection}>
@@ -805,7 +838,10 @@ export const PrintSidebar: React.FC<PrintSidebarProps> = ({
                   : "No template fields detected"}
               </span>
             </span>
-            <span className={styles.resizeDisclosureIndicator} aria-hidden="true">
+            <span
+              className={styles.resizeDisclosureIndicator}
+              aria-hidden="true"
+            >
               {showFieldSizeControls ? "Hide" : "Show"}
             </span>
           </button>

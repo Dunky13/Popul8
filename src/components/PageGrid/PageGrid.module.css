@@ -27,7 +27,7 @@
 .headerText {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.2rem;
 }
 
 .header h3 {
@@ -35,22 +35,6 @@
   color: var(--text-primary);
   font-size: 1.08rem;
   font-family: var(--font-display);
-}
-
-.stats {
-  display: flex;
-  gap: 0.42rem;
-  flex-wrap: wrap;
-}
-
-.stats span {
-  padding: 0.24rem 0.54rem;
-  background: color-mix(in srgb, var(--bg-secondary) 84%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
-  border-radius: 999px;
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  font-weight: 700;
 }
 
 .headerActions {
@@ -96,55 +80,6 @@
 
 .printButton:hover {
   transform: translateY(-1px);
-}
-
-.previewStatusBar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.7rem;
-  align-items: center;
-  padding: 0.72rem;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
-  background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
-}
-
-.previewStatusLead {
-  min-width: 0;
-}
-
-.previewStatusTitle {
-  margin: 0;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.previewStatusText {
-  margin: 0.16rem 0 0;
-  font-size: 0.76rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
-
-.previewStatusChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.38rem;
-  justify-content: flex-end;
-}
-
-.previewStatusChip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.9rem;
-  padding: 0.22rem 0.54rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
-  background: color-mix(in srgb, var(--bg-primary) 86%, transparent);
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text-secondary);
 }
 
 .notReady {
@@ -204,6 +139,11 @@
   overflow-y: auto;
   padding-right: 0.35rem;
   height: 100%;
+  border: 1px solid color-mix(in srgb, var(--border-color) 84%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-secondary) 56%, transparent);
+  padding: 0.78rem;
+  box-sizing: border-box;
 }
 
 .previewLayout {
@@ -214,50 +154,6 @@
   height: calc(100vh - 278px);
   min-height: 0;
   overflow: hidden;
-}
-
-.previewCanvasShell {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  border: 1px solid color-mix(in srgb, var(--border-color) 84%, transparent);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--bg-secondary) 56%, transparent);
-}
-
-.previewCanvasHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.65rem;
-  padding: 0.72rem 0.78rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 84%, transparent);
-}
-
-.previewCanvasTitle {
-  margin: 0;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.previewCanvasHint {
-  margin: 0.16rem 0 0;
-  font-size: 0.74rem;
-  color: var(--text-secondary);
-}
-
-.previewCanvasMeta {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.85rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
-  background: color-mix(in srgb, var(--bg-primary) 86%, transparent);
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text-secondary);
 }
 
 .pageGrid {
@@ -378,13 +274,6 @@
     max-height: none;
   }
 
-  .previewStatusBar {
-    grid-template-columns: 1fr;
-  }
-
-  .previewStatusChips {
-    justify-content: flex-start;
-  }
 }
 
 @media (max-width: 768px) {
@@ -419,10 +308,6 @@
   .pageGrid {
     grid-template-columns: 1fr;
     aspect-ratio: 297/525;
-  }
-
-  .stats {
-    gap: 0.35rem;
   }
 
   .secondaryButton,

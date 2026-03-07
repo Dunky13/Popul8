@@ -9,6 +9,7 @@ import type {
 } from "../types/template";
 import type { DataRecord } from "../types/dataRecord";
 import { generateMappedRecord } from "./fuzzyMatcher";
+import { getUnmappedRequiredPlaceholders } from "./requiredFields";
 import type { TextResizeRules } from "../types/textResize";
 import { getFieldOverride, getOverrideForKeys } from "./textResize";
 import {
@@ -283,9 +284,27 @@ const forceSVGReRender = (container: Element): void => {
 export const replacePlaceholders = (
   svgContent: string,
   recordData: Record<string, string>,
-  mapping: DataMapping
+  mapping: DataMapping,
+  templatePlaceholders: string[]
 ): string => {
   const placeholderValues = new Map<string, string>();
+  templatePlaceholders.forEach((templateKey) => {
+    const csvColumn = mapping[templateKey];
+    const hasTemplateValue = Object.prototype.hasOwnProperty.call(
+      recordData,
+      templateKey,
+    );
+    const hasCsvColumnValue =
+      Boolean(csvColumn) &&
+      Object.prototype.hasOwnProperty.call(recordData, csvColumn);
+    const value = hasTemplateValue
+      ? recordData[templateKey]
+      : hasCsvColumnValue && csvColumn
+        ? recordData[csvColumn]
+        : "";
+    placeholderValues.set(templateKey, value);
+  });
+
   Object.entries(mapping).forEach(([templateKey, csvColumn]) => {
     const hasTemplateValue = Object.prototype.hasOwnProperty.call(
       recordData,
@@ -465,11 +484,14 @@ export const createProcessedSheet = (
   const errors: string[] = [];
 
   // Check for unmapped placeholders
-  const unmappedPlaceholders = template.placeholders.filter(
-    (key) => !mapping[key]
-  );
-  if (unmappedPlaceholders.length > 0) {
-    errors.push(`Unmapped placeholders: ${unmappedPlaceholders.join(", ")}`);
+  const unmappedRequiredPlaceholders = getUnmappedRequiredPlaceholders({
+    placeholders: template.placeholders,
+    dataMapping: mapping,
+  });
+  if (unmappedRequiredPlaceholders.length > 0) {
+    errors.push(
+      `Unmapped placeholders: ${unmappedRequiredPlaceholders.join(", ")}`,
+    );
   }
 
   // Generate mapped record values for all template placeholders.
@@ -480,7 +502,8 @@ export const createProcessedSheet = (
   const svgContent = replacePlaceholders(
     template.content,
     mappedRecord,
-    mapping
+    mapping,
+    template.placeholders,
   );
 
   return {

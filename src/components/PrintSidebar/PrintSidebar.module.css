@@ -12,85 +12,89 @@
 
 .sectionCard {
   border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
-  border-radius: 14px;
-  padding: 0.78rem;
+  border-radius: 12px;
+  padding: 0.72rem;
   background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
 }
 
-.summaryCard {
+.resizePanel {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: 0.65rem;
+  min-height: clamp(31rem, 56vh, 46rem);
 }
 
-.summaryHeader {
+.sectionToggle {
+  width: 100%;
+  padding: 0.08rem 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: 0.6rem;
+  cursor: pointer;
+  text-align: left;
 }
 
-.summaryEyebrow {
-  margin: 0;
-  font-size: 0.7rem;
-  font-weight: 700;
+.sectionToggleLead {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
   color: var(--text-muted);
 }
 
-.summaryHeader h4 {
-  margin: 0.14rem 0 0;
-  font-size: 0.96rem;
+.sectionToggleCaret {
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.sectionToggleMain {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+}
+
+.sectionToggleTitle {
+  font-size: 0.88rem;
+  font-weight: 700;
   color: var(--text-primary);
   font-family: var(--font-display);
+  line-height: 1.2;
 }
 
-.summaryTarget {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.85rem;
-  padding: 0.2rem 0.52rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
-  background: color-mix(in srgb, var(--bg-primary) 86%, transparent);
+.sectionToggleSummary {
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
-.summaryStats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.42rem;
-}
-
-.summaryStat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.14rem;
-  padding: 0.5rem 0.55rem;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
-  background: color-mix(in srgb, var(--bg-primary) 86%, transparent);
-}
-
-.summaryStat span {
+.sectionToggleIndicator {
+  flex-shrink: 0;
+  margin-left: auto;
   font-size: 0.68rem;
   font-weight: 700;
   color: var(--text-muted);
-}
-
-.summaryStat strong {
-  font-size: 0.84rem;
-  color: var(--text-primary);
-}
-
-.sectionHeader {
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin-bottom: 0.5rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
+}
+
+.sectionToggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-cyan) 52%, transparent);
+  outline-offset: 3px;
+}
+
+.sectionBody {
+  margin-top: 0.62rem;
+  padding-top: 0.68rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 84%, transparent);
 }
 
 .sectionIntro {
@@ -300,7 +304,11 @@
 }
 
 .resizeSection {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   margin-bottom: 0.58rem;
+  min-height: 0;
 }
 
 .resizeSectionTitle {
@@ -313,6 +321,7 @@
 }
 
 .resizeDisclosure {
+  margin-top: auto;
   border-top: 1px solid color-mix(in srgb, var(--border-color) 84%, transparent);
   padding-top: 0.72rem;
 }
@@ -358,8 +367,10 @@
 .resizeCardList {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 0.25rem;
-  max-height: 170px;
+  max-height: none;
+  min-height: 170px;
   overflow: auto;
   padding-right: 0.18rem;
 }
@@ -485,15 +496,23 @@
     overflow: visible;
     padding-right: 0;
   }
+
+  .resizePanel {
+    min-height: 28rem;
+  }
 }
 
 @media (max-width: 768px) {
   .sectionCard {
-    padding: 0.92rem;
+    padding: 0.82rem;
   }
 
-  .summaryStats {
-    grid-template-columns: 1fr;
+  .sectionToggleMain {
+    gap: 0.3rem 0.45rem;
+  }
+
+  .sectionToggleIndicator {
+    display: none;
   }
 
   .layoutControls {

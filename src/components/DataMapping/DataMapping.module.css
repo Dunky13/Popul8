@@ -131,6 +131,9 @@
 }
 
 .unmappedTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
   padding: 0.2rem 0.46rem;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--warning-color) 45%, transparent);
@@ -316,6 +319,25 @@
   font-size: 0.76rem;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileRequiredBadge,
+.requiredBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.2rem;
+  padding: 0 0.38rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--warning-color) 42%, transparent);
+  background: color-mix(in srgb, var(--warning-bg) 56%, var(--bg-primary));
+  color: color-mix(in srgb, var(--warning-text) 86%, var(--text-primary));
+  font-size: 0.63rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   white-space: nowrap;
 }
 
@@ -544,6 +566,11 @@
   font-family: "IBM Plex Mono", "Consolas", monospace;
   font-size: 0.72rem;
   color: var(--primary-color);
+}
+
+.placeholderCell {
+  gap: 0.38rem;
+  flex-wrap: wrap;
 }
 
 .columnSelect {

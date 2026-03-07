@@ -296,18 +296,6 @@ export const PageGrid: React.FC = () => {
         <div className={styles.headerText}>
           <p className={styles.eyebrow}>Print studio</p>
           <h3>Print Preview</h3>
-          <div className={styles.stats}>
-            <span>{records.length} records</span>
-            <span>{paginatedRecords.length} pages</span>
-            <span>
-              {printLayout.rows}×{printLayout.columns} layout per page
-            </span>
-            <span>
-              {selectedResizeCount === 0
-                ? "Resize target: all cards"
-                : `Resize target: ${selectedResizeCount} selected`}
-            </span>
-          </div>
         </div>
         <div className={styles.headerActions}>
           <button
@@ -335,29 +323,6 @@ export const PageGrid: React.FC = () => {
         </div>
       </div>
 
-      <div className={styles.previewStatusBar}>
-        <div className={styles.previewStatusLead}>
-          <p className={styles.previewStatusTitle}>Sheet preview</p>
-          <p className={styles.previewStatusText}>
-            Click cards to target text resize rules, then print when the sheet
-            layout looks correct.
-          </p>
-        </div>
-        <div className={styles.previewStatusChips}>
-          <span className={styles.previewStatusChip}>
-            {printLayout.pageSize} {printLayout.orientation}
-          </span>
-          <span className={styles.previewStatusChip}>
-            {printLayout.rows}x{printLayout.columns} per sheet
-          </span>
-          <span className={styles.previewStatusChip}>
-            {selectedResizeCount === 0
-              ? "Resize target: all cards"
-              : `Resize target: ${selectedResizeCount} card(s)`}
-          </span>
-        </div>
-      </div>
-
       {printReadiness.warnings.length > 0 && (
         <div className={styles.warnings}>
           <h4>Warnings:</h4>
@@ -370,106 +335,93 @@ export const PageGrid: React.FC = () => {
       )}
 
       <div className={styles.previewLayout} data-print-preview-layout="true">
-        <div className={styles.previewCanvasShell}>
-          <div className={styles.previewCanvasHeader}>
-            <div>
-              <p className={styles.previewCanvasTitle}>Preview canvas</p>
-              <p className={styles.previewCanvasHint}>
-                Card targeting for resize is done directly in this area.
-              </p>
-            </div>
-            <span className={styles.previewCanvasMeta}>
-              {paginatedRecords.length} page{paginatedRecords.length === 1 ? "" : "s"}
-            </span>
-          </div>
-          <div
-            className={styles.preview}
-            ref={printRef}
-            data-print-preview="true"
-          >
-            {paginatedRecords.map((page, pageIndex) => (
-              (() => {
-                const pageStyle: React.CSSProperties & {
-                  "--print-page-ratio"?: number;
-                } = {
-                  gridTemplateColumns: `repeat(${printLayout.columns}, minmax(0, 1fr))`,
-                  gridTemplateRows: `repeat(${printLayout.rows}, minmax(0, 1fr))`,
-                  aspectRatio: `${pageDimensions.width} / ${pageDimensions.height}`,
-                  "--print-page-ratio": pageDimensions.width / pageDimensions.height,
-                };
+        <div
+          className={styles.preview}
+          ref={printRef}
+          data-print-preview="true"
+        >
+          {paginatedRecords.map((page, pageIndex) => (
+            (() => {
+              const pageStyle: React.CSSProperties & {
+                "--print-page-ratio"?: number;
+              } = {
+                gridTemplateColumns: `repeat(${printLayout.columns}, minmax(0, 1fr))`,
+                gridTemplateRows: `repeat(${printLayout.rows}, minmax(0, 1fr))`,
+                aspectRatio: `${pageDimensions.width} / ${pageDimensions.height}`,
+                "--print-page-ratio": pageDimensions.width / pageDimensions.height,
+              };
 
-                return (
-                  <div
-                    key={pageIndex}
-                    className={`${styles.pageGrid} print`}
-                    data-print-page="true"
-                    data-print-page-break={
-                      pageIndex < paginatedRecords.length - 1 ? "page" : "none"
-                    }
-                    style={pageStyle}
-                  >
-                    {page.map((record, recordIndex) => {
-                      const isSelected = selectedResizeCardIdSet.has(record.id);
-                      const resizeBadge = resizeBadgesByCardId[record.id] ?? null;
-                      return (
-                        <div
-                          key={record.id}
-                          className={`${styles.recordCardContainer} print ${
-                            isSelected ? styles.recordCardSelected : ""
-                          }`}
-                          data-print-card="true"
-                          onClick={() => handleToggleResizeCard(record.id)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              handleToggleResizeCard(record.id);
-                            }
-                          }}
-                        >
-                          <RecordCard
-                            record={record}
-                            index={pageIndex * sheetsPerPage + recordIndex}
-                            preview={true}
-                          />
-                          <div className={styles.selectionBadge}>
-                            {isSelected ? "Selected" : "Select"}
-                          </div>
-                          {resizeBadge && (
-                            <div
-                              className={`${styles.resizeBadge} ${
-                                styles[`resizeBadge${resizeBadge.tone}`]
-                              }`}
-                            >
-                              <span className={styles.resizeBadgeTitle}>
-                                {resizeBadge.label}
-                              </span>
-                              {resizeBadge.detail && (
-                                <span className={styles.resizeBadgeDetail}>
-                                  {resizeBadge.detail}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-
-                    {Array.from({
-                      length: sheetsPerPage - page.length,
-                    }).map((_, emptyIndex) => (
+              return (
+                <div
+                  key={pageIndex}
+                  className={`${styles.pageGrid} print`}
+                  data-print-page="true"
+                  data-print-page-break={
+                    pageIndex < paginatedRecords.length - 1 ? "page" : "none"
+                  }
+                  style={pageStyle}
+                >
+                  {page.map((record, recordIndex) => {
+                    const isSelected = selectedResizeCardIdSet.has(record.id);
+                    const resizeBadge = resizeBadgesByCardId[record.id] ?? null;
+                    return (
                       <div
-                        key={`empty-${emptyIndex}`}
-                        className={`${styles.emptySlot} print`}
-                        data-print-empty="true"
-                      />
-                    ))}
-                  </div>
-                );
-              })()
-            ))}
-          </div>
+                        key={record.id}
+                        className={`${styles.recordCardContainer} print ${
+                          isSelected ? styles.recordCardSelected : ""
+                        }`}
+                        data-print-card="true"
+                        onClick={() => handleToggleResizeCard(record.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            handleToggleResizeCard(record.id);
+                          }
+                        }}
+                      >
+                        <RecordCard
+                          record={record}
+                          index={pageIndex * sheetsPerPage + recordIndex}
+                          preview={true}
+                        />
+                        <div className={styles.selectionBadge}>
+                          {isSelected ? "Selected" : "Select"}
+                        </div>
+                        {resizeBadge && (
+                          <div
+                            className={`${styles.resizeBadge} ${
+                              styles[`resizeBadge${resizeBadge.tone}`]
+                            }`}
+                          >
+                            <span className={styles.resizeBadgeTitle}>
+                              {resizeBadge.label}
+                            </span>
+                            {resizeBadge.detail && (
+                              <span className={styles.resizeBadgeDetail}>
+                                {resizeBadge.detail}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {Array.from({
+                    length: sheetsPerPage - page.length,
+                  }).map((_, emptyIndex) => (
+                    <div
+                      key={`empty-${emptyIndex}`}
+                      className={`${styles.emptySlot} print`}
+                      data-print-empty="true"
+                    />
+                  ))}
+                </div>
+              );
+            })()
+          ))}
         </div>
 
         <PrintSidebar

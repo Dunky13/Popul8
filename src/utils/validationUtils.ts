@@ -9,6 +9,7 @@ import type { DataRecord } from "../types/dataRecord";
 import type { MappingValidationResult } from "../types/mapping";
 import { VALIDATION, DATASET_LIMITS } from "../constants";
 import { ERROR_MESSAGES } from "../errors/errorMessages";
+import { getUnmappedRequiredPlaceholders } from "./requiredFields";
 import { validateSVGTemplate } from "./svgManipulator";
 import { validateCSVData } from "./csvParser";
 
@@ -44,11 +45,17 @@ export const validateDataMapping = (
   
   // Check all template placeholders are mapped
   const unmappedPlaceholders = template.placeholders.filter(
-    key => !mapping[key]
+    (key) => !mapping[key]
   );
-  
-  if (unmappedPlaceholders.length > 0) {
-    errors.push(ERROR_MESSAGES.MISSING_PLACEHOLDERS_MAPPING(unmappedPlaceholders));
+  const unmappedRequiredPlaceholders = getUnmappedRequiredPlaceholders({
+    placeholders: template.placeholders,
+    dataMapping: mapping,
+  });
+
+  if (unmappedRequiredPlaceholders.length > 0) {
+    errors.push(
+      ERROR_MESSAGES.MISSING_PLACEHOLDERS_MAPPING(unmappedRequiredPlaceholders),
+    );
   }
   
   // Check mapped CSV columns exist
@@ -66,7 +73,7 @@ export const validateDataMapping = (
   );
   
   // Only warn about unused columns when there are unmapped placeholders
-  if (unusedColumns.length > 0 && unmappedPlaceholders.length > 0) {
+  if (unusedColumns.length > 0 && unmappedRequiredPlaceholders.length > 0) {
     warnings.push(`Unused CSV columns: ${unusedColumns.join(', ')}`);
   }
   
@@ -161,11 +168,16 @@ export const validatePrintReadiness = (
   
   // Check template placeholders
   if (template && template.placeholders.length > 0) {
-    const unmappedPlaceholders = template.placeholders.filter(
-      key => !mapping[key]
-    );
-    if (unmappedPlaceholders.length > 0) {
-      errors.push(ERROR_MESSAGES.MISSING_PLACEHOLDERS_MAPPING(unmappedPlaceholders));
+    const unmappedRequiredPlaceholders = getUnmappedRequiredPlaceholders({
+      placeholders: template.placeholders,
+      dataMapping: mapping,
+    });
+    if (unmappedRequiredPlaceholders.length > 0) {
+      errors.push(
+        ERROR_MESSAGES.MISSING_PLACEHOLDERS_MAPPING(
+          unmappedRequiredPlaceholders,
+        ),
+      );
     }
   }
   

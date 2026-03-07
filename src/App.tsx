@@ -19,7 +19,17 @@ import styles from "./styles/App.module.css";
 import type { StepId } from "./types/app";
 
 export const App: React.FC = () => {
-  const { csvData, selectedRowIndices, currentStep, svgTemplate, records } =
+  const {
+    csvData,
+    selectedRowIndices,
+    currentStep,
+    svgTemplate,
+    records,
+    errors,
+    warnings,
+    setErrors,
+    setWarnings,
+  } =
     useAppStore(
       useShallow((state) => ({
         csvData: state.csvData,
@@ -27,6 +37,10 @@ export const App: React.FC = () => {
         currentStep: state.currentStep,
         svgTemplate: state.svgTemplate,
         records: state.records,
+        errors: state.errors,
+        warnings: state.warnings,
+        setErrors: state.setErrors,
+        setWarnings: state.setWarnings,
       })),
     );
 
@@ -58,6 +72,27 @@ export const App: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep]);
 
+  React.useEffect(() => {
+    if (currentStep === "mapping") return;
+
+    const isMappingError = (message: string) =>
+      message.startsWith("Template placeholders not mapped:") ||
+      message.startsWith("Invalid mapping:");
+    const isMappingWarning = (message: string) =>
+      message.startsWith("Unused CSV columns:") ||
+      message.startsWith("Potential mapping mismatches:");
+
+    const nextErrors = errors.filter((message) => !isMappingError(message));
+    const nextWarnings = warnings.filter((message) => !isMappingWarning(message));
+
+    if (nextErrors.length !== errors.length) {
+      setErrors(nextErrors);
+    }
+    if (nextWarnings.length !== warnings.length) {
+      setWarnings(nextWarnings);
+    }
+  }, [currentStep, errors, warnings, setErrors, setWarnings]);
+
   return (
     <div className={styles.app}>
       {showOfflineIndicator && (
@@ -68,7 +103,7 @@ export const App: React.FC = () => {
       )}
 
       <AppHeader themeMode={themeMode} onThemeModeChange={setThemeMode} />
-      <AppMessages />
+      {currentStep !== "mapping" && <AppMessages />}
 
       <main className={styles.main}>
         <StepContent />

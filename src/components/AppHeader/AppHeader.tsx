@@ -10,12 +10,13 @@ import {
   shouldAutoLoadMissingFonts,
 } from "../../utils/editorPreferences";
 import { getMissingFonts } from "../../utils/svgFonts";
+import { validateDataMapping } from "../../utils/validationUtils";
 import { ThemeSwitcher } from "../ThemeSwitcher/ThemeSwitcher";
 import styles from "../../styles/App.module.css";
 
 const APP_LOGO_URL = "/branding/popul8-logo.svg";
 
-type StepBadgeTone = "default" | "error";
+type StepBadgeTone = "default" | "error" | "warning";
 
 type FlowAction = {
   label: string;
@@ -38,6 +39,7 @@ type StepButtonProps = {
     isCompleted: boolean;
     isAvailable: boolean;
     isReady: boolean;
+    hasWarning: boolean;
   };
   onActivate: (step: StepId) => void;
 };
@@ -122,17 +124,24 @@ const StepButton: React.FC<StepButtonProps> = ({
   onActivate,
 }) => {
   const { index, label, detail, badge, badgeTone = "default" } = display;
-  const { isActive, isCompleted, isAvailable, isReady } = state;
+  const { isActive, isCompleted, isAvailable, isReady, hasWarning } = state;
   const readyBadge =
     badge ?? (isCompleted ? "Done" : isReady ? "Ready" : undefined);
-  const badgeClassName = badgeTone === "error" ? styles.stepBadgeError : "";
+  const badgeClassName =
+    badgeTone === "error"
+      ? styles.stepBadgeError
+      : badgeTone === "warning"
+        ? styles.stepBadgeWarning
+        : "";
 
   return (
     <button
       type="button"
       className={`${styles.stepButton} ${isActive ? styles.active : ""} ${
         isCompleted && !isActive ? styles.completed : ""
-      } ${isReady && !isActive ? styles.ready : ""}`}
+      } ${isReady && !isActive ? styles.ready : ""} ${
+        hasWarning ? styles.warning : ""
+      }`}
       onClick={() => {
         if (isAvailable) {
           onActivate(step);
@@ -178,6 +187,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     isEditComplete,
     isReadyForSelection,
     isReadyForMapping,
+    isReadyForPreview,
     isReadyForPrint,
   } = useAppStore(
     useShallow((state) => ({
@@ -190,6 +200,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       isEditComplete: state.isEditComplete,
       isReadyForSelection: state.isReadyForSelection,
       isReadyForMapping: state.isReadyForMapping,
+      isReadyForPreview: state.isReadyForPreview,
       isReadyForPrint: state.isReadyForPrint,
     })),
   );
@@ -225,9 +236,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const readyForEdit = isReadyForEdit();
   const readyForMapping = isReadyForMapping();
   const hasSelectedRows = selectedRowIndices.length > 0;
-  const readyForPreview =
-    readyForMapping &&
-    (!svgTemplate || mappedPlaceholders === svgTemplate.placeholders.length);
+  const readyForPreview = isReadyForPreview();
   const readyForPrint = isReadyForPrint();
   const hasCsvUpload = csvData !== null;
   const hasTemplateUpload = svgTemplate !== null;
@@ -235,6 +244,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const selectedCount = selectedRowIndices.length;
   const recordCount = csvData?.rows.length ?? 0;
   const activeStep = STEP_COPY[currentStep];
+  const mappingValidation =
+    svgTemplate && csvData
+      ? validateDataMapping(svgTemplate, csvData, dataMapping)
+      : null;
+  const mappingNeedsAttention = Boolean(
+    mappingValidation &&
+      (mappingValidation.errors.length > 0 ||
+        mappingValidation.warnings.length > 0),
+  );
 
   const flowAction: FlowAction | null = (() => {
     switch (currentStep) {
@@ -293,15 +311,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       (step === "preview" && readyForPrint && hasSelectedRows);
 
     const isAvailable =
+      isCompleted ||
       step === "upload" ||
-      (step === "edit" && readyForEdit) ||
+      (step === "edit" && hasTemplateUpload) ||
       (step === "mapping" && readyForMapping) ||
       (step === "select" && readyForPreview) ||
       (step === "preview" && readyForPreview && hasSelectedRows);
 
     const isReady = isAvailable && !isActive && !isCompleted;
+    const hasWarning = step === "mapping" && mappingNeedsAttention;
 
-    return { isActive, isCompleted, isAvailable, isReady };
+    return { isActive, isCompleted, isAvailable, isReady, hasWarning };
   };
 
   const stepSnapshot = (() => {
@@ -416,12 +436,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 const badge =
                   item.step === "edit" && warningFontCount > 0
                     ? `${warningFontCount}`
+                    : item.step === "mapping" && item.state.hasWarning
+                      ? "Issue"
                     : item.step === "select"
                       ? `${selectedRowIndices.length}`
                       : undefined;
                 const badgeTone: StepBadgeTone =
                   item.step === "edit" && warningFontCount > 0
                     ? "error"
+                    : item.step === "mapping" && item.state.hasWarning
+                      ? "warning"
                     : "default";
 
                 return (

@@ -9,6 +9,11 @@ import { useValidateDataMapping } from "../../utils/validationUtils";
 import { findBestMatches } from "../../utils/fuzzyMatcher";
 import { buildDefaultMapping } from "../../utils/mappingDefaults";
 import { VALIDATION } from "../../constants";
+import {
+  getRequiredPlaceholders,
+  getUnmappedRequiredPlaceholders,
+  isRequiredPlaceholder,
+} from "../../utils/requiredFields";
 
 import styles from "./DataMapping.module.css";
 import Icon from "../Icon/Icon";
@@ -20,8 +25,6 @@ export const DataMapping: React.FC = () => {
     svgTemplate,
     dataMapping,
     setDataMapping,
-    setErrors,
-    setWarnings,
     selectedRowIndices,
     isReadyForMapping,
     isReadyForPreview,
@@ -31,8 +34,6 @@ export const DataMapping: React.FC = () => {
       svgTemplate: state.svgTemplate,
       dataMapping: state.dataMapping,
       setDataMapping: state.setDataMapping,
-      setErrors: state.setErrors,
-      setWarnings: state.setWarnings,
       selectedRowIndices: state.selectedRowIndices,
       isReadyForMapping: state.isReadyForMapping,
       isReadyForPreview: state.isReadyForPreview,
@@ -47,17 +48,6 @@ export const DataMapping: React.FC = () => {
   >(null);
 
   const validationResult = useValidateDataMapping(svgTemplate, csvData, dataMapping);
-
-  React.useEffect(() => {
-    if (!validationResult) {
-      setErrors([]);
-      setWarnings([]);
-      return;
-    }
-
-    setErrors(validationResult.errors);
-    setWarnings(validationResult.warnings);
-  }, [validationResult, setErrors, setWarnings]);
 
   const handleMappingChange = (templateKey: string, csvColumn: string) => {
     const newMapping = { ...dataMapping, [templateKey]: csvColumn };
@@ -119,7 +109,16 @@ export const DataMapping: React.FC = () => {
   };
 
   const handleClearMapping = () => {
-    setDataMapping({});
+    if (!svgTemplate) {
+      setDataMapping({});
+      setAutoSuggestedMapping(false);
+      return;
+    }
+
+    const emptyMapping = Object.fromEntries(
+      svgTemplate.placeholders.map((placeholder) => [placeholder, ""]),
+    );
+    setDataMapping(emptyMapping);
     setAutoSuggestedMapping(false);
   };
 
@@ -163,6 +162,20 @@ export const DataMapping: React.FC = () => {
     () => validationResult?.unmappedPlaceholders ?? [],
     [validationResult?.unmappedPlaceholders],
   );
+  const requiredPlaceholderCount = useMemo(
+    () => (svgTemplate ? getRequiredPlaceholders(svgTemplate.placeholders).length : 0),
+    [svgTemplate],
+  );
+  const unmappedRequiredPlaceholders = useMemo(
+    () =>
+      svgTemplate
+        ? getUnmappedRequiredPlaceholders({
+            placeholders: svgTemplate.placeholders,
+            dataMapping,
+          })
+        : [],
+    [dataMapping, svgTemplate],
+  );
   const normalizedFilter = placeholderFilter.trim().toLowerCase();
 
   const placeholderRows = useMemo(() => {
@@ -170,6 +183,7 @@ export const DataMapping: React.FC = () => {
 
     return svgTemplate.placeholders.map((placeholder) => {
       const isUnmapped = unmappedPlaceholders.includes(placeholder);
+      const isRequired = isRequiredPlaceholder(placeholder);
       const selectedColumn = dataMapping[placeholder];
       const isInvalidColumn =
         !!selectedColumn && !csvData?.headers.includes(selectedColumn);
@@ -181,6 +195,7 @@ export const DataMapping: React.FC = () => {
 
       return {
         placeholder,
+        isRequired,
         isUnmapped,
         selectedColumn,
         isInvalidColumn,
@@ -295,10 +310,12 @@ export const DataMapping: React.FC = () => {
           </span>
           <span
             className={`${styles.headerStat} ${
-              unmappedPlaceholders.length > 0 ? styles.headerStatWarning : ""
+              unmappedRequiredPlaceholders.length > 0
+                ? styles.headerStatWarning
+                : ""
             }`}
           >
-            {unmappedPlaceholders.length} unresolved
+            {unmappedRequiredPlaceholders.length}/{requiredPlaceholderCount} required unresolved
           </span>
           <span className={styles.headerStat}>{mappingCoverage}% coverage</span>
           {previewRowNumber ? (
@@ -309,9 +326,13 @@ export const DataMapping: React.FC = () => {
 
       <div className={styles.topBar}>
         <div className={styles.topBarStatus}>
-          {unmappedPlaceholders.length > 0 ? (
+          {unmappedRequiredPlaceholders.length > 0 ? (
             <p className={styles.topBarMessage}>
-              Resolve the remaining placeholders before moving to preview.
+              Resolve the required placeholders before moving to preview.
+            </p>
+          ) : unmappedPlaceholders.length > 0 ? (
+            <p className={styles.topBarMessage}>
+              Required fields are mapped. Optional placeholders can stay blank.
             </p>
           ) : (
             <p className={styles.topBarMessage}>
@@ -424,6 +445,9 @@ export const DataMapping: React.FC = () => {
                 <code className={styles.mobilePlaceholderCode}>
                   {`{{${mobileCurrentRow.placeholder}}}`}
                 </code>
+                {mobileCurrentRow.isRequired ? (
+                  <span className={styles.mobileRequiredBadge}>Required</span>
+                ) : null}
               </div>
 
               <div className={styles.mobileFieldGroup}>
@@ -555,6 +579,9 @@ export const DataMapping: React.FC = () => {
           >
             <div className={styles.placeholderCell}>
               <code className={styles.placeholderCode}>{`{{${row.placeholder}}}`}</code>
+              {row.isRequired ? (
+                <span className={styles.requiredBadge}>Required</span>
+              ) : null}
             </div>
 
             <div className={styles.columnCell}>

@@ -16,6 +16,7 @@ import {
 } from '../utils/editorPreferences';
 import {
   applyRequiredSelectionRules,
+  getUnmappedRequiredPlaceholders,
   getMissingRequiredRowIndices,
 } from '../utils/requiredFields';
 
@@ -238,11 +239,27 @@ export const useAppStore = create<AppState>()(
       const { csvData, svgTemplate, dataMapping } = get();
       if (!csvData || !svgTemplate) return false;
 
+      const hasInvalidMapping = Object.values(dataMapping).some(
+        (csvColumn) => csvColumn && !csvData.headers.includes(csvColumn),
+      );
+      if (hasInvalidMapping) {
+        return false;
+      }
+
+      const unmappedRequiredPlaceholders = getUnmappedRequiredPlaceholders({
+        placeholders: svgTemplate.placeholders,
+        dataMapping,
+      });
+
+      if (unmappedRequiredPlaceholders.length > 0) {
+        return false;
+      }
+
       if (svgTemplate.placeholders.length === 0) {
         return true;
       }
 
-      return svgTemplate.placeholders.every((key) => Boolean(dataMapping[key]));
+      return true;
     },
 
     isReadyForPrint: () => {
