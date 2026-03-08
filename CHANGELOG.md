@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/Dunky13/Popul8/compare/v1.5.0...v1.6.0) (2026-03-08)
+
+
+### Features
+
+* download files ([2bb9245](https://github.com/Dunky13/Popul8/commit/2bb9245eea4bde017b54f93fda7903716d51ac54))
+
+
+### Bug Fixes
+
+* action flow ([fd442dc](https://github.com/Dunky13/Popul8/commit/fd442dc4a2539bac6bea5c79b7f3b72a7531a8a6))
+
 ## [1.5.0](https://github.com/Dunky13/Popul8/compare/v1.4.0...v1.5.0) (2026-03-07)
 
 
