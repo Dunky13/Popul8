@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages-${{ github.ref }}
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -88,6 +88,13 @@ jobs:
             mkdir -p "_site/${SITE_PATH}"
             cp -R dist/. "_site/${SITE_PATH}/"
           fi
+          cat > _site/deploy-info.txt <<EOF
+          event=${{ github.event_name }}
+          ref=${{ github.ref }}
+          sha=${{ github.sha }}
+          run_id=${{ github.run_id }}
+          run_attempt=${{ github.run_attempt }}
+          EOF
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
