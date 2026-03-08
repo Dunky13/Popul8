@@ -2,6 +2,8 @@
  * Local file history utilities (localStorage)
  */
 
+import { parseCSVContent } from "./csvParser";
+
 export type StoredFileType = "csv" | "svg";
 
 export interface StoredFile {
@@ -12,6 +14,7 @@ export interface StoredFile {
   type: StoredFileType;
   uploadedAt: string;
   content: string;
+  rowCount?: number;
 }
 
 export interface AddFilesToHistoryResult {
@@ -373,6 +376,15 @@ export const addFilesToHistoryWithHashes = async (
     const uploadedAt = options.uploadedAt
       ? new Date(options.uploadedAt).toISOString()
       : new Date().toISOString();
+    let rowCount: number | undefined;
+    if (type === "csv") {
+      try {
+        const parsed = await parseCSVContent(content, file.name);
+        rowCount = parsed.rows.length;
+      } catch {
+        rowCount = 0;
+      }
+    }
 
     const storedFile: StoredFile = {
       id: hash,
@@ -382,6 +394,7 @@ export const addFilesToHistoryWithHashes = async (
       type,
       uploadedAt,
       content,
+      rowCount,
     };
 
     items.unshift(storedFile);
@@ -423,6 +436,54 @@ export const clearHistory = (type?: StoredFileType) => {
   if (didMutateHistory) {
     dispatchFileHistoryUpdated();
   }
+};
+
+export const removeHistoryItem = (
+  type: StoredFileType,
+  id: string,
+): StoredFile[] => {
+  const history = loadHistory();
+  const nextItems = history[type].filter((item) => item.id !== id);
+
+  if (nextItems.length === history[type].length) {
+    return listHistory(type);
+  }
+
+  const nextHistory: FileHistory = {
+    ...history,
+    [type]: nextItems,
+  };
+
+  saveHistory(nextHistory);
+  normalizeSelectionState(nextHistory);
+  dispatchFileHistoryUpdated();
+
+  return listHistory(type);
+};
+
+export const hydrateCsvHistoryRowCounts = async (): Promise<StoredFile[]> => {
+  const history = loadHistory();
+  const entriesMissingRowCount = history.csv.filter(
+    (entry) => typeof entry.rowCount !== "number",
+  );
+
+  if (entriesMissingRowCount.length === 0) {
+    return listHistory("csv");
+  }
+
+  await Promise.all(
+    entriesMissingRowCount.map(async (entry) => {
+      try {
+        const parsed = await parseCSVContent(entry.content, entry.fileName);
+        entry.rowCount = parsed.rows.length;
+      } catch {
+        entry.rowCount = 0;
+      }
+    }),
+  );
+
+  saveHistory(history);
+  return listHistory("csv");
 };
 
 export const getSelection = (

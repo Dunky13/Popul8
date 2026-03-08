@@ -23,7 +23,9 @@ import {
   clearHistory,
   getLastUsed,
   getSelection,
+  hydrateCsvHistoryRowCounts,
   listHistory,
+  removeHistoryItem,
   setLastUsed,
   setSelection,
   storedFileToFile,
@@ -98,9 +100,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(
     () => new Set(getSelection("csv") as string[]),
   );
-  const [historyRowCounts, setHistoryRowCounts] = useState<
-    Record<string, number>
-  >({});
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const addFilesInputRef = useRef<HTMLInputElement>(null);
   const acceptedFileRules = useMemo(
     () => parseAcceptedFileRules(accept),
@@ -141,25 +141,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   }, []);
 
   useEffect(() => {
+    if (historyItems.every((item) => typeof item.rowCount === "number")) return;
+
     let isCancelled = false;
 
-    const loadRowCounts = async () => {
-      const counts = await Promise.all(
-        historyItems.map(async (item) => {
-          try {
-            const parsed = await parseCSVContent(item.content, item.fileName);
-            return [item.id, parsed.rows.length] as const;
-          } catch {
-            return [item.id, 0] as const;
-          }
-        }),
-      );
-
+    void hydrateCsvHistoryRowCounts().then((updated) => {
       if (isCancelled) return;
-      setHistoryRowCounts(Object.fromEntries(counts));
-    };
-
-    void loadRowCounts();
+      setHistoryItems(updated);
+    });
 
     return () => {
       isCancelled = true;
@@ -486,6 +475,30 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     clearHistory("csv");
     setHistoryItems([]);
     setSelectedHistoryIds(new Set());
+    setPendingDeleteId(null);
+  }, []);
+
+  const handleDownloadHistoryItem = useCallback((item: StoredFile) => {
+    const file = storedFileToFile(item);
+    const url = URL.createObjectURL(file);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = file.name;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleDeleteHistoryItem = useCallback((id: string) => {
+    setPendingDeleteId((currentPendingId) => {
+      if (currentPendingId !== id) {
+        return id;
+      }
+
+      removeHistoryItem("csv", id);
+      return null;
+    });
   }, []);
 
   const handleAddSelectedToCurrent = useCallback(async () => {
@@ -632,10 +645,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             <span>File</span>
             <span>Rows</span>
             <span>Saved</span>
+            <span>Actions</span>
           </div>
           <div className={styles.historyList}>
             {sortedHistoryItems.map((item) => (
-              <label
+              <div
                 key={item.id}
                 className={`${styles.historyItem} ${
                   selectedHistoryIds.has(item.id)
@@ -644,20 +658,73 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 }`}
               >
                 <input
+                  id={`csv-history-${item.id}`}
                   type="checkbox"
+                  className={styles.historySelectionControl}
                   checked={selectedHistoryIds.has(item.id)}
                   onChange={() => toggleHistorySelection(item.id)}
                 />
-                <div className={styles.historyDetails}>
+                <label
+                  htmlFor={`csv-history-${item.id}`}
+                  className={styles.historyDetails}
+                >
                   <span className={styles.historyName}>{item.fileName}</span>
-                </div>
+                </label>
                 <span className={styles.historySize}>
-                  {historyRowCounts[item.id] ?? 0}
+                  {item.rowCount ?? 0}
                 </span>
                 <span className={styles.historyTime}>
                   {new Date(item.uploadedAt).toLocaleDateString()}
                 </span>
-              </label>
+                <div className={styles.historyActions}>
+                  <button
+                    type="button"
+                    className={styles.historyActionButton}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      handleDownloadHistoryItem(item);
+                    }}
+                    aria-label={`Download ${item.fileName}`}
+                    title={`Download ${item.fileName}`}
+                  >
+                    <Icon name="download" size={16} />
+                  </button>
+                  {pendingDeleteId === item.id ? (
+                    <button
+                      type="button"
+                      className={`${styles.historyActionButton} ${styles.historyConfirmButton}`}
+                      autoFocus
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        handleDeleteHistoryItem(item.id);
+                      }}
+                      onBlur={() => {
+                        setPendingDeleteId((currentPendingId) =>
+                          currentPendingId === item.id ? null : currentPendingId,
+                        );
+                      }}
+                    >
+                      Are you sure?
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.historyActionButton}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        handleDeleteHistoryItem(item.id);
+                      }}
+                      aria-label={`Delete ${item.fileName}`}
+                      title={`Delete ${item.fileName}`}
+                    >
+                      <Icon name="trash" size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
 

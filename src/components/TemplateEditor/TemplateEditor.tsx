@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { useAppStore } from "../../store/appStore";
 import { useShallow } from "zustand/react/shallow";
-import { parseSVGTemplate } from "../../utils/svgManipulator";
 import { stripSvgExtension } from "../../utils/regexUtils";
 import styles from "./TemplateEditor.module.css";
 import { TemplateEditorEmptyState } from "./TemplateEditorEmptyState";
@@ -34,12 +33,11 @@ export const TemplateEditor: React.FC = () => {
 
   const contentSummary = useMemo(() => {
     if (!localContent) return null;
-    const template = parseSVGTemplate(localContent, svgTemplate?.fileName);
     return {
-      placeholders: template.placeholders,
-      elementIds: template.elementIds,
+      placeholders: svgTemplate?.placeholders ?? [],
+      elementIds: svgTemplate?.elementIds ?? [],
     };
-  }, [localContent, svgTemplate?.fileName]);
+  }, [localContent, svgTemplate?.elementIds, svgTemplate?.placeholders]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

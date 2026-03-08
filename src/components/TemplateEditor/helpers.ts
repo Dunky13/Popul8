@@ -25,12 +25,26 @@ const loadPrettierHtml = async () => {
   return prettierHtmlLoader;
 };
 
-export const parseSvgInfo = (content: string): SvgInfo | null => {
+export const parseSvgDocument = (content: string) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(content, "image/svg+xml");
   const svg = doc.querySelector("svg");
   if (!svg) return null;
+  return { doc, svg };
+};
 
+export const cloneParsedSvgDocument = (parsed: {
+  svg: Element;
+  doc: XMLDocument;
+}) => {
+  const namespace = parsed.svg.namespaceURI ?? "http://www.w3.org/2000/svg";
+  const doc = parsed.doc.implementation.createDocument(namespace, "svg", null);
+  const imported = doc.importNode(parsed.svg, true);
+  doc.replaceChild(imported, doc.documentElement);
+  return { doc, svg: imported as SVGSVGElement };
+};
+
+export const buildSvgInfoFromSvg = (svg: Element): SvgInfo | null => {
   const viewBox = svg.getAttribute("viewBox");
   const widthAttr = svg.getAttribute("width");
   const heightAttr = svg.getAttribute("height");
@@ -51,6 +65,12 @@ export const parseSvgInfo = (content: string): SvgInfo | null => {
     width: Number.isFinite(width) ? width : undefined,
     height: Number.isFinite(height) ? height : undefined,
   };
+};
+
+export const parseSvgInfo = (content: string): SvgInfo | null => {
+  const parsed = parseSvgDocument(content);
+  if (!parsed) return null;
+  return buildSvgInfoFromSvg(parsed.svg);
 };
 
 export const normalizeFontSize = (value: string) => {

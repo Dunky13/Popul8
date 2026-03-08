@@ -17,8 +17,10 @@ import {
   getLastUsed,
   getSelection,
   listHistory,
+  removeHistoryItem,
   setLastUsed,
   setSelection,
+  storedFileToFile,
   type StoredFile,
 } from "../../utils/fileHistory";
 import {
@@ -74,6 +76,7 @@ export const TemplateUpload: React.FC = () => {
       return typeof selection === "string" ? selection : null;
     },
   );
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     setSelection("svg", selectedHistoryId);
@@ -260,9 +263,37 @@ export const TemplateUpload: React.FC = () => {
   ]);
 
   const handleClearSvgHistory = useCallback(() => {
+    handleClear();
+    clearErrors();
     clearHistory("svg");
+    setSvgUploaded(false);
+    setSvgTemplate(null);
     setHistoryItems([]);
     setSelectedHistoryId(null);
+    setPendingDeleteId(null);
+  }, [clearErrors, handleClear, setSvgTemplate, setSvgUploaded]);
+
+  const handleDownloadHistoryItem = useCallback((item: StoredFile) => {
+    const file = storedFileToFile(item);
+    const url = URL.createObjectURL(file);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = file.name;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleDeleteHistoryItem = useCallback((id: string) => {
+    setPendingDeleteId((currentPendingId) => {
+      if (currentPendingId !== id) {
+        return id;
+      }
+
+      removeHistoryItem("svg", id);
+      return null;
+    });
   }, []);
 
   return (
@@ -330,10 +361,11 @@ export const TemplateUpload: React.FC = () => {
             <span>Template</span>
             <span>Placeholders</span>
             <span>Saved</span>
+            <span>Actions</span>
           </div>
           <div className={styles.historyList}>
             {sortedHistoryItems.map((item) => (
-              <label
+              <div
                 key={item.id}
                 className={`${styles.historyItem} ${
                   selectedHistoryId === item.id
@@ -342,21 +374,74 @@ export const TemplateUpload: React.FC = () => {
                 }`}
               >
                 <input
+                  id={`svg-history-${item.id}`}
                   type="radio"
                   name="svg-history"
+                  className={styles.historySelectionControl}
                   checked={selectedHistoryId === item.id}
                   onChange={() => setSelectedHistoryId(item.id)}
                 />
-                <div className={styles.historyDetails}>
+                <label
+                  htmlFor={`svg-history-${item.id}`}
+                  className={styles.historyDetails}
+                >
                   <span className={styles.historyName}>{item.fileName}</span>
-                </div>
+                </label>
                 <span className={styles.historyCount}>
                   {historyPlaceholderCounts[item.id] ?? 0}
                 </span>
                 <span className={styles.historyTime}>
                   {new Date(item.uploadedAt).toLocaleDateString()}
                 </span>
-              </label>
+                <div className={styles.historyActions}>
+                  <button
+                    type="button"
+                    className={styles.historyActionButton}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      handleDownloadHistoryItem(item);
+                    }}
+                    aria-label={`Download ${item.fileName}`}
+                    title={`Download ${item.fileName}`}
+                  >
+                    <Icon name="download" size={16} />
+                  </button>
+                  {pendingDeleteId === item.id ? (
+                    <button
+                      type="button"
+                      className={`${styles.historyActionButton} ${styles.historyConfirmButton}`}
+                      autoFocus
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        handleDeleteHistoryItem(item.id);
+                      }}
+                      onBlur={() => {
+                        setPendingDeleteId((currentPendingId) =>
+                          currentPendingId === item.id ? null : currentPendingId,
+                        );
+                      }}
+                    >
+                      Are you sure?
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.historyActionButton}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        handleDeleteHistoryItem(item.id);
+                      }}
+                      aria-label={`Delete ${item.fileName}`}
+                      title={`Delete ${item.fileName}`}
+                    >
+                      <Icon name="trash" size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
 

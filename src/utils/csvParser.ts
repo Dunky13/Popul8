@@ -2,7 +2,7 @@
  * CSV parsing utilities using papaparse
  */
 
-import Papa from "papaparse";
+import * as Papa from "papaparse";
 import type { ParsedData } from "../types/template";
 import type { DataRecord } from "../types/dataRecord";
 import { csvRowToRecord } from "../types/dataRecord";
@@ -37,8 +37,8 @@ export const parseCSVFile = (file: File): Promise<ParsedData> => {
     Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (header) => header.trim(),
-      complete: (results) => {
+      transformHeader: (header: string) => header.trim(),
+      complete: (results: Papa.ParseResult<Record<string, string>>) => {
         try {
           resolve(buildParsedData(results, file.name));
         } catch (error) {
@@ -70,8 +70,8 @@ export const parseCSVContent = (
     Papa.parse<Record<string, string>>(content, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (header) => header.trim(),
-      complete: (results) => {
+      transformHeader: (header: string) => header.trim(),
+      complete: (results: Papa.ParseResult<Record<string, string>>) => {
         try {
           resolve(buildParsedData(results, fileName));
         } catch (error) {

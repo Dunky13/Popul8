@@ -42,6 +42,7 @@ export const validateDataMapping = (
 ): MappingValidationResult => {
   const errors: string[] = [];
   const warnings: string[] = [];
+  const invalidColumns: string[] = [];
   
   // Check all template placeholders are mapped
   const unmappedPlaceholders = template.placeholders.filter(
@@ -63,6 +64,7 @@ export const validateDataMapping = (
     if (!csvColumn) return;
     if (!csvData.headers.includes(csvColumn)) {
       errors.push(ERROR_MESSAGES.INVALID_MAPPING(templateKey, csvColumn));
+      invalidColumns.push(csvColumn);
     }
   });
   
@@ -73,7 +75,7 @@ export const validateDataMapping = (
   );
   
   // Only warn about unused columns when there are unmapped placeholders
-  if (unusedColumns.length > 0 && unmappedRequiredPlaceholders.length > 0) {
+  if (unusedColumns.length > 0 && unmappedPlaceholders.length > 0) {
     warnings.push(`Unused CSV columns: ${unusedColumns.join(', ')}`);
   }
   
@@ -102,7 +104,7 @@ export const validateDataMapping = (
     errors,
     warnings,
     unmappedPlaceholders,
-    invalidColumns: []
+    invalidColumns: Array.from(new Set(invalidColumns)),
   };
 };
 

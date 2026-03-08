@@ -68,7 +68,7 @@
 
 .historyColumns {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 5.25rem 5.5rem;
+  grid-template-columns: minmax(0, 1fr) 5.25rem 5.5rem auto;
   gap: 0.6rem;
   padding: 0 0.35rem;
   font-size: 0.66rem;
@@ -87,7 +87,7 @@
 
 .historyItem {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 5.25rem 5.5rem;
+  grid-template-columns: auto minmax(0, 1fr) 5.25rem 5.5rem auto;
   align-items: center;
   gap: 0.55rem 0.6rem;
   padding: 0.45rem 0.55rem;
@@ -110,11 +110,17 @@
   margin: 0;
 }
 
+.historySelectionControl {
+  width: 1rem;
+  height: 1rem;
+}
+
 .historyDetails {
   display: flex;
   flex-direction: column;
   gap: 0.14rem;
   min-width: 0;
+  cursor: pointer;
 }
 
 .historyName {
@@ -131,6 +137,47 @@
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.historyActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.historyActionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.9rem;
+  min-width: 1.9rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 8px;
+  background: var(--surface-panel-strong);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.historyActionButton:hover {
+  border-color: var(--line-strong);
+  color: var(--text-primary);
+}
+
+.historyConfirmButton {
+  min-width: max-content;
+  color: var(--error-color);
+}
+
+.historyConfirmButton:hover {
+  border-color: color-mix(in srgb, var(--error-color) 40%, var(--line-strong));
+  background: color-mix(in srgb, var(--error-bg) 55%, var(--surface-panel-strong));
+  color: var(--error-text);
 }
 
 @media (max-width: 768px) {
@@ -155,8 +202,17 @@
   }
 
   .historyCount,
-  .historyTime {
+  .historyTime,
+  .historyActions {
     grid-column: 2;
+  }
+
+  .historyCount,
+  .historyTime {
     text-align: left;
+  }
+
+  .historyActions {
+    justify-content: flex-start;
   }
 }

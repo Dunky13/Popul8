@@ -18,30 +18,25 @@ import { posthog } from "./lib/posthog";
 import { useAppStore } from "./store/appStore";
 import styles from "./styles/App.module.css";
 import type { StepId } from "./types/app";
+import { shouldRedirectToUploadForMissingSvg } from "./utils/workflowGuards";
 
 export const App: React.FC = () => {
   const {
     csvData,
     selectedRowIndices,
     currentStep,
+    setCurrentStep,
     svgTemplate,
     records,
-    errors,
-    warnings,
-    setErrors,
-    setWarnings,
   } =
     useAppStore(
       useShallow((state) => ({
         csvData: state.csvData,
         selectedRowIndices: state.selectedRowIndices,
         currentStep: state.currentStep,
+        setCurrentStep: state.setCurrentStep,
         svgTemplate: state.svgTemplate,
         records: state.records,
-        errors: state.errors,
-        warnings: state.warnings,
-        setErrors: state.setErrors,
-        setWarnings: state.setWarnings,
       })),
     );
 
@@ -74,25 +69,16 @@ export const App: React.FC = () => {
   }, [currentStep]);
 
   React.useEffect(() => {
-    if (currentStep === "mapping") return;
-
-    const isMappingError = (message: string) =>
-      message.startsWith("Template placeholders not mapped:") ||
-      message.startsWith("Invalid mapping:");
-    const isMappingWarning = (message: string) =>
-      message.startsWith("Unused CSV columns:") ||
-      message.startsWith("Potential mapping mismatches:");
-
-    const nextErrors = errors.filter((message) => !isMappingError(message));
-    const nextWarnings = warnings.filter((message) => !isMappingWarning(message));
-
-    if (nextErrors.length !== errors.length) {
-      setErrors(nextErrors);
+    if (
+      !shouldRedirectToUploadForMissingSvg({
+        currentStep,
+        hasSvgTemplate: svgTemplate !== null,
+      })
+    ) {
+      return;
     }
-    if (nextWarnings.length !== warnings.length) {
-      setWarnings(nextWarnings);
-    }
-  }, [currentStep, errors, warnings, setErrors, setWarnings]);
+    setCurrentStep("upload");
+  }, [currentStep, setCurrentStep, svgTemplate]);
 
   return (
     <div className={styles.app}>

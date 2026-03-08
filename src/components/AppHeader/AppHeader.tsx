@@ -238,10 +238,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const selectedCount = selectedRowIndices.length;
   const recordCount = csvData?.rows.length ?? 0;
   const activeStep = STEP_COPY[currentStep];
-  const mappingValidation =
-    svgTemplate && csvData
-      ? validateDataMapping(svgTemplate, csvData, dataMapping)
-      : null;
+  const mappingValidation = React.useMemo(() => {
+    if (!svgTemplate || !csvData) return null;
+    return validateDataMapping(svgTemplate, csvData, dataMapping);
+  }, [csvData, dataMapping, svgTemplate]);
   const mappingNeedsAttention = Boolean(
     mappingValidation &&
       (mappingValidation.errors.length > 0 ||
@@ -256,6 +256,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     readyForPreview,
     selectedCount,
     remainingPlaceholderCount: placeholderCount - mappedPlaceholders,
+    requireCompleteUploadForEdit: true,
   });
 
   const getStepState = (step: StepId) => {
@@ -270,7 +271,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     const isAvailable =
       isCompleted ||
       step === "upload" ||
-      (step === "edit" && hasTemplateUpload) ||
+      (step === "edit" && readyForEdit) ||
       (step === "mapping" && readyForMapping) ||
       (step === "select" && readyForPreview) ||
       (step === "preview" && readyForPreview && hasSelectedRows);

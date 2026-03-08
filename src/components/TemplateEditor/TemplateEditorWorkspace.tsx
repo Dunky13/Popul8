@@ -26,11 +26,17 @@ import styles from "./TemplateEditor.module.css";
 import type { PlaceholderBlock, Rect } from "./types";
 import { PlaceholderPanel } from "./PlaceholderPanel";
 import { DetectedPlaceholders } from "./DetectedPlaceholders";
-import { formatSvg, normalizeFontSize, parseSvgInfo } from "./helpers";
+import {
+  buildSvgInfoFromSvg,
+  cloneParsedSvgDocument,
+  formatSvg,
+  normalizeFontSize,
+  parseSvgDocument,
+} from "./helpers";
 import { CanvasToolbar } from "./CanvasToolbar";
 import { TemplateEditorStage } from "./TemplateEditorStage";
 import Icon from "../Icon/Icon";
-import { usePlaceholderBlocks } from "./hooks/usePlaceholderBlocks";
+import { buildPlaceholderBlocksFromSvg } from "./hooks/usePlaceholderBlocks";
 import { useCanvasSelection } from "./hooks/useCanvasSelection";
 import { useDebouncedValue } from "./hooks/useDebouncedValue";
 import { useSelectedCodeSync } from "./hooks/useSelectedCodeSync";
@@ -154,24 +160,21 @@ export const TemplateEditorWorkspace: React.FC<
   const svgPreviewRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<SVGSVGElement | null>(null);
 
-  const svgInfo = useMemo(() => parseSvgInfo(localContent), [localContent]);
-  const placeholderBlocks = usePlaceholderBlocks(localContent);
   const debouncedFontSize = useDebouncedValue(fontSizeInput, 250);
   const parsedLocalSvg = useMemo(() => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(localContent, "image/svg+xml");
-    const svg = doc.querySelector("svg");
-    if (!svg) return null;
-    return { doc, svg };
+    return parseSvgDocument(localContent);
   }, [localContent]);
-
-  const parseEditableSvg = useCallback(() => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(localContent, "image/svg+xml");
-    const svg = doc.querySelector("svg");
-    if (!svg) return null;
-    return { doc, svg };
-  }, [localContent]);
+  const svgInfo = useMemo(
+    () => (parsedLocalSvg ? buildSvgInfoFromSvg(parsedLocalSvg.svg) : null),
+    [parsedLocalSvg],
+  );
+  const placeholderBlocks = useMemo(
+    () =>
+      parsedLocalSvg
+        ? buildPlaceholderBlocksFromSvg(parsedLocalSvg.svg as SVGSVGElement)
+        : ([] as PlaceholderBlock[]),
+    [parsedLocalSvg],
+  );
 
   const getFontSizeForPlaceholder = useCallback(
     (block: PlaceholderBlock) => {
@@ -396,12 +399,11 @@ export const TemplateEditorWorkspace: React.FC<
       ? getUniqueId(normalized, [normalized, ...existingIds])
       : getUniqueId(normalized, existingIds);
 
-    const parsedSvg = parseEditableSvg();
-    if (!parsedSvg) {
+    if (!parsedLocalSvg) {
       setError("Unable to read SVG content.");
       return;
     }
-    const { doc, svg } = parsedSvg;
+    const { doc, svg } = cloneParsedSvgDocument(parsedLocalSvg);
 
     const baseTemplate =
       placeholderType === "image"
@@ -468,9 +470,9 @@ export const TemplateEditorWorkspace: React.FC<
     contentSummary,
     fontSizeInput,
     isTextPlaceholder,
-    parseEditableSvg,
     placeholderName,
     placeholderType,
+    parsedLocalSvg,
     selection,
     setSelection,
   ]);
@@ -572,12 +574,11 @@ export const TemplateEditorWorkspace: React.FC<
 
   const handleRemovePlaceholder = useCallback(async () => {
     if (!selectedPlaceholder) return;
-    const parsedSvg = parseEditableSvg();
-    if (!parsedSvg) {
+    if (!parsedLocalSvg) {
       setError("Unable to read SVG content.");
       return;
     }
-    const { svg } = parsedSvg;
+    const { svg } = cloneParsedSvgDocument(parsedLocalSvg);
 
     const candidates = findPlaceholderElements(svg, selectedPlaceholder.name);
     const target =
@@ -602,7 +603,7 @@ export const TemplateEditorWorkspace: React.FC<
   }, [
     applyUpdate,
     clearSelectionMeta,
-    parseEditableSvg,
+    parsedLocalSvg,
     selectedPlaceholder,
     setSelection,
   ]);

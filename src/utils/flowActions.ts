@@ -16,6 +16,7 @@ type FlowActionContext = {
   readyForPreview: boolean;
   selectedCount: number;
   remainingPlaceholderCount: number;
+  requireCompleteUploadForEdit?: boolean;
 };
 
 export const getFlowAction = ({
@@ -26,9 +27,37 @@ export const getFlowAction = ({
   readyForPreview,
   selectedCount,
   remainingPlaceholderCount,
+  requireCompleteUploadForEdit = false,
 }: FlowActionContext): FlowAction | null => {
   switch (currentStep) {
     case "upload":
+      if (requireCompleteUploadForEdit) {
+        if (hasCsvUpload && hasTemplateUpload) {
+          return {
+            label: "Continue To Template Editing",
+            shortLabel: "Continue",
+            helper:
+              "Both files are loaded. Open the editor to refine placeholder regions.",
+            targetStep: "edit",
+            enabled: true,
+          };
+        }
+
+        return {
+          label:
+            hasTemplateUpload || hasCsvUpload
+              ? "Upload The Remaining Source File"
+              : "Upload Source Files To Continue",
+          shortLabel: "Finish upload",
+          helper:
+            hasTemplateUpload || hasCsvUpload
+              ? "Both the CSV dataset and SVG template are required before the editor unlocks."
+              : "Load the CSV dataset and SVG template to unlock the editor.",
+          targetStep: "edit",
+          enabled: false,
+        };
+      }
+
       return {
         label: hasTemplateUpload
           ? "Continue To Template Editing"
