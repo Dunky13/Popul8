@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/Dunky13/Popul8/compare/v1.6.0...v1.6.1) (2026-03-08)
+
+
+### Bug Fixes
+
+* debug build ([2d78b42](https://github.com/Dunky13/Popul8/commit/2d78b425a7f999ec86a579e380e9c374a65305cb))
+
 ## [1.6.0](https://github.com/Dunky13/Popul8/compare/v1.5.0...v1.6.0) (2026-03-08)
 
 
