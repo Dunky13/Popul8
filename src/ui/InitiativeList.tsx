@@ -6,8 +6,13 @@ export function InitiativeList() {
   const dispatch = useDmStore((s) => s.dispatch);
   const ordered = sortOrder(encounter.combatants);
 
+  // Fix #5: count PCs that haven't submitted initiative yet.
+  const waiting = encounter.combatants.filter((c) => c.kind === 'pc' && !c.hasSubmitted).length;
+
   return (
-    <ol>
+    <>
+      {waiting > 0 && <p>Waiting on {waiting} player(s)…</p>}
+      <ol>
       {ordered.map((c) => (
         <li
           key={c.id}
@@ -26,6 +31,7 @@ export function InitiativeList() {
           </button>
         </li>
       ))}
-    </ol>
+      </ol>
+    </>
   );
 }
