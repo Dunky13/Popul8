@@ -30,6 +30,8 @@ the DM's snapshot — they never trust each other.
 - **State:** Zustand (with `persist` for the DM store).
 - **Realtime:** [Trystero](https://github.com/dmotz/trystero) — room-based WebRTC that
   bootstraps via public trackers, so there is no signaling server to run or pay for.
+- **Monster data:** [dnd5eapi.co](https://www.dnd5eapi.co) SRD 5.1 API (CORS `*`,
+  client-side fetch, no backend, no key). SRD content only — legally safe, ~330 monsters.
 - **Deploy:** static build to GitHub Pages (matching sibling projects).
 - **Package manager:** pnpm.
 
@@ -87,7 +89,12 @@ type EncounterState = {
 - Room code + QR for players to join.
 - Auto-sorted initiative list with per-row HP, conditions, and active-turn highlight.
 - Drag-to-reorder for manual override of ties.
-- Add-Monster form (name, initiative, dex modifier, HP).
+- Add-Monster form with **SRD search**: type a monster name, pick from dnd5eapi.co
+  results, autofills HP and dex modifier (derived from the API's dex score:
+  `floor((score - 10) / 2)`). On add, initiative is **auto-rolled** (`d20 + dex mod`).
+  All fields remain manually editable, and manual-only entry works when offline or for
+  non-SRD monsters. Adding the same monster repeatedly creates distinct instances
+  (Goblin 1, Goblin 2), each with its own auto-rolled initiative and HP.
 - Next / Prev turn controls and a round counter.
 - "Waiting on N players" indicator (PCs that have not yet submitted initiative).
 
@@ -96,6 +103,18 @@ type EncounterState = {
 - Submit initiative: in-app d20 roller (with advantage) or type a number directly.
 - Live read-only turn order, highlighting the player's own turn.
 - Own HP and conditions editor, synced to the DM.
+
+## SRD Monster Lookup (`src/services/srd.ts`)
+
+Thin wrapper over dnd5eapi.co:
+
+- `searchMonsters(query)` → name + index list (the API exposes a full monster index;
+  filter client-side, or hit `/api/2014/monsters?name=`).
+- `getMonster(index)` → fetches the stat block; maps to `{ name, hp: hit_points,
+  dexMod: floor((dexterity - 10) / 2) }`.
+
+Failures (network down, monster not found) fall back to manual entry — never block the
+DM. Results may be cached in memory for the session.
 
 ## Identity, Reconnection & Persistence
 
@@ -112,6 +131,7 @@ type EncounterState = {
 - Player joins a room with no DM present → "waiting for DM" state.
 - Duplicate character names allowed; combatants are keyed by `id`, not name.
 - Lost connection → reconnect banner; state re-syncs from the next DM snapshot.
+- SRD API unreachable or monster not found → silent fallback to manual monster entry.
 
 ## Testing
 
@@ -124,5 +144,6 @@ kept thin and are not unit-tested.
 
 - Player-to-player visibility of each other's HP/conditions (only the DM aggregates).
 - Persisting encounters across sessions beyond the DM's own localStorage.
-- Monster stat blocks / SRD content import.
+- Non-SRD monster content (Monster Manual / homebrew) beyond manual entry.
+- Full stat blocks (attacks, abilities) — lookup pulls HP and dex modifier only.
 - Multiple simultaneous encounters per DM.
