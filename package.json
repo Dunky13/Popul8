@@ -1,0 +1,32 @@
+{
+  "name": "live-tracker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsgo -p tsconfig.app.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsgo -p tsconfig.app.json --noEmit",
+    "lint": "oxlint",
+    "test": "tsgo -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.tmp-tests/package.json', JSON.stringify({ type: 'commonjs' }))\" && node --test .tmp-tests/tests/*.test.js"
+  },
+  "dependencies": {
+    "nanoid": "5.1.11",
+    "qrcode": "1.5.4",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "trystero": "0.25.2",
+    "zustand": "5.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/qrcode": "1.5.5",
+    "@types/react": "19.2.5",
+    "@types/react-dom": "19.2.3",
+    "@typescript/native-preview": "7.0.0-dev.20260615.1",
+    "@vitejs/plugin-react": "6.0.2",
+    "oxlint": "1.70.0",
+    "vite": "8.0.16"
+  }
+}
