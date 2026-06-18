@@ -36,9 +36,9 @@ test('submitInitiative sets initiative and marks submitted', () => {
 test('updateHp and updateConditions mutate only the target', () => {
   let s = applyAction(EMPTY_ENCOUNTER, { type: 'addCombatant', combatant: monster('m1') });
   s = applyAction(s, { type: 'updateHp', id: 'm1', current: 3, max: 7 });
-  s = applyAction(s, { type: 'updateConditions', id: 'm1', conditions: ['prone'] });
+  s = applyAction(s, { type: 'updateConditions', id: 'm1', conditions: [{ name: 'prone', rounds: null }] });
   assert.deepEqual(s.combatants[0].hp, { current: 3, max: 7 });
-  assert.deepEqual(s.combatants[0].conditions, ['prone']);
+  assert.deepEqual(s.combatants[0].conditions, [{ name: 'prone', rounds: null }]);
 });
 
 test('removeCombatant clears activeId when removing the active combatant', () => {

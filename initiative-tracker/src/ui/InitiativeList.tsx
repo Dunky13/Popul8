@@ -59,20 +59,32 @@ function CombatantRow({ c, index, isActive }: { c: Combatant; index: number; isA
     dispatch({ type: 'updateHp', id: c.id, current, max: c.hp.max });
   }
 
-  function toggleCondition(cond: string) {
-    const conditions = c.conditions.includes(cond)
-      ? c.conditions.filter((x) => x !== cond)
-      : [...c.conditions, cond];
+  function toggleCondition(name: string) {
+    const conditions = c.conditions.some((x) => x.name === name)
+      ? c.conditions.filter((x) => x.name !== name)
+      : [...c.conditions, { name, rounds: null }];
     dispatch({ type: 'updateConditions', id: c.id, conditions });
+  }
+
+  function setRounds(name: string, rounds: number | null) {
+    dispatch({
+      type: 'updateConditions',
+      id: c.id,
+      conditions: c.conditions.map((x) => (x.name === name ? { ...x, rounds } : x)),
+    });
   }
 
   function addCustom() {
     const value = custom.trim();
-    if (!value || c.conditions.includes(value)) {
+    if (!value || c.conditions.some((x) => x.name === value)) {
       setCustom('');
       return;
     }
-    dispatch({ type: 'updateConditions', id: c.id, conditions: [...c.conditions, value] });
+    dispatch({
+      type: 'updateConditions',
+      id: c.id,
+      conditions: [...c.conditions, { name: value, rounds: null }],
+    });
     setCustom('');
   }
 
@@ -100,7 +112,10 @@ function CombatantRow({ c, index, isActive }: { c: Combatant; index: number; isA
         {c.conditions.length > 0 && (
           <div className="conditions">
             {c.conditions.map((cond) => (
-              <span key={cond} className="condition">{cond}</span>
+              <span key={cond.name} className="condition">
+                {cond.name}
+                {cond.rounds != null && <span className="condition__rounds">{cond.rounds}</span>}
+              </span>
             ))}
           </div>
         )}
@@ -166,7 +181,7 @@ function CombatantRow({ c, index, isActive }: { c: Combatant; index: number; isA
             <span className="eyebrow">Status effects</span>
             <div className="cond-grid">
               {CONDITIONS.map((cond) => {
-                const on = c.conditions.includes(cond);
+                const on = c.conditions.some((x) => x.name === cond);
                 return (
                   <button
                     key={cond}
@@ -180,6 +195,40 @@ function CombatantRow({ c, index, isActive }: { c: Combatant; index: number; isA
                 );
               })}
             </div>
+
+            {c.conditions.length > 0 && (
+              <ul className="active-effects">
+                {c.conditions.map((cond) => (
+                  <li key={cond.name} className="active-effect">
+                    <span className="active-effect__name">{cond.name}</span>
+                    <input
+                      className="input input--num active-effect__rounds"
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      value={cond.rounds ?? ''}
+                      placeholder="∞"
+                      aria-label={`${cond.name} duration in rounds`}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setRounds(cond.name, v === '' ? null : Math.max(1, Number(v)));
+                      }}
+                    />
+                    <span className="active-effect__unit">rds</span>
+                    <button
+                      type="button"
+                      className="iconbtn iconbtn--danger"
+                      aria-label={`Clear ${cond.name}`}
+                      title="Clear"
+                      onClick={() => toggleCondition(cond.name)}
+                    >
+                      ✕
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
             <form
               className="inline-form"
               onSubmit={(e) => {

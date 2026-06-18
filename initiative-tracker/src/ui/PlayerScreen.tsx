@@ -116,14 +116,16 @@ export function PlayerScreen({ roomCode }: { roomCode: string }) {
             <span>Conditions</span>
             <input
               className="input"
-              value={me.conditions.join(', ')}
-              onChange={(e) =>
+              value={me.conditions.map((c) => c.name).join(', ')}
+              onChange={(e) => {
+                const names = e.target.value.split(',').map((s) => s.trim()).filter(Boolean);
+                const byName = new Map(me.conditions.map((c) => [c.name, c]));
                 send({
                   type: 'updateConditions',
                   id: myId,
-                  conditions: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
-                })
-              }
+                  conditions: names.map((name) => byName.get(name) ?? { name, rounds: null }),
+                });
+              }}
               placeholder="poisoned, prone…"
             />
           </label>

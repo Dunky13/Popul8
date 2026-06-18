@@ -378,6 +378,21 @@ ol, ul { list-style: none; padding: 0; }
   color: oklch(0.87 0.09 24);
 }
 
+.condition__rounds {
+  display: inline-grid; place-items: center;
+  margin-left: 0.4em; min-width: 1.35em; height: 1.35em; padding: 0 0.3em;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--danger) 42%, var(--ink-900));
+  color: oklch(0.95 0.03 24);
+  font-size: 0.82em; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+
+.active-effects { display: flex; flex-direction: column; gap: 0.35rem; }
+.active-effect { display: flex; align-items: center; gap: var(--sp-2); }
+.active-effect__name { flex: 1; font-size: var(--step--1); }
+.active-effect__rounds { flex: 0 0 3.6rem; min-height: 2.4rem; }
+.active-effect__unit { font-size: var(--step--1); color: var(--muted); }
+
 /* ── HP stepper (player) ───────────────────────────────────────────────────*/
 .stepper { display: flex; align-items: stretch; gap: var(--sp-2); }
 .stepper .input { font-size: var(--step-1); font-weight: 600; }

@@ -7,6 +7,43 @@ function c(id: string, initiative: number | null, dex: number | null): Combatant
   return { id, name: id, kind: 'pc', initiative, dex, hp: null, conditions: [], hasSubmitted: initiative !== null };
 }
 
+test('advanceTurn ticks condition durations down on round wrap, dropping expired', () => {
+  const s: EncounterState = {
+    combatants: [
+      {
+        ...c('a', 20, 0),
+        conditions: [
+          { name: 'Poisoned', rounds: 2 },
+          { name: 'Prone', rounds: 1 },
+          { name: 'Cursed', rounds: null },
+        ],
+      },
+      c('b', 10, 0),
+    ],
+    round: 1,
+    activeId: 'b', // last in order → next advance wraps the round
+    started: true,
+  };
+  const next = advanceTurn(s);
+  assert.equal(next.round, 2);
+  assert.deepEqual(next.combatants[0].conditions, [
+    { name: 'Poisoned', rounds: 1 }, // 2 → 1
+    { name: 'Cursed', rounds: null }, // indefinite, unchanged; Prone (1 → 0) dropped
+  ]);
+});
+
+test('advanceTurn within a round does not tick durations', () => {
+  const s: EncounterState = {
+    combatants: [{ ...c('a', 20, 0), conditions: [{ name: 'Poisoned', rounds: 2 }] }, c('b', 10, 0)],
+    round: 1,
+    activeId: 'a', // not the last → no wrap
+    started: true,
+  };
+  const next = advanceTurn(s);
+  assert.equal(next.round, 1);
+  assert.deepEqual(next.combatants[0].conditions, [{ name: 'Poisoned', rounds: 2 }]);
+});
+
 test('sortOrder sorts by initiative desc', () => {
   const out = sortOrder([c('a', 10, 0), c('b', 18, 0), c('d', 14, 0)]);
   assert.deepEqual(out.map((x) => x.id), ['b', 'd', 'a']);

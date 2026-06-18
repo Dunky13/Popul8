@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { customAlphabet } from 'nanoid';
 import { EMPTY_ENCOUNTER } from '../types';
-import type { Action, EncounterState } from '../types';
+import type { ActiveCondition, Action, EncounterState } from '../types';
 import { applyAction } from '../domain/reducer';
 import { advanceTurn, prevTurn } from '../domain/order';
 import { createRoom, type Room } from '../net/room';
@@ -75,8 +75,26 @@ export const useDmStore = create<DmStore>()(
     }),
     {
       name: 'dm-encounter',
+      version: 1,
       // Persist only serialisable state, never the live Room object.
       partialize: (s) => ({ roomCode: s.roomCode, encounter: s.encounter }),
+      // v0 stored conditions as plain strings; v1 stores { name, rounds }.
+      migrate: (persisted) => {
+        const s = persisted as { roomCode: string; encounter: EncounterState };
+        if (!s?.encounter) return s;
+        return {
+          ...s,
+          encounter: {
+            ...s.encounter,
+            combatants: s.encounter.combatants.map((c) => ({
+              ...c,
+              conditions: (c.conditions as Array<string | ActiveCondition>).map((cond) =>
+                typeof cond === 'string' ? { name: cond, rounds: null } : cond,
+              ),
+            })),
+          },
+        };
+      },
     },
   ),
 );

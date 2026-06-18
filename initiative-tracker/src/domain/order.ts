@@ -1,5 +1,19 @@
 import type { Combatant, EncounterState } from '../types';
 
+/**
+ * Tick condition timers down by one round, dropping any that hit zero.
+ * Conditions with `rounds: null` are indefinite and never expire.
+ */
+function tickConditions(combatants: Combatant[]): Combatant[] {
+  return combatants.map((c) => {
+    if (c.conditions.length === 0) return c;
+    const conditions = c.conditions
+      .map((cond) => (cond.rounds == null ? cond : { ...cond, rounds: cond.rounds - 1 }))
+      .filter((cond) => cond.rounds == null || cond.rounds > 0);
+    return { ...c, conditions };
+  });
+}
+
 export function sortOrder(combatants: Combatant[]): Combatant[] {
   return combatants
     .map((c, index) => ({ c, index }))
@@ -28,7 +42,13 @@ function step(state: EncounterState, direction: 1 | -1): EncounterState {
   }
   const nextIndex = currentIndex + direction;
   if (nextIndex >= order.length) {
-    return { ...state, activeId: order[0].id, round: state.round + 1 };
+    // Wrapping to a new round: tick condition timers down once.
+    return {
+      ...state,
+      combatants: tickConditions(state.combatants),
+      activeId: order[0].id,
+      round: state.round + 1,
+    };
   }
   if (nextIndex < 0) {
     return { ...state, activeId: order[order.length - 1].id, round: Math.max(1, state.round - 1) };
