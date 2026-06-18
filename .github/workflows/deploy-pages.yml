@@ -65,6 +65,15 @@ jobs:
           VITE_PUBLIC_POSTHOG_HOST: ${{ vars.VITE_PUBLIC_POSTHOG_HOST }}
           VITE_COMMIT_SHA: ${{ github.sha }}
 
+      - name: Install initiative-tracker dependencies
+        run: pnpm -C initiative-tracker install --frozen-lockfile
+
+      - name: Build initiative-tracker
+        run: pnpm -C initiative-tracker run build
+        env:
+          VITE_BASE_PATH: ${{ steps.paths.outputs.base }}initiative-tracker/
+          VITE_COMMIT_SHA: ${{ github.sha }}
+
       - name: Restore existing site state
         run: |
           mkdir -p _site
@@ -88,6 +97,14 @@ jobs:
             mkdir -p "_site/${SITE_PATH}"
             cp -R dist/. "_site/${SITE_PATH}/"
           fi
+
+          # Place the initiative-tracker app at <site>/initiative-tracker/.
+          # On release SITE_PATH is empty → _site/initiative-tracker; on push
+          # previews it nests under the preview subpath.
+          it_dest="_site/${SITE_PATH:+$SITE_PATH/}initiative-tracker"
+          rm -rf "$it_dest"
+          mkdir -p "$it_dest"
+          cp -R initiative-tracker/dist/. "$it_dest/"
           cat > _site/deploy-info.txt <<EOF
           event=${{ github.event_name }}
           ref=${{ github.ref }}
