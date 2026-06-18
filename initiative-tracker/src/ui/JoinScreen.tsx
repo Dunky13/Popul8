@@ -9,13 +9,47 @@ export function JoinScreen({ roomCode }: { roomCode: string }) {
   const [dex, setDex] = useState(savedDex);
 
   return (
-    <main>
-      <h1>Join room {roomCode}</h1>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Character name" />
-      <input type="number" value={dex} onChange={(e) => setDex(Number(e.target.value))} placeholder="Dex modifier" />
-      <button type="button" disabled={!name} onClick={() => join(roomCode, name, dex)}>
-        Join
-      </button>
+    <main className="join">
+      <form
+        className="card join__card"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (name) join(roomCode, name, dex);
+        }}
+      >
+        <p className="join__sigil">⚔</p>
+        <p className="eyebrow">Joining room {roomCode}</p>
+        <h1 className="section-title" style={{ justifyContent: 'center' }}>
+          Enter the fray
+        </h1>
+
+        <label className="field">
+          <span>Character name</span>
+          <input
+            className="input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Aria Brightwood"
+            autoFocus
+          />
+        </label>
+
+        <label className="field">
+          <span>Dexterity modifier</span>
+          <input
+            className="input input--num"
+            type="number"
+            inputMode="numeric"
+            value={dex}
+            onChange={(e) => setDex(Number(e.target.value))}
+            placeholder="0"
+          />
+        </label>
+
+        <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={!name}>
+          Join encounter
+        </button>
+      </form>
     </main>
   );
 }

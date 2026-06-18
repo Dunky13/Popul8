@@ -11,14 +11,20 @@ export function DiceRoller({ dexMod, onResult }: { dexMod: number; onResult: (va
     onResult(value);
   }
 
+  const mod = dexMod >= 0 ? `+${dexMod}` : `${dexMod}`;
+
   return (
-    <div>
-      <label>
+    <div className="roller">
+      <div className="roller__row">
+        <button type="button" className="btn btn--primary btn--lg" style={{ flex: 1 }} onClick={roll}>
+          🎲 Roll d20 {mod}
+        </button>
+        {last !== null && <span className="roll-result" aria-live="polite">{last}</span>}
+      </div>
+      <label className="adv">
         <input type="checkbox" checked={advantage} onChange={(e) => setAdvantage(e.target.checked)} />
-        Advantage
+        Roll with advantage
       </label>
-      <button type="button" onClick={roll}>Roll d20 {dexMod >= 0 ? `+${dexMod}` : dexMod}</button>
-      {last !== null && <span> Rolled: {last}</span>}
     </div>
   );
 }

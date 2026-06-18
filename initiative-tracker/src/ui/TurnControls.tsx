@@ -6,10 +6,17 @@ export function TurnControls() {
   const prev = useDmStore((s) => s.prev);
 
   return (
-    <div>
-      <span>Round {round}</span>
-      <button type="button" onClick={prev}>Prev</button>
-      <button type="button" onClick={next}>Next</button>
+    <div className="turnbar">
+      <div className="turnbar__round">
+        <span>Round</span>
+        <strong>{round}</strong>
+      </div>
+      <button type="button" className="btn btn--ghost" onClick={prev}>
+        ◀ Prev
+      </button>
+      <button type="button" className="btn btn--primary" onClick={next}>
+        Next ▶
+      </button>
     </div>
   );
 }

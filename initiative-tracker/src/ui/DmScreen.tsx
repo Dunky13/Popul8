@@ -14,12 +14,22 @@ export function DmScreen() {
   }, [connect]);
 
   return (
-    <main>
-      <h1>DM — Initiative Tracker</h1>
+    <main className="app">
+      <header className="appbar">
+        <div className="appbar__title">
+          Initiative Tracker
+          <small>Dungeon Master</small>
+        </div>
+        <div className="chip">
+          <span className="chip__label">Room</span>
+          <span className="chip__code">{roomCode}</span>
+        </div>
+      </header>
+
       <RoomQr roomCode={roomCode} />
-      <TurnControls />
       <InitiativeList />
       <AddMonsterForm />
+      <TurnControls />
     </main>
   );
 }

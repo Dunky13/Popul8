@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { usePlayerStore } from '../store/playerStore';
 import { sortOrder } from '../domain/order';
 import { JoinScreen } from './JoinScreen';
@@ -15,8 +16,7 @@ export function PlayerScreen({ roomCode }: { roomCode: string }) {
   const join = usePlayerStore((s) => s.join);
   const [initInput, setInitInput] = useState('');
 
-  // Fix #2: auto-reconnect on reload when the player has a persisted identity.
-  // Only fires when name is non-empty (persisted player) and not yet joined.
+  // Auto-reconnect on reload when the player has a persisted identity.
   useEffect(() => {
     if (!joined && name) {
       join(roomCode, name, dex);
@@ -27,6 +27,7 @@ export function PlayerScreen({ roomCode }: { roomCode: string }) {
 
   const me = encounter.combatants.find((c) => c.id === myId);
   const ordered = sortOrder(encounter.combatants);
+  const submitted = me?.initiative != null;
 
   function submit(value: number) {
     send({ type: 'submitInitiative', id: myId, initiative: value });
@@ -34,62 +35,123 @@ export function PlayerScreen({ roomCode }: { roomCode: string }) {
   }
 
   return (
-    <main>
-      <h1>Room {roomCode}</h1>
+    <main className="app app--player">
+      <header className="appbar">
+        <div className="appbar__title">
+          {name || 'Adventurer'}
+          <small>Player</small>
+        </div>
+        <div className="chip">
+          <span className="chip__label">Room</span>
+          <span className="chip__code">{roomCode}</span>
+        </div>
+      </header>
 
-      {/* Fix #4: DM connection banner */}
-      {!dmConnected && <p role="alert">Waiting for DM / reconnecting…</p>}
+      <span className={`status${dmConnected ? '' : ' status--off'}`} role="status">
+        {dmConnected ? 'Connected to DM' : 'Waiting for DM / reconnecting…'}
+      </span>
 
-      <section>
-        <h2>Your initiative {me?.initiative != null ? `(submitted: ${me.initiative})` : ''}</h2>
+      <section className="card hero">
+        <span className="eyebrow">Your initiative</span>
+        <p className={`hero__value${submitted ? '' : ' hero__value--empty'}`}>
+          {submitted ? me?.initiative : 'not rolled'}
+        </p>
         <DiceRoller dexMod={dex} onResult={submit} />
-        <input type="number" value={initInput} onChange={(e) => setInitInput(e.target.value)} placeholder="Or type a number" />
-        <button type="button" disabled={initInput === ''} onClick={() => submit(Number(initInput))}>
-          Submit
-        </button>
+        <div className="inline-form">
+          <input
+            className="input input--num"
+            type="number"
+            inputMode="numeric"
+            value={initInput}
+            onChange={(e) => setInitInput(e.target.value)}
+            placeholder="Type a number"
+          />
+          <button type="button" className="btn btn--ghost" disabled={initInput === ''} onClick={() => submit(Number(initInput))}>
+            Submit
+          </button>
+        </div>
       </section>
 
       {me && (
-        <section>
-          <h2>Your HP & conditions</h2>
-          <input
-            type="number"
-            value={me.hp?.current ?? 0}
-            onChange={(e) =>
-              send({ type: 'updateHp', id: myId, current: Number(e.target.value), max: me.hp?.max ?? Number(e.target.value) })
-            }
-          />
-          {' / '}
-          <input
-            type="number"
-            value={me.hp?.max ?? 0}
-            onChange={(e) =>
-              send({ type: 'updateHp', id: myId, current: me.hp?.current ?? Number(e.target.value), max: Number(e.target.value) })
-            }
-          />
-          <input
-            value={me.conditions.join(', ')}
-            onChange={(e) =>
-              send({
-                type: 'updateConditions',
-                id: myId,
-                conditions: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
-              })
-            }
-            placeholder="Conditions (comma-separated)"
-          />
+        <section className="card">
+          <h2 className="section-title">Hit points</h2>
+          <div className="stepper">
+            <label className="field" style={{ flex: 1 }}>
+              <span>Current</span>
+              <input
+                className="input input--num"
+                type="number"
+                inputMode="numeric"
+                value={me.hp?.current ?? 0}
+                onChange={(e) =>
+                  send({ type: 'updateHp', id: myId, current: Number(e.target.value), max: me.hp?.max ?? Number(e.target.value) })
+                }
+              />
+            </label>
+            <span className="stepper__sep">/</span>
+            <label className="field" style={{ flex: 1 }}>
+              <span>Max</span>
+              <input
+                className="input input--num"
+                type="number"
+                inputMode="numeric"
+                value={me.hp?.max ?? 0}
+                onChange={(e) =>
+                  send({ type: 'updateHp', id: myId, current: me.hp?.current ?? Number(e.target.value), max: Number(e.target.value) })
+                }
+              />
+            </label>
+          </div>
+          <label className="field">
+            <span>Conditions</span>
+            <input
+              className="input"
+              value={me.conditions.join(', ')}
+              onChange={(e) =>
+                send({
+                  type: 'updateConditions',
+                  id: myId,
+                  conditions: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                })
+              }
+              placeholder="poisoned, prone…"
+            />
+          </label>
         </section>
       )}
 
-      <section>
-        <h2>Turn order</h2>
-        <ol>
-          {ordered.map((c) => (
-            <li key={c.id} style={{ fontWeight: c.id === encounter.activeId ? 'bold' : 'normal' }}>
-              {c.initiative ?? '—'} {c.name} {c.id === myId ? '(you)' : ''}
-            </li>
-          ))}
-        </ol>
+      <section className="card">
+        <h2 className="section-title">Turn order</h2>
+        {ordered.length === 0 ? (
+          <div className="empty"><strong>Empty</strong>Initiative hasn’t started yet.</div>
+        ) : (
+          <ol className="roster">
+            {ordered.map((c, i) => {
+              const isActive = c.id === encounter.activeId;
+              const isMine = c.id === myId;
+              return (
+                <li
+                  key={c.id}
+                  className={`combatant${isActive ? ' is-active' : ''}${isMine ? ' is-mine' : ''}`}
+                  style={{ '--i': i } as CSSProperties}
+                >
+                  <div className="init">
+                    <span className={`init__num${c.initiative == null ? ' init__num--empty' : ''}`}>
+                      {c.initiative ?? '—'}
+                    </span>
+                    {isActive && <span className="init__cue">turn</span>}
+                  </div>
+                  <div className="combatant__body">
+                    <div className="combatant__name">
+                      {c.name}
+                      {isMine && <span className="tag tag--you">you</span>}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
       </section>
     </main>
   );
