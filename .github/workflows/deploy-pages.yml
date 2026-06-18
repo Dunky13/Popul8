@@ -105,6 +105,12 @@ jobs:
           rm -rf "$it_dest"
           mkdir -p "$it_dest"
           cp -R initiative-tracker/dist/. "$it_dest/"
+
+          # Place the static token-generator app at <site>/token-generator/.
+          tok_dest="_site/${SITE_PATH:+$SITE_PATH/}token-generator"
+          rm -rf "$tok_dest"
+          mkdir -p "$tok_dest"
+          cp -R token-generator/. "$tok_dest/"
           cat > _site/deploy-info.txt <<EOF
           event=${{ github.event_name }}
           ref=${{ github.ref }}

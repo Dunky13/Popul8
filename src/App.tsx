@@ -6,6 +6,7 @@ import React from "react";
 import { useShallow } from "zustand/react/shallow";
 import { AppHeader } from "./components/AppHeader/AppHeader";
 import { AppMessages } from "./components/AppMessages/AppMessages";
+import { AppRail } from "./components/AppRail/AppRail";
 import Icon from "./components/Icon/Icon";
 import { ServiceWorkerUpdateBanner } from "./components/ServiceWorkerUpdateBanner/ServiceWorkerUpdateBanner";
 import { StepContent } from "./components/StepContent/StepContent";
@@ -82,6 +83,7 @@ export const App: React.FC = () => {
 
   return (
     <div className={styles.app}>
+      <AppRail current="cards" />
       <ServiceWorkerUpdateBanner />
       {showOfflineIndicator && (
         <div className={styles.offlineIndicator}>

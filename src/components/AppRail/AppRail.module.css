@@ -1,0 +1,127 @@
+.rail {
+  position: fixed;
+  inset-block: 0;
+  left: 0;
+  z-index: 1000;
+  width: var(--app-rail-w, 3.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.5rem;
+  background: var(--surface-panel);
+  border-right: 1px solid var(--border-color);
+  overflow: hidden;
+  font-family: var(--font-body);
+  transition:
+    width var(--transition-normal),
+    box-shadow var(--transition-normal);
+}
+.rail:hover,
+.rail:focus-within,
+.rail.open {
+  width: 15rem;
+  box-shadow: var(--shadow-xl);
+}
+
+.toggle,
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+.toggle {
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.brand {
+  flex: none;
+  width: 2.15rem;
+  height: 2.15rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--primary-color), var(--primary-hover));
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+
+.apps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.active {
+  background: var(--primary-light);
+  color: var(--primary-color);
+  cursor: default;
+}
+.active:hover {
+  background: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.icon {
+  flex: none;
+  width: 2.15rem;
+  height: 2.15rem;
+  display: grid;
+  place-items: center;
+}
+.icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.wordmark,
+.label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+.wordmark {
+  font-size: 1.15rem;
+}
+.rail:hover .label,
+.rail:focus-within .label,
+.rail.open .label,
+.rail:hover .wordmark,
+.rail:focus-within .wordmark,
+.rail.open .wordmark {
+  opacity: 1;
+  transform: none;
+}
+
+@media print {
+  .rail {
+    display: none;
+  }
+}

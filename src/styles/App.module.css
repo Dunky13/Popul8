@@ -1,5 +1,7 @@
 .app {
+  --app-rail-w: 3.25rem;
   min-height: 100vh;
+  padding-left: var(--app-rail-w); /* gutter for the fixed app-switcher rail */
   display: flex;
   flex-direction: column;
   background:
@@ -841,6 +843,10 @@
   .main {
     background: white !important;
     color: black !important;
+  }
+
+  .app {
+    padding-left: 0 !important;
   }
 
   .main {
