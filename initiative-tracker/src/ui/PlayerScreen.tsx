@@ -28,6 +28,8 @@ export function PlayerScreen({ roomCode }: { roomCode: string }) {
   const me = encounter.combatants.find((c) => c.id === myId);
   const ordered = sortOrder(encounter.combatants);
   const submitted = me?.initiative != null;
+  const active = encounter.combatants.find((c) => c.id === encounter.activeId);
+  const myTurn = active != null && active.id === myId;
 
   function submit(value: number) {
     send({ type: 'submitInitiative', id: myId, initiative: value });
@@ -50,6 +52,14 @@ export function PlayerScreen({ roomCode }: { roomCode: string }) {
       <span className={`status${dmConnected ? '' : ' status--off'}`} role="status">
         {dmConnected ? 'Connected to DM' : 'Waiting for DM / reconnecting…'}
       </span>
+
+      <div className={`turn-now${myTurn ? ' turn-now--you' : ''}`} role="status" aria-live="polite">
+        {active ? (
+          myTurn ? '⚔ Your turn!' : `${active.name}’s turn`
+        ) : (
+          'Encounter not started yet'
+        )}
+      </div>
 
       <section className="card hero">
         <span className="eyebrow">Your initiative</span>

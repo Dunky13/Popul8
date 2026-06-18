@@ -9,6 +9,19 @@ import { createRoom, type Room } from '../net/room';
 
 const makeCode = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 4);
 
+/**
+ * Player-facing view of the encounter. Monster HP is the DM's secret, so it is
+ * stripped before any snapshot leaves the DM — players never receive it.
+ */
+function redactForPlayers(state: EncounterState): EncounterState {
+  return {
+    ...state,
+    combatants: state.combatants.map((c) =>
+      c.kind === 'monster' && c.hp ? { ...c, hp: null } : c,
+    ),
+  };
+}
+
 interface DmStore {
   roomCode: string;
   encounter: EncounterState;
@@ -38,26 +51,26 @@ export const useDmStore = create<DmStore>()(
           ) {
             const next = applyAction(get().encounter, action);
             set({ encounter: next });
-            room.broadcast(next);
+            room.broadcast(redactForPlayers(next));
           }
         });
-        room.onPeerJoin(() => room.broadcast(get().encounter));
+        room.onPeerJoin(() => room.broadcast(redactForPlayers(get().encounter)));
         set({ room });
       },
       dispatch: (action) => {
         const next = applyAction(get().encounter, action);
         set({ encounter: next });
-        get().room?.broadcast(next);
+        get().room?.broadcast(redactForPlayers(next));
       },
       next: () => {
         const next = advanceTurn(get().encounter);
         set({ encounter: next });
-        get().room?.broadcast(next);
+        get().room?.broadcast(redactForPlayers(next));
       },
       prev: () => {
         const next = prevTurn(get().encounter);
         set({ encounter: next });
-        get().room?.broadcast(next);
+        get().room?.broadcast(redactForPlayers(next));
       },
     }),
     {
