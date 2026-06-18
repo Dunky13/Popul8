@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// base must match the GitHub Pages subpath; './' produces relative asset paths.
+// base must match the GitHub Pages subpath. CI sets VITE_BASE_PATH (e.g.
+// "/initiative-tracker/"); locally it defaults to './' for relative asset paths.
 export default defineConfig({
-  base: './',
+  base: process.env.VITE_BASE_PATH ?? './',
   plugins: [react()],
 });
