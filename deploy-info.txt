@@ -1,5 +1,5 @@
-event=push
-ref=refs/heads/main
+event=release
+ref=refs/tags/v1.7.0
 sha=ca99d9b74e94907b2999162375f18aa23f45b8fc
-run_id=38648999856
+run_id=38649015148
 run_attempt=1
