@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DND Token Generator</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <nav class="app-rail" id="appRail" aria-label="Switch app">
+      <button
+        type="button"
+        class="app-rail__toggle"
+        id="appRailToggle"
+        aria-label="Expand menu"
+        aria-expanded="false"
+      >
+        <span class="app-rail__brand">P8</span>
+        <span class="app-rail__wordmark">Popul8</span>
+      </button>
+      <ul class="app-rail__apps">
+        <li>
+          <a class="app-rail__item" data-id="cards" data-seg="">
+            <span class="app-rail__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3.5" y="6.5" width="11" height="14" rx="2" />
+                <path d="M9.5 6.5V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-1.5" />
+              </svg>
+            </span>
+            <span class="app-rail__label">Card Generator</span>
+          </a>
+        </li>
+        <li>
+          <a class="app-rail__item" data-id="tracker" data-seg="initiative-tracker/">
+            <span class="app-rail__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2.5 20 7v10l-8 4.5L4 17V7z" />
+                <path d="M4 7l8 4 8-4M12 11v10.5" />
+              </svg>
+            </span>
+            <span class="app-rail__label">Initiative Tracker</span>
+          </a>
+        </li>
+        <li>
+          <a class="app-rail__item app-rail__item--active" data-id="tokens" data-seg="token-generator/" aria-current="page">
+            <span class="app-rail__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="8.5" />
+                <circle cx="12" cy="12" r="3.2" />
+              </svg>
+            </span>
+            <span class="app-rail__label">Token Generator</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="app">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">V3 DND Token Studio</p>
+          <h1>Drag, drop, print circular tokens.</h1>
+          <p class="subhead">
+            Front-end only. Set token size, border, and optional numbers. Print on A4 or
+            Letter, portrait or landscape.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <button id="printBtn" class="btn primary">Print Tokens</button>
+          <button id="clearBtn" class="btn ghost">Clear All</button>
+        </div>
+      </header>
+
+      <section class="uploader" aria-label="Upload images">
+        <div id="dropZone" class="drop-zone" tabindex="0" role="button">
+          <input id="fileInput" type="file" accept="image/*" multiple />
+          <div>
+            <p class="drop-title">Drop images here</p>
+            <p class="drop-sub">
+              or click to browse. Images only, multiple files supported.
+            </p>
+            <p class="drop-note" id="statusText">Ready for drag & drop.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="Token and print settings">
+        <div class="control-card">
+          <h2>Token</h2>
+          <label>
+            Token size (inches)
+            <input id="tokenSize" type="number" min="0.25" step="0.05" value="1" />
+          </label>
+          <label class="inline">
+            <input id="borderToggle" type="checkbox" checked />
+            Add border
+          </label>
+          <label>
+            Border width (mm)
+            <input id="borderWidth" type="number" min="0" step="0.1" value="1" />
+          </label>
+          <label>
+            Border style
+            <select id="borderStyle">
+              <option value="simple">Simple</option>
+              <option value="gilded" selected>Gilded</option>
+              <option value="ember">Ember</option>
+              <option value="stone">Stone</option>
+              <option value="steel">Steel</option>
+            </select>
+          </label>
+          <label>
+            Border color
+            <div class="color-row">
+              <input id="borderColor" type="color" value="#c89b6a" />
+              <input
+                id="borderColorHex"
+                type="text"
+                value="#c89b6a"
+                inputmode="text"
+                spellcheck="false"
+              />
+            </div>
+          </label>
+          <label>
+            Image background
+            <div class="color-row">
+              <input id="tokenBgColor" type="color" value="#ffffff" />
+              <input
+                id="tokenBgColorHex"
+                type="text"
+                value="#ffffff"
+                inputmode="text"
+                spellcheck="false"
+              />
+            </div>
+          </label>
+        </div>
+
+        <div class="control-card">
+          <h2>Page</h2>
+          <label>
+            Page size
+            <select id="pageSize">
+              <option value="A4">A4</option>
+              <option value="Letter">Letter</option>
+            </select>
+          </label>
+          <label>
+            Orientation
+            <select id="orientation">
+              <option value="portrait">Portrait</option>
+              <option value="landscape">Landscape</option>
+            </select>
+          </label>
+          <label>
+            Margin (inches)
+            <input id="pageMargin" type="number" min="0" step="0.1" value="0.5" />
+          </label>
+        </div>
+
+        <div class="control-card">
+          <h2>Numbering</h2>
+          <p>
+            Each token has an optional number. Leave blank for no number. Integers only.
+          </p>
+          <p>
+            Tokens are circular by default with a printable border for punch-out discs.
+          </p>
+        </div>
+      </section>
+
+      <section class="content" aria-label="Tokens and preview">
+        <div class="token-panel">
+          <h2>Tokens</h2>
+          <div id="tokenList" class="token-list"></div>
+        </div>
+
+        <div class="preview-panel">
+          <div class="preview-header">
+            <h2>Print Preview</h2>
+            <p>Preview scales to your selected page size.</p>
+          </div>
+          <div class="page" id="page">
+            <div class="token-grid" id="tokenGrid"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      (function () {
+        var root = location.pathname.replace(/token-generator\/(index\.html)?$/, "");
+        document.querySelectorAll(".app-rail__item").forEach(function (a) {
+          if (a.dataset.id === "tokens") return; // current app, no link
+          a.setAttribute("href", root + a.dataset.seg);
+        });
+        var rail = document.getElementById("appRail");
+        var toggle = document.getElementById("appRailToggle");
+        function close() {
+          rail.classList.remove("is-open");
+          toggle.setAttribute("aria-expanded", "false");
+          toggle.setAttribute("aria-label", "Expand menu");
+        }
+        toggle.addEventListener("click", function () {
+          var open = rail.classList.toggle("is-open");
+          toggle.setAttribute("aria-expanded", String(open));
+          toggle.setAttribute("aria-label", open ? "Collapse menu" : "Expand menu");
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") close();
+        });
+        document.addEventListener("pointerdown", function (e) {
+          if (!rail.contains(e.target)) close();
+        });
+      })();
+    </script>
+  </body>
+</html>
