@@ -1,10 +1,10 @@
 name: Deploy to GitHub Pages
 
 on:
+  # Pages identifies deployments by source SHA. A push preview must not consume
+  # the SHA that a later release needs to promote at the stable root.
   release:
     types: [published]
-  push:
-    branches: [main]
 
 permissions:
   contents: write
@@ -45,13 +45,8 @@ jobs:
       - name: Determine base path and site path
         id: paths
         run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "base=/" >> $GITHUB_OUTPUT
-            echo "site_path=" >> $GITHUB_OUTPUT
-          else
-            echo "base=/preview/${{ github.sha }}/" >> $GITHUB_OUTPUT
-            echo "site_path=preview/${{ github.sha }}" >> $GITHUB_OUTPUT
-          fi
+          echo "base=/" >> "$GITHUB_OUTPUT"
+          echo "site_path=" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -174,3 +169,40 @@ jobs:
           fi
           echo "Deployed URL: $URL"
           echo "::notice title=Deployed URL::$URL"
+
+      - name: Verify public release bytes
+        timeout-minutes: 20
+        env:
+          SITE_URL: https://popul8.app
+        run: |
+          bundle_path=$(sed -nE 's/.*<script[^>]*src="([^"]+\.js)".*/\1/p' _site/index.html)
+          case "$bundle_path" in
+            /assets/*.js) ;;
+            *) echo "::error::Expected one root JavaScript bundle under /assets/"; exit 1 ;;
+          esac
+
+          verification_dir=$(mktemp -d)
+          trap 'rm -rf "$verification_dir"' EXIT
+
+          for attempt in $(seq 1 10); do
+            verified=true
+            for path in /index.html /deploy-info.txt "$bundle_path"; do
+              public_path=$path
+              if [[ "$path" == /index.html ]]; then public_path=/; fi
+              if ! curl --fail --silent --show-error --max-time 20 \
+                --proto '=https' --proto-redir '=https' \
+                --user-agent 'Popul8-release-verification' \
+                --output "$verification_dir/response" "$SITE_URL$public_path" || \
+                ! cmp -s "_site$path" "$verification_dir/response"; then
+                echo "Public content does not match the release artifact: $public_path"
+                verified=false
+              fi
+            done
+            if [[ "$verified" == true ]]; then
+              echo "Canonical root, deploy marker, and root bundle match the release artifact."
+              exit 0
+            fi
+            if [[ "$attempt" -lt 10 ]]; then sleep 60; fi
+          done
+          echo "::error::Pages reported success but the public release bytes differ."
+          exit 1
