@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/Dunky13/Popul8/compare/v1.7.1...v1.7.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **ci:** reserve Pages promotion for releases ([5343dfb](https://github.com/Dunky13/Popul8/commit/5343dfbab1e897b012249d0f2300caf1fbb98c3d))
+
 ## [1.7.1](https://github.com/Dunky13/Popul8/compare/v1.7.0...v1.7.1)
 
 ### Maintenance
