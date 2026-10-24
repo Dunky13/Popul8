@@ -1,5 +1,5 @@
 event=release
-ref=refs/tags/v1.7.1
-sha=76c8b8b1334a1166c0203922511ce0a1e2222a26
-run_id=40045436096
-run_attempt=2
+ref=refs/tags/v1.7.2
+sha=4f8bad03c41e56c55944377f6b439d65a57208bb
+run_id=40078680352
+run_attempt=1
