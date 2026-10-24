@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.7.1](https://github.com/Dunky13/Popul8/compare/v1.7.0...v1.7.1)
+
+### Maintenance
+
+* Rebuild the stable site and initiative tracker with Node.js 26.12.1 tooling ([#9](https://github.com/Dunky13/Popul8/pull/9)).
+
 ## [1.7.0](https://github.com/Dunky13/Popul8/compare/v1.6.1...v1.7.0) (2026-06-18)
 
 
